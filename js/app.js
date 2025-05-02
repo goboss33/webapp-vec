@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const imagePreviewContainer = document.getElementById('imagePreview');
 
 		try {
-			// Construit l'URL à appeler
+			// Construit l'URL à appeler 2
 			const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${currentProductId}`;
 			console.log(`Workspaceing data from: ${urlToFetch}`); // Log pour débogage
 
