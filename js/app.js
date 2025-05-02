@@ -42,36 +42,69 @@ document.addEventListener('DOMContentLoaded', () => {
     // From the MVP app.js
 	const fetchProductData = async () => {
 		updateStatus("Récupération des données produit...", 'info');
+		// Assure-toi que productNameElement, mainImageUrlElement, imagePreviewContainer sont définis
+		const productNameElement = document.getElementById('productName');
+		const mainImageUrlElement = document.getElementById('mainImageUrl');
+		const imagePreviewContainer = document.getElementById('imagePreview');
+
 		try {
-			const response = await fetch(`<span class="math-inline">\{N8N\_GET\_DATA\_WEBHOOK\_URL\}?productId\=</span>{currentProductId}`);
+			// Construit l'URL à appeler
+			const urlToFetch = `<span class="math-inline">\{N8N\_GET\_DATA\_WEBHOOK\_URL\}?productId\=</span>{currentProductId}`;
+			console.log(`Workspaceing data from: ${urlToFetch}`); // Log pour débogage
+
+			// Fait l'appel
+			const response = await fetch(urlToFetch);
+			console.log('Raw response received:', response); // Log pour débogage
+
+			// Vérifie si la réponse HTTP est OK (status 200-299)
 			if (!response.ok) {
-				// This was the part potentially causing the 404 display before
-				throw new Error(`Erreur serveur n8n (Get Data): ${response.status}`);
+				// Si non-OK, essaie de lire le corps pour plus de détails avant de lever l'erreur
+				const errorBody = await response.text().catch(() => 'Impossible de lire le corps de l\'erreur');
+				console.error('Fetch failed:', response.status, response.statusText, errorBody);
+				throw new Error(`Erreur serveur n8n (Get Data): ${response.status} ${response.statusText}`);
 			}
-			// --- Potential failure point if response wasn't JSON ---
+
+			// Parse la réponse JSON (devrait fonctionner maintenant)
 			const data = await response.json();
-			// --- End potential failure point ---
+			console.log('Parsed JSON data:', data); // Log pour débogage
+
+			// Met à jour l'interface utilisateur avec succès
 			updateStatus("Données récupérées.", 'success');
 			productNameElement.textContent = data.productName || 'Non trouvé';
-			if (data.images && data.images.length > 0) {
+
+			if (data.images && data.images.length > 0 && data.images[0].url) {
 				const firstImageUrl = data.images[0].url;
 				mainImageUrlElement.textContent = firstImageUrl;
-				imagePreviewContainer.innerHTML = `<img src="${firstImageUrl}" alt="Aperçu">`;
+				// Crée ou met à jour l'élément image
+				let imgElement = imagePreviewContainer.querySelector('img');
+				if (!imgElement) {
+					imgElement = document.createElement('img');
+					imagePreviewContainer.appendChild(imgElement);
+				}
+				imgElement.src = firstImageUrl;
+				imgElement.alt = `Aperçu pour ${data.productName || currentProductId}`;
 			} else {
-				 mainImageUrlElement.textContent = 'Aucune';
-				 imagePreviewContainer.innerHTML = '';
+				mainImageUrlElement.textContent = 'Aucune image trouvée';
+				imagePreviewContainer.innerHTML = ''; // Vider l'aperçu s'il n'y a pas d'image
 			}
 
 		} catch (error) {
-			console.error("Erreur fetchProductData:", error); // Logging added later
-			 let uiErrorMessage = `Erreur récupération données: ${error.message || error.toString()}`; // Enhanced display added later
-			 if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) { // Enhanced display added later
-				 uiErrorMessage += ' (Vérifiez réseau, CORS, URL)';
-			 }
-			 updateStatus(uiErrorMessage, 'error');
-			 productNameElement.textContent = 'Erreur';
-			 mainImageUrlElement.textContent = 'Erreur';
-			 imagePreviewContainer.innerHTML = ''; // Added later
+			// Log l'erreur complète dans la console (si accessible)
+			console.error("Erreur détaillée fetchProductData:", error);
+
+			// Affiche un message d'erreur dans l'interface
+			let uiErrorMessage = `Erreur récupération données: ${error.message || error.toString()}`;
+			if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
+				uiErrorMessage += ' (Vérifiez réseau, CORS, URL)';
+			} else if (error.message.toLowerCase().includes('json input')) {
+				 uiErrorMessage += ' (La réponse du serveur n\'est pas du JSON valide)';
+			}
+
+			updateStatus(uiErrorMessage, 'error');
+			// Assure-toi que les éléments existent avant de modifier leur texte
+			if (productNameElement) productNameElement.textContent = 'Erreur';
+			if (mainImageUrlElement) mainImageUrlElement.textContent = 'Erreur';
+			if (imagePreviewContainer) imagePreviewContainer.innerHTML = ''; // Vider en cas d'erreur
 		}
 	};
 
