@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		try {
 			// Construit l'URL à appeler
-			const urlToFetch = `<span class="math-inline">\{N8N\_GET\_DATA\_WEBHOOK\_URL\}?productId\=</span>{currentProductId}`;
+			const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${currentProductId}`;
 			console.log(`Workspaceing data from: ${urlToFetch}`); // Log pour débogage
 
 			// Fait l'appel
