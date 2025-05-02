@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Fetch n8n</title>
+    <style> body { font-family: sans-serif; } pre { background-color: #f0f0f0; padding: 10px; border: 1px solid #ccc; white-space: pre-wrap; word-wrap: break-word; } </style>
+</head>
+<body>
+    <h1>Test d'appel Fetch vers n8n (Get Data)</h1>
+    <p>Ouvrez les outils de développement (F12 -> Console et Network) AVANT de cliquer.</p>
+    <button id="testButton">Tester Fetch GET vers n8n</button>
+    <h3>Résultat :</h3>
+    <pre id="result">En attente...</pre>
+
+    <script>
+        // Utilise EXACTEMENT la même URL que dans ton app.js
+        const N8N_GET_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/get-product-data';
+        const TEST_PRODUCT_ID = '11116'; // Ou un autre ID pour être sûr
+
+        const testButton = document.getElementById('testButton');
+        const resultElement = document.getElementById('result');
+
+        testButton.addEventListener('click', async () => {
+            resultElement.textContent = 'Appel en cours...';
+            testButton.disabled = true;
+            const urlToFetch = `<span class="math-inline">\{N8N\_GET\_DATA\_WEBHOOK\_URL\}?productId\=</span>{TEST_PRODUCT_ID}`;
+            resultElement.textContent += `\nURL: ${urlToFetch}`;
+            console.log(`Tentative de fetch vers : ${urlToFetch}`);
+
+            try {
+                const response = await fetch(urlToFetch);
+                console.log('Réponse brute reçue:', response);
+                let responseBodyText = await response.text(); // Lire le corps pour le log, même si erreur
+                console.log('Corps brut de la réponse:', responseBodyText);
+
+                resultElement.textContent += `\nStatut reçu: ${response.status} ${response.statusText}`;
+
+                if (!response.ok) {
+                    // L'erreur principale est le statut non-OK
+                    throw new Error(`Erreur HTTP: ${response.status} ${response.statusText}\nRéponse: ${responseBodyText}`);
+                }
+
+                // Essayer de parser en JSON seulement si OK
+                const data = JSON.parse(responseBodyText);
+                console.log('Données JSON reçues:', data);
+                resultElement.textContent += '\nSuccès!\nDonnées reçues:\n' + JSON.stringify(data, null, 2);
+
+            } catch (error) {
+                // Gérer les erreurs (réseau, parsing JSON, ou l'erreur HTTP levée)
+                console.error('Erreur détaillée dans le bloc catch:', error);
+                resultElement.textContent += `\n\nERREUR:\n${error.message || error.toString()}`;
+                 // Ajouter l'indice CORS/Réseau
+                 if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
+                     resultElement.textContent += '\n(Ceci indique souvent un problème réseau, DNS, CORS ou URL inaccessible)';
+                 }
+            } finally {
+                testButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
