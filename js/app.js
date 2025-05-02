@@ -39,34 +39,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     productIdElement.textContent = currentProductId;
 
-    // Fonction pour récupérer les données du produit (via n8n)
-    const fetchProductData = async () => {
-        updateStatus("Récupération des données produit...", 'info');
-        try {
-            const response = await fetch(`<span class="math-inline">\{N8N\_GET\_DATA\_WEBHOOK\_URL\}?productId\=</span>{currentProductId}`);
-            if (!response.ok) {
-                throw new Error(`Erreur serveur n8n (Get Data): ${response.status}`);
-            }
-            const data = await response.json();
-            updateStatus("Données récupérées.", 'success');
-            productNameElement.textContent = data.productName || 'Non trouvé';
-            // Afficher la première image (si elle existe dans les données dummy)
-            if (data.images && data.images.length > 0) {
-                const firstImageUrl = data.images[0].url;
-                mainImageUrlElement.textContent = firstImageUrl;
-                imagePreviewContainer.innerHTML = `<img src="${firstImageUrl}" alt="Aperçu">`;
-            } else {
-                 mainImageUrlElement.textContent = 'Aucune';
-                 imagePreviewContainer.innerHTML = '';
-            }
+    // From the MVP app.js
+	const fetchProductData = async () => {
+		updateStatus("Récupération des données produit...", 'info');
+		try {
+			const response = await fetch(`<span class="math-inline">\{N8N\_GET\_DATA\_WEBHOOK\_URL\}?productId\=</span>{currentProductId}`);
+			if (!response.ok) {
+				// This was the part potentially causing the 404 display before
+				throw new Error(`Erreur serveur n8n (Get Data): ${response.status}`);
+			}
+			// --- Potential failure point if response wasn't JSON ---
+			const data = await response.json();
+			// --- End potential failure point ---
+			updateStatus("Données récupérées.", 'success');
+			productNameElement.textContent = data.productName || 'Non trouvé';
+			if (data.images && data.images.length > 0) {
+				const firstImageUrl = data.images[0].url;
+				mainImageUrlElement.textContent = firstImageUrl;
+				imagePreviewContainer.innerHTML = `<img src="${firstImageUrl}" alt="Aperçu">`;
+			} else {
+				 mainImageUrlElement.textContent = 'Aucune';
+				 imagePreviewContainer.innerHTML = '';
+			}
 
-        } catch (error) {
-            console.error("Erreur fetchProductData:", error);
-            updateStatus(`Erreur récupération données: ${error.message}`, 'error');
-            productNameElement.textContent = 'Erreur';
-            mainImageUrlElement.textContent = 'Erreur';
-        }
-    };
+		} catch (error) {
+			console.error("Erreur fetchProductData:", error); // Logging added later
+			 let uiErrorMessage = `Erreur récupération données: ${error.message || error.toString()}`; // Enhanced display added later
+			 if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) { // Enhanced display added later
+				 uiErrorMessage += ' (Vérifiez réseau, CORS, URL)';
+			 }
+			 updateStatus(uiErrorMessage, 'error');
+			 productNameElement.textContent = 'Erreur';
+			 mainImageUrlElement.textContent = 'Erreur';
+			 imagePreviewContainer.innerHTML = ''; // Added later
+		}
+	};
 
     // Fonction pour simuler la mise à jour (via n8n)
     const updateProduct = async () => {
