@@ -1,4 +1,4 @@
-// js/app.js - V2: Verify Scoping
+// js/app.js - V2.1: Verify Scoping
 
 // --- Constants ---
 const N8N_GET_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/get-product-data'; // Verified by user
