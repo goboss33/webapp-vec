@@ -1,244 +1,221 @@
-// js/app.js - V3: Logique de Dépôt + Retrait Vignette
+// js/app.js - V4: Intégration de SortableJS pour Drag & Drop
 
-// --- URLs N8N --- (Vérifie qu'elles sont toujours bonnes)
+// --- URLs N8N ---
 const N8N_GET_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/get-product-data';
 const N8N_UPDATE_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/update-product';
 
 // --- Variables Globales ---
 let currentProductId = null;
 let allImageData = []; // Stocke les données des images reçues
-let draggedItemId = null; // ID de l'image en cours de drag
-let draggedItemUrl = null; // URL de l'image en cours de drag
+let sortableCarousel = null; // Instance Sortable pour le carousel
+let sortableZones = {}; // Stockera les instances Sortable pour les zones {main: instance, gallery: instance, ...}
 
-// --- Références aux Éléments DOM (assignées dans DOMContentLoaded) ---
+// --- Références aux Éléments DOM ---
 let productIdElement, productNameElement, saveChangesButton, statusElement;
 let dropzoneMain, dropzoneGallery, dropzoneCustom;
-let imageCarousel;
+let imageCarouselContainer, imageCarousel; // Ajout container carousel
 
 // --- Fonctions Utilitaires ---
-
-// Met à jour le message de statut
 const updateStatus = (message, type = 'info') => {
     if (statusElement) {
         statusElement.textContent = message;
         statusElement.className = `status-message status-${type}`;
     } else {
-        console.error("statusElement non trouvé. Ne peut pas mettre à jour le statut:", message);
+        console.error("statusElement non trouvé.");
     }
 };
 
-// Crée un élément pour le carousel (rendu draggable)
+// Crée un élément pour le carousel (pour SortableJS)
+// Note: On met les données dans le dataset de l'élément qui sera cloné/déplacé par SortableJS
 function createCarouselItem(image) {
     const container = document.createElement('div');
     container.className = 'carousel-image-container';
-    container.draggable = true; // Rend tout le conteneur draggable
+    // Stocke les données nécessaires directement sur l'élément
     container.dataset.imageId = image.id;
-    container.dataset.imageUrl = image.url; // Stocke l'URL aussi
+    container.dataset.imageUrl = image.url;
+     // Ajoute les rôles initiaux pour info, mais non essentiel pour le drag
+    container.dataset.initialUses = image.uses.join(',');
 
     const img = document.createElement('img');
     img.src = image.url;
     img.alt = `Image ID ${image.id}`;
-    // Empêche le drag natif sur l'image elle-même qui peut interférer
-    img.ondragstart = (event) => event.preventDefault();
 
     const info = document.createElement('p');
-    info.textContent = `ID: ${image.id} (${image.uses.join(', ') || 'libre'})`; // Affiche rôles initiaux
+    info.textContent = `ID: ${image.id}`; // Simplifié, rôle affiché dans la zone
 
     container.appendChild(img);
     container.appendChild(info);
 
-    // Écouteurs pour le drag & drop sur le conteneur
-    container.addEventListener('dragstart', handleDragStart);
-    container.addEventListener('dragend', handleDragEnd);
+    // PAS D'ECOUTEUR DRAGSTART ICI - SortableJS s'en charge
 
     return container;
 }
 
 // Crée une miniature pour les zones de dépôt (avec clic pour retirer)
-function createThumbnail(image, targetRole) { // Ajout de targetRole pour le title
+function createThumbnail(image, targetRole) {
+    const container = document.createElement('div'); // Utiliser un conteneur pour la miniature + bouton
+    container.className = 'thumbnail-wrapper';
+    container.dataset.imageId = image.id; // Garde l'ID sur le wrapper
+
     const img = document.createElement('img');
     img.src = image.url;
     img.alt = `Vignette ID ${image.id}`;
-    img.className = 'img-thumbnail';
-    img.dataset.imageId = image.id;
+    img.className = 'img-thumbnail'; // Garde cette classe pour le style
+    img.title = `ID: ${image.id}\nAssigné à: ${targetRole}`;
 
-    // Ajoute le listener pour pouvoir cliquer et retirer
-    img.addEventListener('click', handleThumbnailClickToRemove);
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '×'; // Croix pour supprimer
+    removeBtn.className = 'remove-thumbnail-btn';
+    removeBtn.title = `Retirer de ${targetRole}`;
+    removeBtn.onclick = handleThumbnailRemoveClick; // Utilise un seul handler
 
-    // Info au survol
-    img.title = `ID: ${image.id}\nAssigné à: ${targetRole}\n(Cliquer pour retirer)`;
+    container.appendChild(img);
+    container.appendChild(removeBtn);
 
-    return img;
+    return container; // Retourne le wrapper complet
 }
 
-// --- Gestion du Retrait de Miniature ---
-function handleThumbnailClickToRemove(event) {
-    const thumbnail = event.currentTarget;
-    const imageId = thumbnail.dataset.imageId;
-    const container = thumbnail.closest('.thumbnail-container');
-    const zone = thumbnail.closest('.dropzone');
+// Handler pour le clic sur le bouton 'x' des miniatures
+function handleThumbnailRemoveClick(event) {
+    const wrapper = event.currentTarget.closest('.thumbnail-wrapper');
+    const imageId = wrapper.dataset.imageId;
+    const zone = wrapper.closest('.dropzone');
     const role = zone ? zone.dataset.role : 'unknown';
 
-    if (container && zone) {
-        thumbnail.remove(); // Retire l'élément du DOM
-        console.log(`Vignette retirée ID=${imageId} de la zone=${role}`);
+    if (wrapper) {
+        wrapper.remove(); // Retire le wrapper (image + bouton)
+        console.log(`Vignette retirée (clic) ID=${imageId} de la zone=${role}`);
         updateStatus(`Image ${imageId} retirée de la zone ${role}.`, 'info');
-        // !!! TODO: Mettre à jour l'état interne (variables JS) qui suit les assignations
-    } else {
-        console.error("Impossible de trouver le conteneur/zone parent pour retirer la vignette.");
+        // Mettre à jour l'état interne si nécessaire
     }
 }
 
 
-// --- Gestionnaires d'Événements Drag & Drop ---
-
-function handleDragStart(event) {
-    // Applique un style à l'élément déplacé
-    event.currentTarget.classList.add('dragging');
-    // Stocke les infos de l'élément déplacé
-    draggedItemId = event.currentTarget.dataset.imageId;
-    draggedItemUrl = event.currentTarget.dataset.imageUrl;
-    // Nécessaire pour Firefox et pour indiquer le type de données
-    event.dataTransfer.setData('text/plain', draggedItemId);
-    event.dataTransfer.effectAllowed = 'move';
-    console.log(`Drag Start: ID=${draggedItemId}`);
-}
-
-function handleDragEnd(event) {
-    // Retire le style de l'élément quand le drag se termine
-    event.currentTarget.classList.remove('dragging');
-    console.log(`Drag End: ID=${draggedItemId}`);
-     // Optionnel : vérifier ici si le drop a réussi avant de reset ?
-    // Reset les variables globales du drag
-    draggedItemId = null;
-    draggedItemUrl = null;
-}
-
-function handleDragOver(event) {
-    event.preventDefault(); // Indispensable pour autoriser le drop
-    event.dataTransfer.dropEffect = 'move';
-    // Ajoute un style à la zone survolée pour feedback visuel
-    event.currentTarget.classList.add('drag-over');
-}
-
-function handleDragLeave(event) {
-    // Retire le style de la zone quand on quitte
-    event.currentTarget.classList.remove('drag-over');
-}
-
-function handleDrop(event) {
-    event.preventDefault(); // Empêche le navigateur d'ouvrir l'image, etc.
-    const targetZone = event.currentTarget; // La zone où on a déposé
-    targetZone.classList.remove('drag-over'); // Retire le style de survol
-    const targetRole = targetZone.dataset.role; // Récupère le rôle ('main', 'gallery', 'custom')
-    const targetThumbContainer = targetZone.querySelector('.thumbnail-container'); // Le div où mettre la vignette
-    const maxImages = parseInt(targetZone.dataset.maxImages) || 999; // Limite max (pour custom)
-
-    console.log(`Drop Event: Tentative dépôt Image ID=${draggedItemId} -> Zone=${targetRole}`);
-
-    // Vérifie si on a bien les infos de l'image déplacée et la zone cible
-    if (!draggedItemId || !draggedItemUrl || !targetThumbContainer) {
-        console.error("Drop Erreur: Données image ou conteneur cible manquant.");
-        // Reset au cas où dragend n'aurait pas fonctionné
-        draggedItemId = null;
-        draggedItemUrl = null;
+// --- Initialisation de SortableJS ---
+function initializeSortable() {
+    if (!Sortable) {
+        console.error("SortableJS n'est pas chargé !");
+        updateStatus("Erreur: Bibliothèque SortableJS manquante.", "error");
         return;
     }
 
-    // Vérifie si l'image est déjà dans CETTE zone cible
-    const existingThumb = targetThumbContainer.querySelector(`.img-thumbnail[data-image-id="${draggedItemId}"]`);
-    if (existingThumb) {
-        console.log(`Image ${draggedItemId} déjà présente dans la zone ${targetRole}.`);
-        updateStatus(`Image ${draggedItemId} déjà dans la zone ${targetRole}.`, 'info');
-        return; // On ne fait rien si elle y est déjà
-    }
+    // Rendre les éléments du carousel déplaçables (Source)
+    // On clone les éléments pour ne pas vider le carousel
+    sortableCarousel = new Sortable(imageCarousel, {
+        group: {
+            name: 'shared',
+            pull: 'clone', // On clone l'élément quand on le sort du carousel
+            put: false // On ne peut pas déposer DANS le carousel
+        },
+        sort: false, // On ne veut pas réorganiser le carousel lui-même
+        animation: 150,
+        onClone: (evt) => {
+             // Optionnel: ajouter une classe CSS pendant le clonage/drag
+             evt.clone.classList.add("dragging-clone");
+        },
+        // Note: Pas besoin de onStart/onEnd ici si on gère via les zones
+    });
 
-    // --- Logique Spécifique à chaque Zone ---
+    // Rendre les zones de dépôt réceptives (Destinations)
+    const dropZoneElements = [dropzoneMain, dropzoneGallery, dropzoneCustom];
+    dropZoneElements.forEach(zoneElement => {
+        if (zoneElement) {
+            const container = zoneElement.querySelector('.thumbnail-container');
+            const role = zoneElement.dataset.role;
+            const maxImages = parseInt(zoneElement.dataset.maxImages) || 999;
 
-    // 1. Zone Principale ('main')
-    if (targetRole === 'main') {
-        // Une seule image autorisée: on vide la zone avant d'ajouter
-        targetThumbContainer.innerHTML = '';
-        // Crée et ajoute la nouvelle vignette
-        const thumbnail = createThumbnail({ id: draggedItemId, url: draggedItemUrl }, targetRole);
-        targetThumbContainer.appendChild(thumbnail);
-        updateStatus(`Image ${draggedItemId} définie comme principale.`, 'success');
-        // Optionnel : Si une image devient principale, faut-il la retirer des autres zones?
-        // removeThumbnailFromOtherZones(draggedItemId, 'main'); // Fonction à créer si besoin
-    }
+            sortableZones[role] = new Sortable(container, {
+                group: 'shared', // Permet de recevoir depuis le carousel (et potentiellement d'autres zones)
+                animation: 150,
+                onAdd: function (evt) { // Fonction déclenchée quand un élément est AJOUTÉ à cette zone
+                    const itemEl = evt.item; // L'élément qui a été déposé (c'est notre .carousel-image-container cloné)
+                    const droppedImageId = itemEl.dataset.imageId;
+                    const droppedImageUrl = itemEl.dataset.imageUrl;
+                    const targetContainer = evt.to; // Le .thumbnail-container où on a déposé
 
-    // 2. Zone Galerie ('gallery')
-    else if (targetRole === 'gallery') {
-        // Pas de limite spécifiée, on ajoute simplement
-        const thumbnail = createThumbnail({ id: draggedItemId, url: draggedItemUrl }, targetRole);
-        targetThumbContainer.appendChild(thumbnail);
-        updateStatus(`Image ${draggedItemId} ajoutée à la galerie.`, 'success');
-    }
+                    console.log(`onAdd Event: Image ID ${droppedImageId} ajoutée à la zone ${role}`);
 
-    // 3. Zone Custom ('custom')
-    else if (targetRole === 'custom') {
-        const currentCount = targetThumbContainer.querySelectorAll('.img-thumbnail').length;
-        if (currentCount < maxImages) {
-            // Limite non atteinte, on ajoute
-            const thumbnail = createThumbnail({ id: draggedItemId, url: draggedItemUrl }, targetRole);
-            targetThumbContainer.appendChild(thumbnail);
-            updateStatus(`Image ${draggedItemId} ajoutée à galerie custom (${currentCount + 1}/${maxImages}).`, 'success');
-        } else {
-            // Limite atteinte
-            console.log(`Limite (${maxImages}) atteinte pour la galerie custom.`);
-            updateStatus(`Limite de ${maxImages} images atteinte pour galerie custom.`, 'warn');
+                    // Règle 1: Vérifier doublons dans la zone cible
+                    const existing = Array.from(targetContainer.querySelectorAll('.thumbnail-wrapper'))
+                                         .find(wrapper => wrapper.dataset.imageId === droppedImageId);
+                    if (existing) {
+                        console.log("Doublon détecté, annulation de l'ajout.");
+                        itemEl.remove(); // Supprime l'élément cloné qui vient d'être ajouté
+                        updateStatus(`Image ${droppedImageId} déjà dans la zone ${role}.`, 'info');
+                        return;
+                    }
+
+                    // Règle 2: Zone Principale - une seule image
+                    if (role === 'main' && targetContainer.children.length > 1) { // > 1 car itemEl est déjà ajouté à ce stade
+                        console.log("Zone Principale ne peut contenir qu'une image. Retrait de l'ancienne.");
+                        // Supprime tous les enfants SAUF le nouvel élément 'itemEl'
+                         Array.from(targetContainer.children).forEach(child => {
+                             if (child !== itemEl) child.remove();
+                         });
+                         updateStatus(`Ancienne image principale remplacée par ${droppedImageId}.`, 'info');
+                    }
+
+                    // Règle 3: Zone Custom - limite max
+                    if (role === 'custom' && targetContainer.children.length > maxImages) {
+                        console.log(`Limite (${maxImages}) atteinte pour Custom. Annulation.`);
+                        itemEl.remove(); // Supprime l'élément ajouté en trop
+                        updateStatus(`Limite de ${maxImages} images atteinte pour galerie custom.`, 'warn');
+                        return;
+                    }
+
+                    // --- Transformation du Clone en Vignette ---
+                    // Si on arrive ici, l'ajout est valide (ou c'est la galerie sans limite)
+                    // On remplace le clone du carousel par une vraie vignette cliquable
+                    const thumbnailWrapper = createThumbnail({ id: droppedImageId, url: droppedImageUrl }, role);
+                    targetContainer.replaceChild(thumbnailWrapper, itemEl); // Remplace le clone par la vignette
+
+                    updateStatus(`Image ${droppedImageId} ajoutée à la zone ${role}.`, 'success');
+
+                    // TODO: Mettre à jour l'état interne JS
+                },
+                 onRemove: function(evt) { // Quand un élément est retiré (soit par drag ailleurs, soit par clic->remove)
+                     const itemEl = evt.item; // L'élément retiré (thumbnail-wrapper)
+                     const removedImageId = itemEl.dataset.imageId;
+                     console.log(`onRemove Event: Image ID ${removedImageId} retirée de la zone ${role}`);
+                      updateStatus(`Image ${removedImageId} retirée de la zone ${role}.`, 'info');
+                     // TODO: Mettre à jour l'état interne JS
+                 }
+            });
         }
-    }
-
-    // !!! TODO: Mettre à jour l'état interne (variables JS) qui suit les assignations
+    });
 }
 
 
 // --- Récupération Initiale des Données ---
 const fetchProductData = async () => {
     updateStatus("Récupération des données produit...", 'info');
-
-    // Nettoyage de l'interface avant chargement
     if (productNameElement) productNameElement.textContent = 'Chargement...';
+    // Vider le carousel et les conteneurs de vignettes avant de re-peupler
     if (imageCarousel) imageCarousel.innerHTML = '<p>Chargement...</p>';
     document.querySelectorAll('.dropzone .thumbnail-container').forEach(container => container.innerHTML = '');
 
-
     try {
         const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${currentProductId}`;
-        console.log(`Workspaceing data from: ${urlToFetch}`);
         const response = await fetch(urlToFetch);
-        console.log('Raw response received:', response);
-
-        if (!response.ok) {
-            const errorBody = await response.text().catch(() => 'Impossible de lire le corps de l\'erreur');
-            console.error('Fetch failed:', response.status, response.statusText, errorBody);
-            throw new Error(`Erreur serveur n8n (Get Data): ${response.status} ${response.statusText}`);
-        }
-
+        if (!response.ok) throw new Error(`Erreur serveur n8n: ${response.status}`);
         const data = await response.json();
         console.log('Parsed JSON data:', data);
         updateStatus("Données reçues. Affichage...", 'info');
 
-        // Afficher le nom du produit
-        if (productNameElement) {
-          productNameElement.textContent = data.productName || 'Non trouvé';
-        }
+        if (productNameElement) productNameElement.textContent = data.productName || 'Non trouvé';
 
-        // Traiter les images (en vérifiant la clé 'images' maintenant)
+        // Utiliser 'data.images' comme clé (confirmé dans le dernier debug)
         if (data.images && Array.isArray(data.images)) {
-            allImageData = data.images; // Stocker les données globalement
+            allImageData = data.images;
 
             if (allImageData.length > 0) {
-                imageCarousel.innerHTML = ''; // Vider le message "Chargement..."
+                imageCarousel.innerHTML = ''; // Vider le message de chargement
 
-                // Peupler le Carousel et Pré-remplir les Zones de Dépôt
+                // Peupler le carousel et pré-remplir les zones
                 allImageData.forEach(image => {
-                    // 1. Ajouter l'élément au Carousel
-                    const carouselItem = createCarouselItem(image);
-                    imageCarousel.appendChild(carouselItem);
-
-                    // 2. Ajouter les vignettes initiales dans les zones selon 'uses'
+                    // 1. Ajouter au Carousel
+                    imageCarousel.appendChild(createCarouselItem(image));
+                    // 2. Pré-remplir les zones selon 'uses'
                     if (image.uses.includes('main') && dropzoneMain) {
                          dropzoneMain.querySelector('.thumbnail-container').appendChild(createThumbnail(image, 'main'));
                     }
@@ -246,31 +223,28 @@ const fetchProductData = async () => {
                          dropzoneGallery.querySelector('.thumbnail-container').appendChild(createThumbnail(image, 'gallery'));
                     }
                     if (image.uses.includes('custom') && dropzoneCustom) {
-                         // Vérifier la limite même au chargement initial? Normalement non.
                          dropzoneCustom.querySelector('.thumbnail-container').appendChild(createThumbnail(image, 'custom'));
                     }
                 });
-                 updateStatus("Images affichées. Glissez-les pour assigner les rôles.", 'success');
 
+                // Initialiser SortableJS APRÈS avoir peuplé le DOM
+                initializeSortable();
+
+                updateStatus("Images affichées. Glissez-les pour assigner les rôles.", 'success');
             } else {
-                // Cas où le produit n'a pas d'images
-                imageCarousel.innerHTML = '<p>Aucune image disponible pour ce produit.</p>';
+                imageCarousel.innerHTML = '<p>Aucune image disponible.</p>';
                 updateStatus("Aucune image trouvée.", 'info');
             }
         } else {
-            // Cas où le format reçu n'est pas bon
             console.error("Format de données invalide : 'images' manquant ou n'est pas un tableau.");
-            imageCarousel.innerHTML = '<p>Erreur de format des données d\'images.</p>';
+            imageCarousel.innerHTML = '<p>Erreur format données.</p>';
             updateStatus("Erreur format données images.", 'error');
         }
-
     } catch (error) {
-        // Gestion des erreurs réseau ou JSON
-        console.error("Erreur détaillée fetchProductData:", error);
-        let uiErrorMessage = `Erreur récupération données: ${error.message || error.toString()}`;
-        updateStatus(uiErrorMessage, 'error');
+        console.error("Erreur fetchProductData:", error);
+        updateStatus(`Erreur chargement: ${error.message}`, 'error');
         if (productNameElement) productNameElement.textContent = 'Erreur';
-        if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur lors du chargement.</p>';
+        if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur chargement.</p>';
     }
 };
 
@@ -280,25 +254,20 @@ const handleSaveChanges = async () => {
     updateStatus("Enregistrement des modifications...", 'info');
     if(saveChangesButton) saveChangesButton.disabled = true;
 
-    // --- Collecter l'état actuel depuis le DOM ---
-    // Image Principale (devrait y en avoir 0 ou 1)
-    const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.img-thumbnail') : null;
+    // Collecter l'état depuis les vignettes dans les zones de dépôt
+    const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
     const mainImageId = mainImageThumb ? mainImageThumb.dataset.imageId : null;
 
-    // Images Galerie
-    const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.img-thumbnail') : [];
-    const galleryImageIds = Array.from(galleryImageThumbs).map(thumb => thumb.dataset.imageId);
+    const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
+    const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
 
-    // Images Galerie Custom
-    const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.img-thumbnail') : [];
-    const customGalleryImageIds = Array.from(customGalleryThumbs).map(thumb => thumb.dataset.imageId);
+    const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper') : [];
+    const customGalleryImageIds = Array.from(customGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
 
-    // Log pour vérifier ce qu'on enverrait
-    console.log("Données à envoyer (Simulation):", { productId: currentProductId, mainImageId, galleryImageIds, customGalleryImageIds });
+    console.log("Données à envoyer :", { productId: currentProductId, mainImageId, galleryImageIds, customGalleryImageIds });
 
-    // --- Appeler le Webhook N8N (Partie à implémenter) ---
+    // Appeler le Webhook N8N (Partie à décommenter et finaliser)
     try {
-        /* // Décommenter et adapter pour l'appel réel
         const payload = {
             productId: currentProductId,
             mainImageId: mainImageId,
@@ -315,21 +284,16 @@ const handleSaveChanges = async () => {
         });
 
         if (!response.ok) {
-             // Essayer de lire le message d'erreur de n8n
              const errorData = await response.json().catch(() => ({ message: `Erreur serveur ${response.status}` }));
              throw new Error(errorData.message || `Erreur serveur n8n: ${response.status}`);
         }
 
-        const result = await response.json(); // Lire la réponse succès de n8n
+        const result = await response.json();
         console.log("Réponse de n8n (Mise à jour):", result);
         updateStatus("Modifications enregistrées avec succès !", 'success');
-        */
 
-         // Simulation pour l'instant
-         await new Promise(resolve => setTimeout(resolve, 1000)); // Simule l'attente réseau
-         updateStatus("Modifications enregistrées (Simulation)!", 'success');
-         // Optionnel: recharger les données après succès ? Ou juste laisser l'utilisateur fermer.
-         // setTimeout(fetchProductData, 1500);
+        // Optionnel: recharger ou laisser l'utilisateur fermer
+        // setTimeout(fetchProductData, 1500); // Pourrait être déroutant si l'ordre change visuellement
 
     } catch (error) {
         console.error("Erreur lors de l'enregistrement:", error);
@@ -342,13 +306,12 @@ const handleSaveChanges = async () => {
 
 // --- Initialisation de l'application ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialise le SDK Telegram
     if (window.Telegram && window.Telegram.WebApp) {
         Telegram.WebApp.ready();
         Telegram.WebApp.expand();
     }
 
-    // Récupère les références aux éléments DOM importants
+    // Récupérer les éléments DOM
     productIdElement = document.getElementById('productId');
     productNameElement = document.getElementById('productName');
     saveChangesButton = document.getElementById('saveChangesButton');
@@ -356,42 +319,27 @@ document.addEventListener('DOMContentLoaded', () => {
     dropzoneMain = document.getElementById('dropzone-main');
     dropzoneGallery = document.getElementById('dropzone-gallery');
     dropzoneCustom = document.getElementById('dropzone-custom');
-    imageCarousel = document.getElementById('image-carousel');
+    imageCarouselContainer = document.getElementById('image-carousel-container'); // Container global
+    imageCarousel = document.getElementById('image-carousel'); // Le div interne pour SortableJS
 
-    // Récupère l'ID produit depuis l'URL
+    // Récupérer Product ID
     const urlParams = new URLSearchParams(window.location.search);
     currentProductId = urlParams.get('productId');
-
-    // Vérifie si l'ID est présent
     if (!currentProductId) {
-        updateStatus("Erreur: Product ID manquant dans l'URL.", 'error');
-        if(saveChangesButton) saveChangesButton.disabled = true; // Désactive le bouton si pas d'ID
-        return; // Arrête l'exécution si pas d'ID
+        updateStatus("Erreur: Product ID manquant.", 'error');
+        if(saveChangesButton) saveChangesButton.disabled = true;
+        return;
     }
     if (productIdElement) productIdElement.textContent = currentProductId;
 
-    // --- Attache les écouteurs d'événements ---
-
-    // Pour les zones de dépôt
-     const dropzones = [dropzoneMain, dropzoneGallery, dropzoneCustom];
-     dropzones.forEach(zone => {
-         if (zone) { // Vérifie si l'élément existe avant d'ajouter l'écouteur
-             zone.addEventListener('dragover', handleDragOver);
-             zone.addEventListener('dragleave', handleDragLeave);
-             zone.addEventListener('drop', handleDrop);
-         } else {
-             console.warn(`Dropzone non trouvée pour attacher les écouteurs.`);
-         }
-     });
-
-    // Pour le bouton Enregistrer
+    // Attacher l'écouteur au bouton Enregistrer
     if (saveChangesButton) {
         saveChangesButton.addEventListener('click', handleSaveChanges);
     } else {
         console.error("Bouton 'Enregistrer Modifications' non trouvé!");
     }
 
-    // Lance la récupération initiale des données produit
+    // Récupérer les données initiales (ce qui déclenchera aussi initializeSortable)
     fetchProductData();
 
 }); // Fin de DOMContentLoaded
