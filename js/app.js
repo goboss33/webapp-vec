@@ -136,8 +136,8 @@ const fetchProductData = async () => {
           productNameElement.textContent = data.productName || 'Non trouvé';
         }
 
-        if (data.images_data && Array.isArray(data.images_data)) {
-            allImageData = data.images_data;
+        if (data.images && Array.isArray(data.images)) {
+            allImageData = data.images;
 
             if (allImageData.length > 0) {
                 imageCarousel.innerHTML = '';
