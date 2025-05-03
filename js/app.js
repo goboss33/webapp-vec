@@ -17,18 +17,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Récupérer les éléments du DOM
     const productIdElement = document.getElementById('productId');
     const productNameElement = document.getElementById('productName');
-    const mainImageUrlElement = document.getElementById('mainImageUrl');
-    const imagePreviewContainer = document.getElementById('imagePreview');
+    // const mainImageUrlElement = document.getElementById('mainImageUrl'); // On ne l'utilise plus directement
+    const imagePreviewContainer = document.getElementById('imagePreview'); // Container pour TOUTES les images
     const finishButton = document.getElementById('finishButton');
     const statusElement = document.getElementById('status');
 
-    // Fonction pour mettre à jour le statut
+    // Fonction pour mettre à jour le statut (inchangée)
     const updateStatus = (message, type = 'info') => {
         statusElement.textContent = message;
         statusElement.className = `status-message status-${type}`;
     };
 
-    // Récupérer productId de l'URL
+    // Récupérer productId de l'URL (inchangé)
     const urlParams = new URLSearchParams(window.location.search);
     currentProductId = urlParams.get('productId');
 
@@ -39,74 +39,103 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     productIdElement.textContent = currentProductId;
 
-    // From the MVP app.js
-	const fetchProductData = async () => {
-		updateStatus("Récupération des données produit...", 'info');
-		// Assure-toi que productNameElement, mainImageUrlElement, imagePreviewContainer sont définis
-		const productNameElement = document.getElementById('productName');
-		const mainImageUrlElement = document.getElementById('mainImageUrl');
-		const imagePreviewContainer = document.getElementById('imagePreview');
+    // --- MODIFIED fetchProductData ---
+    const fetchProductData = async () => {
+        updateStatus("Récupération des données produit...", 'info');
+        // Assure-toi que productNameElement et imagePreviewContainer sont définis
+        const productNameElement = document.getElementById('productName');
+        const imagePreviewContainer = document.getElementById('imagePreview');
 
-		try {
-			// Construit l'URL à appeler 2
-			const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${currentProductId}`;
-			console.log(`Workspaceing data from: ${urlToFetch}`); // Log pour débogage
+        // Vider l'affichage précédent
+        if (productNameElement) productNameElement.textContent = 'Chargement...';
+        if (imagePreviewContainer) imagePreviewContainer.innerHTML = ''; // Vider les anciennes images
 
-			// Fait l'appel
-			const response = await fetch(urlToFetch);
-			console.log('Raw response received:', response); // Log pour débogage
+        try {
+            const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${currentProductId}`;
+            console.log(`Workspaceing data from: ${urlToFetch}`);
+            const response = await fetch(urlToFetch);
+            console.log('Raw response received:', response);
 
-			// Vérifie si la réponse HTTP est OK (status 200-299)
-			if (!response.ok) {
-				// Si non-OK, essaie de lire le corps pour plus de détails avant de lever l'erreur
-				const errorBody = await response.text().catch(() => 'Impossible de lire le corps de l\'erreur');
-				console.error('Fetch failed:', response.status, response.statusText, errorBody);
-				throw new Error(`Erreur serveur n8n (Get Data): ${response.status} ${response.statusText}`);
-			}
+            if (!response.ok) {
+                const errorBody = await response.text().catch(() => 'Impossible de lire le corps de l\'erreur');
+                console.error('Fetch failed:', response.status, response.statusText, errorBody);
+                throw new Error(`Erreur serveur n8n (Get Data): ${response.status} ${response.statusText}`);
+            }
 
-			// Parse la réponse JSON (devrait fonctionner maintenant)
-			const data = await response.json();
-			console.log('Parsed JSON data:', data); // Log pour débogage
+            const data = await response.json();
+            console.log('Parsed JSON data:', data);
+             console.log('Type of data.images:', typeof data.images);
+             console.log('Is data.images an Array?', Array.isArray(data.images));
 
-			// Met à jour l'interface utilisateur avec succès
-			updateStatus("Données récupérées.", 'success');
-			productNameElement.textContent = data.productName || 'Non trouvé';
+            updateStatus("Données récupérées. Traitement...", 'info');
 
-			if (data.images && data.images.length > 0 && data.images[0].url) {
-				const firstImageUrl = data.images[0].url;
-				mainImageUrlElement.textContent = firstImageUrl;
-				// Crée ou met à jour l'élément image
-				let imgElement = imagePreviewContainer.querySelector('img');
-				if (!imgElement) {
-					imgElement = document.createElement('img');
-					imagePreviewContainer.appendChild(imgElement);
-				}
-				imgElement.src = firstImageUrl;
-				imgElement.alt = `Aperçu pour ${data.productName || currentProductId}`;
-			} else {
-				mainImageUrlElement.textContent = 'Aucune image trouvée';
-				imagePreviewContainer.innerHTML = ''; // Vider l'aperçu s'il n'y a pas d'image
-			}
+            // Mettre à jour le nom du produit
+            if (productNameElement) {
+              productNameElement.textContent = data.productName || 'Non trouvé';
+            }
 
-		} catch (error) {
-			// Log l'erreur complète dans la console (si accessible)
-			console.error("Erreur détaillée fetchProductData:", error);
+            // Traiter le tableau d'images
+            if (imagePreviewContainer && data.images && Array.isArray(data.images) && data.images.length > 0) {
+                data.images.forEach(image => {
+                    // Créer un conteneur pour chaque image et ses infos
+                    const imageDiv = document.createElement('div');
+                    imageDiv.style.border = '1px solid #eee';
+                    imageDiv.style.marginBottom = '10px';
+                    imageDiv.style.padding = '5px';
+                    imageDiv.style.textAlign = 'center';
 
-			// Affiche un message d'erreur dans l'interface
-			let uiErrorMessage = `Erreur récupération données: ${error.message || error.toString()}`;
-			if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
-				uiErrorMessage += ' (Vérifiez réseau, CORS, URL)';
-			} else if (error.message.toLowerCase().includes('json input')) {
-				 uiErrorMessage += ' (La réponse du serveur n\'est pas du JSON valide)';
-			}
+                    // Créer l'élément image
+                    const imgElement = document.createElement('img');
+                    imgElement.src = image.url;
+                    imgElement.alt = `Image ID ${image.id}`;
+                    imgElement.style.maxWidth = '150px'; // Augmenter un peu la taille max ?
+                    imgElement.style.maxHeight = '150px';
+                    imgElement.style.display = 'block';
+                    imgElement.style.margin = '5px auto';
 
-			updateStatus(uiErrorMessage, 'error');
-			// Assure-toi que les éléments existent avant de modifier leur texte
-			if (productNameElement) productNameElement.textContent = 'Erreur';
-			if (mainImageUrlElement) mainImageUrlElement.textContent = 'Erreur';
-			if (imagePreviewContainer) imagePreviewContainer.innerHTML = ''; // Vider en cas d'erreur
-		}
-	};
+                    // Ajouter l'image au conteneur div
+                    imageDiv.appendChild(imgElement);
+
+                    // Ajouter des infos textuelles (ID, Uses)
+                    const infoP = document.createElement('p');
+                    infoP.style.fontSize = '0.8em';
+                    infoP.style.wordBreak = 'break-all';
+                    infoP.textContent = `ID: ${image.id} | Rôles: ${image.uses.join(', ') || 'aucun'}`; // Affiche les rôles
+                    imageDiv.appendChild(infoP);
+
+                    // Mettre en évidence l'image principale
+                    if (image.uses.includes('main')) {
+                        imageDiv.style.borderColor = 'var(--tg-theme-button-color, green)'; // Utilise une couleur Telegram si possible
+                        imageDiv.style.borderWidth = '2px';
+                        const mainLabel = document.createElement('p');
+                        mainLabel.textContent = '⭐ Principale ⭐';
+                        mainLabel.style.fontWeight = 'bold';
+                        mainLabel.style.color = 'var(--tg-theme-button-color, green)';
+                        imageDiv.insertBefore(mainLabel, infoP); // Ajoute avant les infos ID/Rôles
+                    }
+
+                     // (Plus tard: Ajouter des boutons/checkbox pour modifier les rôles ici)
+
+                    // Ajouter le conteneur de cette image au conteneur principal
+                    imagePreviewContainer.appendChild(imageDiv);
+                });
+                 updateStatus("Données affichées.", 'success');
+
+            } else if (imagePreviewContainer) {
+                // Si pas d'images ou si data.images n'est pas un tableau correct
+                imagePreviewContainer.textContent = 'Aucune image associée trouvée.';
+                 updateStatus("Aucune image à afficher.", 'info');
+            }
+
+        } catch (error) {
+            console.error("Erreur détaillée fetchProductData:", error);
+            let uiErrorMessage = `Erreur récupération données: ${error.message || error.toString()}`;
+             // ... (gestion des erreurs comme avant) ...
+            updateStatus(uiErrorMessage, 'error');
+            if (productNameElement) productNameElement.textContent = 'Erreur';
+            if (imagePreviewContainer) imagePreviewContainer.innerHTML = 'Erreur lors du chargement.';
+        }
+    };
 
     // Fonction pour simuler la mise à jour (via n8n)
     const updateProduct = async () => {
