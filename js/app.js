@@ -136,14 +136,19 @@ const fetchProductData = async () => {
           productNameElement.textContent = data.productName || 'Non trouvé';
         }
 
-        if (data.images && Array.isArray(data.images)) {
-            allImageData = data.images;
+        // Check if data.images exists and is an array (Corrected Key)
+        if (data.images && Array.isArray(data.images)) { // <= CORRIGÉ ICI
+            allImageData = data.images; // <= CORRIGÉ ICI
 
             if (allImageData.length > 0) {
-                imageCarousel.innerHTML = '';
+                imageCarousel.innerHTML = ''; // Clear loading message
+
+                // Populate Carousel & Pre-fill Drop Zones
                 allImageData.forEach(image => {
+                    // ... le reste de la boucle est OK ...
                     const carouselItem = createCarouselItem(image);
                     imageCarousel.appendChild(carouselItem);
+                    // ... pré-remplissage des dropzones ...
                     if (image.uses.includes('main') && dropzoneMain) {
                          dropzoneMain.querySelector('.thumbnail-container').appendChild(createThumbnail(image));
                     }
@@ -155,12 +160,14 @@ const fetchProductData = async () => {
                     }
                 });
                  updateStatus("Images affichées.", 'success');
+
             } else {
                 imageCarousel.innerHTML = '<p>Aucune image disponible pour ce produit.</p>';
                  updateStatus("Aucune image trouvée.", 'info');
             }
         } else {
-            console.error("Format de données invalide : 'images_data' manquant ou n'est pas un tableau.");
+            // Ce bloc ne devrait plus être atteint maintenant
+            console.error("Format de données invalide : 'images' manquant ou n'est pas un tableau."); // Log mis à jour
             imageCarousel.innerHTML = '<p>Erreur de format des données d\'images.</p>';
             updateStatus("Erreur format données images.", 'error');
         }
