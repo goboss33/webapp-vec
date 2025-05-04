@@ -1,204 +1,254 @@
-body { font-family: sans-serif; padding: 15px; color: var(--tg-theme-text-color); background-color: var(--tg-theme-bg-color); }
-h1, h2 { text-align: center; }
-hr { border: none; border-top: 1px solid var(--tg-theme-hint-color, #ccc); margin: 20px 0; }
-button { padding: 10px 15px; font-size: 1em; cursor: pointer; background-color: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); border: none; border-radius: 5px; margin-top: 10px; }
-button:disabled { opacity: 0.7; }
-code { background-color: rgba(128,128,128,0.1); padding: 2px 4px; border-radius: 3px; font-size: 0.9em; word-break: break-all; }
-#imagePreview img { max-width: 100px; max-height: 100px; display: block; margin: 10px auto; border: 1px solid #eee;}
-.status-message { margin-top: 15px; font-style: italic; min-height: 1.2em; color: var(--tg-theme-hint-color, #6c757d); }
-.status-success { color: green; }
-.status-error { color: red; }
+/* Styles Généraux */
+body {
+    font-family: sans-serif;
+    padding: 15px;
+    color: var(--tg-theme-text-color);
+    background-color: var(--tg-theme-bg-color);
+    margin: 0; /* Assurer pas de marge par défaut */
+}
 
+/* En-tête */
+h1 {
+    text-align: center;
+    margin-top: 0; /* Moins d'espace en haut */
+    margin-bottom: 5px;
+}
+#productId { /* Paragraphe contenant l'ID */
+    margin-top: 0;
+    margin-bottom: 15px; /* Espace avant la suite */
+    font-size: 0.9em;
+    color: var(--tg-theme-hint-color, #6c757d);
+}
+hr {
+    border: none;
+    border-top: 1px solid var(--tg-theme-hint-color, #ccc);
+    margin: 15px 0; /* Espace cohérent */
+}
+
+/* Section Infos Produit */
+h2 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+#productName { /* Paragraphe contenant le nom */
+    margin-top: 0;
+    margin-bottom: 15px; /* Espace avant la suite */
+    font-weight: normal; /* Ou garder strong si déjà présent */
+}
+
+/* Section Assignation des Rôles */
+h3 { /* Titres de section */
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+/* Conteneur des Zones de Dépôt */
 .dropzones-container {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 15px;
-    background-color: rgba(128,128,128,0.05); /* Léger fond pour voir la zone */
+    margin-bottom: 20px; /* Plus d'espace avant le carousel */
+    background-color: rgba(128,128,128,0.05);
     padding: 5px;
     border-radius: 5px;
+    align-items: flex-start; /* Aligner les zones en haut */
+    gap: 10px; /* Espace entre les zones */
 }
+
+/* Style Commun des Zones de Dépôt */
 .dropzone {
     border: 2px dashed var(--tg-theme-hint-color, #ccc);
-    padding: 10px;
     text-align: center;
-    min-height: 100px; /* Hauteur minimale pour pouvoir déposer */
-    flex: 1; /* Pour qu'elles prennent la même largeur */
-    margin: 0 5px; /* Petit espace entre les zones */
+    flex: 1; /* Prend largeur égale */
     border-radius: 5px;
-    display: flex; /* Pour organiser titre et miniatures */
-    flex-direction: column; /* Titre en haut, miniatures en dessous */
-    align-items: center; /* Centrer horizontalement */
+    display: flex;
+    flex-direction: column;
+    background-color: var(--tg-theme-secondary-bg-color, #f8f8f8); /* Fond léger */
+    /* Hauteur Max pour éviter étirement */
+    max-height: 250px; /* Hauteur max pour Galerie & Custom - Ajustable */
+    min-height: 110px; /* Hauteur minimale (pour titre + 1 miniature) */
 }
+
+/* Hauteur Spécifique Zone Principale */
+#dropzone-main {
+    max-height: 110px; /* Juste assez pour titre + 1 miniature */
+}
+
+/* Titre dans les Zones */
 .dropzone h3 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 0.9em;
+    margin: 0;
+    padding: 8px; /* Moins de padding */
+    font-size: 0.85em; /* Titre plus petit */
     color: var(--tg-theme-hint-color, #6c757d);
-    width: 100%; /* Pour que le titre prenne toute la largeur */
+    flex-shrink: 0;
+    border-bottom: 1px solid #eee;
+    background-color: rgba(128,128,128,0.03); /* Très léger fond pour le titre */
 }
-.dropzone .thumbnail-container { /* Conteneur pour les miniatures dans les zones */
-     display: flex;
-     flex-wrap: wrap; /* Pour passer à la ligne si besoin */
-     justify-content: center;
-     gap: 5px; /* Espace entre les miniatures */
-     width: 100%;
-}
- .dropzone .img-thumbnail { /* Style pour les miniatures DANS les dropzones */
-     max-width: 50px;
-     max-height: 50px;
-     border: 1px solid #ddd;
-     object-fit: cover; /* Pour que l'image couvre bien la miniature */
-     cursor: pointer; /* Indiquer qu'on peut cliquer */
- }
-#image-carousel-container {
-    border: 1px solid var(--tg-theme-hint-color, #ccc);
-    min-height: 180px; /* Un peu plus haut pour le carousel */
-    padding: 10px;
-    margin-bottom: 15px;
-    background-color: rgba(128,128,128,0.05);
-    border-radius: 5px;
-    text-align: center;
-    overflow-x: auto; /* Permet le défilement horizontal */
-}
-#image-carousel {
-    display: flex; /* Afficher les images en ligne */
-    gap: 10px; /* Espace entre les images du carousel */
-    padding-bottom: 10px; /* Espace pour la barre de scroll */
-    min-height: 150px; /* Hauteur min pour le contenu */
-    align-items: center; /* Centrer verticalement */
-}
- #image-carousel .carousel-image-container { /* Conteneur pour chaque image DANS le carousel */
-     border: 1px solid #eee;
-     padding: 5px;
-     background-color: #fff; /* Fond blanc pour les images */
-     border-radius: 3px;
-     text-align: center;
-     min-width: 120px; /* Largeur minimale pour voir l'image + infos */
- }
- #image-carousel img {
-     max-width: 100px; /* Taille des images dans le carousel */
-     max-height: 100px;
-     display: block;
-     margin: 0 auto 5px auto;
-     cursor: grab; /* Indiquer qu'on peut glisser */
- }
- #image-carousel p {
-     font-size: 0.8em;
-     margin: 0;
-     color: var(--tg-theme-hint-color, #6c757d);
-     word-break: break-all;
- }
-#saveChangesButton {
-    display: block; /* Prend toute la largeur */
+
+/* Conteneur des Miniatures dans les Zones */
+.dropzone .thumbnail-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* Centre les miniatures */
+    gap: 5px; /* Espace entre miniatures */
     width: 100%;
-    margin-top: 15px; /* Espace au-dessus */
-}
-/* Styles pour le drag-and-drop (optionnel, pour retour visuel) */
-.dropzone.drag-over {
-    border-style: solid;
-    border-color: var(--tg-theme-button-color, green);
-    background-color: rgba(0, 255, 0, 0.1);
-}
-.dragging { /* Style pour l'élément en cours de drag */
-     opacity: 0.5;
-}
-/* --- Styles pour l'aperçu du Drag (Fantôme) --- */
-
-/* Cible l'élément qui est activement déplacé et suit le curseur */
-.sortable-drag {
-    opacity: 0.7 !important; /* Un peu transparent */
-    background-color: #eee !important; /* Fond léger */
-    border: 1px dashed #555 !important;
-    border-radius: 4px !important;
-    padding: 3px !important;
-    /* Réduire la taille pour ressembler à une miniature */
-    width: 60px !important;
-    height: 60px !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important; /* Petite ombre */
-    /* S'assurer que l'image interne s'adapte */
-    display: flex !important;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden; /* Cacher le texte si présent */
+    padding: 10px;
+    box-sizing: border-box;
+    overflow-y: auto; /* SCROLL si dépasse max-height */
+    flex-grow: 1; /* Prend l'espace vertical restant */
+    min-height: 60px; /* Hauteur mini pour voir où déposer */
 }
 
-/* Cible l'image A L'INTERIEUR de l'élément déplacé */
-.sortable-drag img {
-    max-width: 50px !important;
-    max-height: 50px !important;
-    object-fit: contain !important; /* Ajuste l'image dans le cadre */
-}
-
-/* Cache le texte (ID) A L'INTERIEUR de l'élément déplacé */
-.sortable-drag p {
-    display: none !important;
-}
-
-/* Cible l'emplacement où l'élément sera déposé (le 'fantôme') */
-/* Optionnel : peut être le même style que .sortable-drag ou différent */
-.sortable-ghost {
-     opacity: 0.4 !important;
-     /* background-color: lightblue !important; */ /* Pour le différencier si besoin */
-}
-
-
-/* --- NOUVEAU/MODIFIÉ : Style pour le FANTÔME DANS LES ZONES DE DEPOT --- */
-/* Cible le placeholder qui apparaît dans la zone cible pendant le survol */
-.dropzone .thumbnail-container .sortable-ghost {
-     opacity: 0.5 !important;
-     background-color: #d0e0ff !important; /* Bleu clair pour le placeholder */
-     border: 1px dashed blue !important;
-     border-radius: 3px !important;
-
-     /* Force la taille de la miniature attendue */
-     /* Doit correspondre à peu près à la taille de .thumbnail-wrapper si tu l'utilises, ou .img-thumbnail sinon */
-     width: 55px !important;
-     height: 55px !important;
-
-     /* Cache le contenu du clone (grande image/texte) */
-     /* On ne veut voir que le placeholder bleu */
-     box-shadow: none !important;
-     padding: 0 !important; /* Enlève le padding du clone */
-}
-
-/* Cache explicitement l'image et le paragraphe à l'intérieur de ce fantôme spécifique */
-.dropzone .thumbnail-container .sortable-ghost img,
-.dropzone .thumbnail-container .sortable-ghost p {
-    display: none !important;
-}
-
-
-/* Si tu utilises le wrapper */
+/* Wrapper pour chaque Miniature + Bouton */
 .dropzone .thumbnail-wrapper {
     position: relative;
-    width: 55px;
+    width: 55px; /* Taille fixe pour le conteneur de la miniature */
     height: 55px;
     display: flex;
     justify-content: center;
     align-items: center;
-    /* background-color: #f9f9f9; /* Optionnel: fond pour le wrapper */
-    /* border: 1px solid #eee; /* Optionnel: bordure pour le wrapper */
-    /* margin: 2px; /* Optionnel: espacement */
+    background-color: #fff;
+    border: 1px solid #eee;
+    border-radius: 3px;
 }
+
+/* Image Miniature dans les Zones */
+.dropzone .img-thumbnail {
+    display: block; /* Assure bon affichage */
+    max-width: 50px;
+    max-height: 50px;
+    object-fit: cover; /* Ou 'contain' */
+}
+
+/* Bouton Supprimer sur Miniature */
 .dropzone .remove-thumbnail-btn {
     position: absolute;
-    top: -5px;
-    right: -5px;
+    top: -7px; /* Ajusté pour être un peu décalé */
+    right: -7px; /* Ajusté */
     width: 18px;
     height: 18px;
-    background-color: rgba(200, 0, 0, 0.8); /* Rouge un peu moins vif */
+    background-color: rgba(200, 0, 0, 0.8);
     color: white;
-    border: none;
+    border: 1px solid rgba(0,0,0,0.2); /* Légère bordure */
     border-radius: 50%;
     cursor: pointer;
     font-size: 12px;
     font-weight: bold;
-    line-height: 16px; /* Ajuster pour centrer la croix */
+    line-height: 16px;
     padding: 0;
     z-index: 10;
-    box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
-/* Ajoute un état au survol pour le bouton */
 .dropzone .remove-thumbnail-btn:hover {
     background-color: rgba(255, 0, 0, 0.9);
+}
+
+/* Carousel d'Images Disponibles */
+#image-carousel-container {
+    border: 1px solid var(--tg-theme-hint-color, #ccc);
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: rgba(128,128,128,0.05);
+    border-radius: 5px;
+    overflow-x: auto; /* Scroll Horizontal */
+    min-height: 150px; /* Hauteur minimale */
+}
+#image-carousel {
+    display: flex;
+    gap: 10px;
+    padding-bottom: 10px; /* Pour la barre de scroll */
+    min-width: min-content; /* Pour que le conteneur s'adapte au contenu */
+}
+#image-carousel .carousel-image-container {
+    border: 1px solid #eee;
+    padding: 5px;
+    background-color: #fff;
+    border-radius: 3px;
+    text-align: center;
+    min-width: 110px; /* Largeur image + padding + ID */
+    flex-shrink: 0; /* Empêche de rétrécir */
+}
+#image-carousel img {
+    max-width: 100px;
+    max-height: 100px;
+    display: block;
+    margin: 0 auto 5px auto;
+    cursor: grab;
+}
+#image-carousel p {
+    font-size: 0.8em;
+    margin: 0;
+    color: var(--tg-theme-hint-color, #6c757d);
+    word-break: break-all;
+}
+
+/* Bouton Enregistrer */
+#saveChangesButton {
+    display: block;
+    width: 100%;
+    padding: 12px 15px; /* Plus grand */
+    font-size: 1em;
+    cursor: pointer;
+    background-color: var(--tg-theme-button-color); /* Utilise couleur TG */
+    color: var(--tg-theme-button-text-color); /* Utilise couleur TG */
+    border: none;
+    border-radius: 5px;
+    margin-top: 20px; /* Espace avant bouton */
+}
+#saveChangesButton:disabled {
+    opacity: 0.7;
+}
+
+/* Message de Statut */
+#status {
+    margin-top: 15px;
+    font-style: italic;
+    min-height: 1.2em;
+    color: var(--tg-theme-hint-color, #6c757d);
+    text-align: center;
+}
+.status-success { color: green; }
+.status-error { color: red; }
+.status-warn { color: orange; } /* Ajout pour avertissements */
+
+
+/* Styles Drag & Drop (Fantômes) */
+.sortable-drag { /* Élément qui suit la souris */
+    opacity: 0.75 !important;
+    background-color: #fff !important;
+    border: 1px dashed #555 !important;
+    border-radius: 4px !important;
+    padding: 3px !important;
+    width: 60px !important;
+    height: 60px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.sortable-drag img {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+}
+.sortable-drag p { display: none !important; }
+
+.dropzone .thumbnail-container .sortable-ghost { /* Placeholder dans la zone cible */
+     opacity: 0.4 !important;
+     background-color: #d0e0ff !important;
+     border: 2px dashed blue !important;
+     border-radius: 3px !important;
+     width: 55px !important; /* Taille du wrapper */
+     height: 55px !important; /* Taille du wrapper */
+     overflow: hidden !important;
+     box-shadow: none !important;
+     padding: 0 !important;
+}
+.dropzone .thumbnail-container .sortable-ghost img,
+.dropzone .thumbnail-container .sortable-ghost p {
+    display: none !important; /* Masque contenu interne du placeholder */
 }
