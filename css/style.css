@@ -252,3 +252,70 @@ h3 { /* Titres de section */
 .dropzone .thumbnail-container .sortable-ghost p {
     display: none !important; /* Masque contenu interne du placeholder */
 }
+
+/* Conteneur Global pour l'assignation */
+.role-assignment-container {
+    margin-bottom: 20px; /* Espace avant le carousel */
+}
+
+/* Conteneur pour la ligne du haut (Principale + Custom) */
+.top-row-zones {
+    display: flex; /* Met les éléments côte à côte */
+    gap: 10px; /* Espace entre Principale et Custom */
+    margin-bottom: 10px; /* Espace avant la zone Galerie */
+}
+
+/* Style de base pour TOUTES les zones */
+.dropzone {
+    border: 2px dashed var(--tg-theme-hint-color, #ccc);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--tg-theme-secondary-bg-color, #f8f8f8);
+}
+
+/* Styles spécifiques pour les zones de la ligne du haut */
+#dropzone-main {
+    flex: 0 0 100px; /* Base de largeur fixe (ex: 100px), ne grandit/rétrécit pas */
+    /* flex: 1; /* Ou utiliser flex pour proportion */
+    max-height: 110px; /* Hauteur fixe basse */
+    min-height: 110px;
+}
+#dropzone-custom {
+    flex: 1; /* Prend le reste de la largeur disponible */
+    max-height: 110px; /* Même hauteur que Principale */
+    min-height: 110px;
+}
+
+/* Style spécifique pour la zone Galerie (pleine largeur) */
+#dropzone-gallery.full-width-zone {
+    width: 100%; /* Prend toute la largeur */
+    max-height: 250px; /* Hauteur max plus grande */
+    min-height: 110px; /* Hauteur min */
+}
+
+/* Titre dans les Zones */
+.dropzone h3 {
+    margin: 0;
+    padding: 8px;
+    font-size: 0.85em;
+    color: var(--tg-theme-hint-color, #6c757d);
+    flex-shrink: 0;
+    border-bottom: 1px solid #eee;
+    background-color: rgba(128,128,128,0.03);
+    text-align: center;
+}
+
+/* Conteneur des Miniatures dans les Zones (avec scroll) */
+.dropzone .thumbnail-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow-y: auto; /* Scroll vertical si besoin */
+    flex-grow: 1; /* Prend l'espace vertical restant */
+    min-height: 60px;
+}
