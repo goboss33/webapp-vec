@@ -142,9 +142,6 @@ code { background-color: rgba(128,128,128,0.1); padding: 2px 4px; border-radius:
 }
 
 
-
--------
-
 /* --- NOUVEAU/MODIFIÉ : Style pour le FANTÔME DANS LES ZONES DE DEPOT --- */
 /* Cible le placeholder qui apparaît dans la zone cible pendant le survol */
 .dropzone .thumbnail-container .sortable-ghost {
