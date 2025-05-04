@@ -100,6 +100,44 @@
         .dragging { /* Style pour l'élément en cours de drag */
              opacity: 0.5;
         }
+        /* --- Styles pour l'aperçu du Drag (Fantôme) --- */
+
+        /* Cible l'élément qui est activement déplacé et suit le curseur */
+        .sortable-drag {
+            opacity: 0.7 !important; /* Un peu transparent */
+            background-color: #eee !important; /* Fond léger */
+            border: 1px dashed #555 !important;
+            border-radius: 4px !important;
+            padding: 3px !important;
+            /* Réduire la taille pour ressembler à une miniature */
+            width: 60px !important;
+            height: 60px !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important; /* Petite ombre */
+            /* S'assurer que l'image interne s'adapte */
+            display: flex !important;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Cacher le texte si présent */
+        }
+        
+        /* Cible l'image A L'INTERIEUR de l'élément déplacé */
+        .sortable-drag img {
+            max-width: 100% !important;
+            max-height: 100% !important;
+            object-fit: contain !important; /* Ajuste l'image dans le cadre */
+        }
+        
+        /* Cache le texte (ID) A L'INTERIEUR de l'élément déplacé */
+        .sortable-drag p {
+            display: none !important;
+        }
+        
+        /* Cible l'emplacement où l'élément sera déposé (le 'fantôme') */
+        /* Optionnel : peut être le même style que .sortable-drag ou différent */
+        .sortable-ghost {
+             opacity: 0.4 !important;
+             /* background-color: lightblue !important; */ /* Pour le différencier si besoin */
+        }
     </style>
 </head>
 <body>
