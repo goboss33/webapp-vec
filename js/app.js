@@ -252,54 +252,81 @@ const fetchProductData = async () => {
 // --- Enregistrement des Modifications ---
 const handleSaveChanges = async () => {
     updateStatus("Enregistrement des modifications...", 'info');
-    if(saveChangesButton) saveChangesButton.disabled = true;
+    if (saveChangesButton) saveChangesButton.disabled = true; // Désactive le bouton pendant l'enregistrement
 
-    // Collecter l'état depuis les vignettes dans les zones de dépôt
+    // --- Collecter l'état actuel depuis les vignettes dans le DOM ---
     const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
+    // Récupère l'ID de l'image principale, ou null si aucune n'est dans la zone
     const mainImageId = mainImageThumb ? mainImageThumb.dataset.imageId : null;
 
+    // Récupère les IDs des images dans la zone Galerie
     const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
     const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
 
+    // Récupère les IDs des images dans la zone Custom Galerie
     const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper') : [];
     const customGalleryImageIds = Array.from(customGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
 
-    console.log("Données à envoyer :", { productId: currentProductId, mainImageId, galleryImageIds, customGalleryImageIds });
+    // Prépare le corps de la requête (payload) pour n8n
+    const payload = {
+        productId: currentProductId, // ID du produit actuel
+        mainImageId: mainImageId, // ID de l'image principale (ou null)
+        galleryImageIds: galleryImageIds, // Tableau des IDs galerie standard
+        customGalleryImageIds: customGalleryImageIds // Tableau des IDs galerie custom
+    };
 
-    // Appeler le Webhook N8N (Partie à décommenter et finaliser)
+    console.log("Données envoyées à n8n:", payload); // Log pour déboguer ce qui est envoyé
+
+    // --- Appeler le Webhook N8N ---
     try {
-        const payload = {
-            productId: currentProductId,
-            mainImageId: mainImageId,
-            galleryImageIds: galleryImageIds, // Envoyer le tableau
-            customGalleryImageIds: customGalleryImageIds // Envoyer le tableau
-        };
-
+        // Envoie les données au webhook de mise à jour
         const response = await fetch(N8N_UPDATE_DATA_WEBHOOK_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
+                // Ajouter d'autres headers si ton webhook n8n le nécessite
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload) // Convertit l'objet JS en chaîne JSON
         });
 
+        // Vérifie si la requête vers n8n a réussi (status HTTP 2xx)
         if (!response.ok) {
-             const errorData = await response.json().catch(() => ({ message: `Erreur serveur ${response.status}` }));
-             throw new Error(errorData.message || `Erreur serveur n8n: ${response.status}`);
+            // Si erreur HTTP, essaie de lire le message d'erreur renvoyé par n8n
+            let errorMsg = `Erreur serveur n8n: ${response.status}`;
+            try {
+                // n8n renvoie souvent les erreurs en JSON avec une clé 'message'
+                const errorData = await response.json();
+                errorMsg = errorData.message || JSON.stringify(errorData);
+            } catch (e) {
+                console.warn("Impossible de parser la réponse d'erreur JSON de n8n.");
+                // Si le corps n'est pas du JSON, utilise le statut texte
+                errorMsg = `Erreur serveur n8n: ${response.status} ${response.statusText}`;
+            }
+            // Lance une erreur JS pour être attrapée par le 'catch'
+            throw new Error(errorMsg);
         }
 
+        // Si la requête a réussi, lire la réponse succès de n8n
         const result = await response.json();
         console.log("Réponse de n8n (Mise à jour):", result);
-        updateStatus("Modifications enregistrées avec succès !", 'success');
+        // Affiche le message de succès (venant de n8n si possible, sinon un message par défaut)
+        updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
 
-        // Optionnel: recharger ou laisser l'utilisateur fermer
-        // setTimeout(fetchProductData, 1500); // Pourrait être déroutant si l'ordre change visuellement
+        // Que faire après succès ?
+        // Option 1: Recharger les données pour être sûr à 100% de l'état serveur
+        // setTimeout(fetchProductData, 1500);
+
+        // Option 2: Ne rien faire de plus, l'interface reflète déjà les choix.
+        // L'utilisateur peut fermer la Web App. C'est peut-être moins déroutant.
+        // On choisit Option 2 pour l'instant.
 
     } catch (error) {
-        console.error("Erreur lors de l'enregistrement:", error);
+        // Gère les erreurs (réseau ou erreur renvoyée par n8n)
+        console.error("Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
     } finally {
-        if(saveChangesButton) saveChangesButton.disabled = false;
+        // Réactive le bouton dans tous les cas (succès ou échec)
+        if (saveChangesButton) saveChangesButton.disabled = false;
     }
 };
 
