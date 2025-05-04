@@ -4,25 +4,25 @@ body {
     padding: 15px;
     color: var(--tg-theme-text-color);
     background-color: var(--tg-theme-bg-color);
-    margin: 0; /* Assurer pas de marge par défaut */
+    margin: 0;
 }
 
 /* En-tête */
 h1 {
     text-align: center;
-    margin-top: 0; /* Moins d'espace en haut */
+    margin-top: 0;
     margin-bottom: 5px;
 }
-#productId { /* Paragraphe contenant l'ID */
+#productId {
     margin-top: 0;
-    margin-bottom: 15px; /* Espace avant la suite */
+    margin-bottom: 15px;
     font-size: 0.9em;
     color: var(--tg-theme-hint-color, #6c757d);
 }
 hr {
     border: none;
     border-top: 1px solid var(--tg-theme-hint-color, #ccc);
-    margin: 15px 0; /* Espace cohérent */
+    margin: 15px 0;
 }
 
 /* Section Infos Produit */
@@ -31,81 +31,98 @@ h2 {
     margin-bottom: 5px;
     font-size: 1.1em;
 }
-#productName { /* Paragraphe contenant le nom */
+#productName {
     margin-top: 0;
-    margin-bottom: 15px; /* Espace avant la suite */
-    font-weight: normal; /* Ou garder strong si déjà présent */
+    margin-bottom: 15px;
+    font-weight: normal;
 }
 
 /* Section Assignation des Rôles */
-h3 { /* Titres de section */
-    margin-top: 0;
+h3 { /* Titres de section (Assigner les Rôles, Images Disponibles) */
+    margin-top: 15px; /* Ajout espace au dessus */
     margin-bottom: 10px;
     font-size: 1em;
     border-bottom: 1px solid #eee;
     padding-bottom: 5px;
 }
-
-/* Conteneur des Zones de Dépôt */
-.dropzones-container {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20px; /* Plus d'espace avant le carousel */
-    background-color: rgba(128,128,128,0.05);
-    padding: 5px;
-    border-radius: 5px;
-    align-items: flex-start; /* Aligner les zones en haut */
-    gap: 10px; /* Espace entre les zones */
+h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
+     margin-top: 0;
 }
 
-/* Style Commun des Zones de Dépôt */
+
+/* --- Styles pour la Nouvelle Disposition --- */
+
+/* Conteneur Global pour l'assignation */
+.role-assignment-container {
+    margin-bottom: 20px;
+}
+
+/* Conteneur pour la ligne du haut (Principale + Custom) */
+.top-row-zones {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* Style de base commun à TOUTES les zones de dépôt */
 .dropzone {
     border: 2px dashed var(--tg-theme-hint-color, #ccc);
-    text-align: center;
-    flex: 1; /* Prend largeur égale */
     border-radius: 5px;
     display: flex;
     flex-direction: column;
-    background-color: var(--tg-theme-secondary-bg-color, #f8f8f8); /* Fond léger */
-    /* Hauteur Max pour éviter étirement */
-    max-height: 250px; /* Hauteur max pour Galerie & Custom - Ajustable */
-    min-height: 110px; /* Hauteur minimale (pour titre + 1 miniature) */
+    background-color: var(--tg-theme-secondary-bg-color, #f8f8f8);
+    /* Les hauteurs et flex sont définis spécifiquement ci-dessous */
 }
 
-/* Hauteur Spécifique Zone Principale */
+/* Styles spécifiques pour les zones de la ligne du haut */
 #dropzone-main {
-    max-height: 110px; /* Juste assez pour titre + 1 miniature */
+    flex: 0 0 100px; /* Largeur fixe */
+    max-height: 110px;
+    min-height: 110px; /* Pour assurer la même hauteur que Custom au départ */
+}
+#dropzone-custom {
+    flex: 1; /* Prend le reste de la largeur */
+    max-height: 110px; /* Même hauteur max que Principale */
+    min-height: 110px;
+}
+
+/* Style spécifique pour la zone Galerie (pleine largeur) */
+#dropzone-gallery.full-width-zone {
+    width: 100%; /* Prend toute la largeur */
+    max-height: 250px; /* Plus de hauteur */
+    min-height: 110px; /* Hauteur min */
 }
 
 /* Titre dans les Zones */
 .dropzone h3 {
     margin: 0;
-    padding: 8px; /* Moins de padding */
-    font-size: 0.85em; /* Titre plus petit */
+    padding: 8px;
+    font-size: 0.85em;
     color: var(--tg-theme-hint-color, #6c757d);
     flex-shrink: 0;
     border-bottom: 1px solid #eee;
-    background-color: rgba(128,128,128,0.03); /* Très léger fond pour le titre */
+    background-color: rgba(128,128,128,0.03);
+    text-align: center;
 }
 
-/* Conteneur des Miniatures dans les Zones */
+/* Conteneur des Miniatures dans les Zones (avec scroll) */
 .dropzone .thumbnail-container {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center; /* Centre les miniatures */
-    gap: 5px; /* Espace entre miniatures */
+    justify-content: center;
+    gap: 5px;
     width: 100%;
     padding: 10px;
     box-sizing: border-box;
-    overflow-y: auto; /* SCROLL si dépasse max-height */
-    flex-grow: 1; /* Prend l'espace vertical restant */
-    min-height: 60px; /* Hauteur mini pour voir où déposer */
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 60px; /* Espace minimum même vide */
 }
 
 /* Wrapper pour chaque Miniature + Bouton */
 .dropzone .thumbnail-wrapper {
     position: relative;
-    width: 55px; /* Taille fixe pour le conteneur de la miniature */
+    width: 55px;
     height: 55px;
     display: flex;
     justify-content: center;
@@ -117,22 +134,22 @@ h3 { /* Titres de section */
 
 /* Image Miniature dans les Zones */
 .dropzone .img-thumbnail {
-    display: block; /* Assure bon affichage */
+    display: block;
     max-width: 50px;
     max-height: 50px;
-    object-fit: cover; /* Ou 'contain' */
+    object-fit: cover;
 }
 
 /* Bouton Supprimer sur Miniature */
 .dropzone .remove-thumbnail-btn {
     position: absolute;
-    top: -7px; /* Ajusté pour être un peu décalé */
-    right: -7px; /* Ajusté */
+    top: -7px;
+    right: -7px;
     width: 18px;
     height: 18px;
     background-color: rgba(200, 0, 0, 0.8);
     color: white;
-    border: 1px solid rgba(0,0,0,0.2); /* Légère bordure */
+    border: 1px solid rgba(0,0,0,0.2);
     border-radius: 50%;
     cursor: pointer;
     font-size: 12px;
@@ -153,14 +170,14 @@ h3 { /* Titres de section */
     margin-bottom: 15px;
     background-color: rgba(128,128,128,0.05);
     border-radius: 5px;
-    overflow-x: auto; /* Scroll Horizontal */
-    min-height: 150px; /* Hauteur minimale */
+    overflow-x: auto;
+    min-height: 150px;
 }
 #image-carousel {
     display: flex;
     gap: 10px;
-    padding-bottom: 10px; /* Pour la barre de scroll */
-    min-width: min-content; /* Pour que le conteneur s'adapte au contenu */
+    padding-bottom: 10px;
+    min-width: min-content;
 }
 #image-carousel .carousel-image-container {
     border: 1px solid #eee;
@@ -168,8 +185,8 @@ h3 { /* Titres de section */
     background-color: #fff;
     border-radius: 3px;
     text-align: center;
-    min-width: 110px; /* Largeur image + padding + ID */
-    flex-shrink: 0; /* Empêche de rétrécir */
+    min-width: 110px;
+    flex-shrink: 0;
 }
 #image-carousel img {
     max-width: 100px;
@@ -189,14 +206,14 @@ h3 { /* Titres de section */
 #saveChangesButton {
     display: block;
     width: 100%;
-    padding: 12px 15px; /* Plus grand */
+    padding: 12px 15px;
     font-size: 1em;
     cursor: pointer;
-    background-color: var(--tg-theme-button-color); /* Utilise couleur TG */
-    color: var(--tg-theme-button-text-color); /* Utilise couleur TG */
+    background-color: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
     border: none;
     border-radius: 5px;
-    margin-top: 20px; /* Espace avant bouton */
+    margin-top: 20px;
 }
 #saveChangesButton:disabled {
     opacity: 0.7;
@@ -212,7 +229,7 @@ h3 { /* Titres de section */
 }
 .status-success { color: green; }
 .status-error { color: red; }
-.status-warn { color: orange; } /* Ajout pour avertissements */
+.status-warn { color: orange; }
 
 
 /* Styles Drag & Drop (Fantômes) */
@@ -251,71 +268,4 @@ h3 { /* Titres de section */
 .dropzone .thumbnail-container .sortable-ghost img,
 .dropzone .thumbnail-container .sortable-ghost p {
     display: none !important; /* Masque contenu interne du placeholder */
-}
-
-/* Conteneur Global pour l'assignation */
-.role-assignment-container {
-    margin-bottom: 20px; /* Espace avant le carousel */
-}
-
-/* Conteneur pour la ligne du haut (Principale + Custom) */
-.top-row-zones {
-    display: flex; /* Met les éléments côte à côte */
-    gap: 10px; /* Espace entre Principale et Custom */
-    margin-bottom: 10px; /* Espace avant la zone Galerie */
-}
-
-/* Style de base pour TOUTES les zones */
-.dropzone {
-    border: 2px dashed var(--tg-theme-hint-color, #ccc);
-    border-radius: 5px;
-    display: flex;
-    flex-direction: column;
-    background-color: var(--tg-theme-secondary-bg-color, #f8f8f8);
-}
-
-/* Styles spécifiques pour les zones de la ligne du haut */
-#dropzone-main {
-    flex: 0 0 100px; /* Base de largeur fixe (ex: 100px), ne grandit/rétrécit pas */
-    /* flex: 1; /* Ou utiliser flex pour proportion */
-    max-height: 110px; /* Hauteur fixe basse */
-    min-height: 110px;
-}
-#dropzone-custom {
-    flex: 1; /* Prend le reste de la largeur disponible */
-    max-height: 110px; /* Même hauteur que Principale */
-    min-height: 110px;
-}
-
-/* Style spécifique pour la zone Galerie (pleine largeur) */
-#dropzone-gallery.full-width-zone {
-    width: 100%; /* Prend toute la largeur */
-    max-height: 250px; /* Hauteur max plus grande */
-    min-height: 110px; /* Hauteur min */
-}
-
-/* Titre dans les Zones */
-.dropzone h3 {
-    margin: 0;
-    padding: 8px;
-    font-size: 0.85em;
-    color: var(--tg-theme-hint-color, #6c757d);
-    flex-shrink: 0;
-    border-bottom: 1px solid #eee;
-    background-color: rgba(128,128,128,0.03);
-    text-align: center;
-}
-
-/* Conteneur des Miniatures dans les Zones (avec scroll) */
-.dropzone .thumbnail-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 5px;
-    width: 100%;
-    padding: 10px;
-    box-sizing: border-box;
-    overflow-y: auto; /* Scroll vertical si besoin */
-    flex-grow: 1; /* Prend l'espace vertical restant */
-    min-height: 60px;
 }
