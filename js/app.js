@@ -671,7 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn("SDK Telegram WebApp non détecté. Fonctionnement hors Telegram?");
     }
 
-    // Récupérer TOUS les éléments DOM nécessaires
+    // Récupérer TOUS les éléments DOM
     productIdElement = document.getElementById('productId');
     productNameElement = document.getElementById('productName');
     saveChangesButton = document.getElementById('saveChangesButton');
@@ -681,16 +681,22 @@ document.addEventListener('DOMContentLoaded', () => {
     dropzoneCustom = document.getElementById('dropzone-custom');
     imageCarouselContainer = document.getElementById('image-carousel-container');
     imageCarousel = document.getElementById('image-carousel');
-    // Éléments Modal
     modalOverlay = document.getElementById('image-modal');
     modalCloseBtn = document.getElementById('modal-close-btn');
-    // Note: On ne prend plus #modal-image directement mais le wrapper
+    modalSwiperContainer = document.querySelector('.modal-swiper'); // Le conteneur de Swiper
     modalSwiperWrapper = document.getElementById('modal-swiper-wrapper');
     modalImageId = document.getElementById('modal-image-id');
     modalImageRoles = document.getElementById('modal-image-roles');
     modalPrevBtn = document.getElementById('modal-prev-btn');
     modalNextBtn = document.getElementById('modal-next-btn');
-    modalActions = document.getElementById('modal-actions'); // Pour les futurs boutons
+    modalActions = document.getElementById('modal-actions');
+    // Éléments pour Cropper
+    modalCropperContainer = document.getElementById('modal-cropper-container');
+    imageToCropElement = document.getElementById('image-to-crop');
+    modalCropBtn = document.getElementById('modal-crop-btn');
+    modalMockupBtn = document.getElementById('modal-mockup-btn');
+    modalCropValidateBtn = document.getElementById('modal-crop-validate-btn');
+    modalCropCancelBtn = document.getElementById('modal-crop-cancel-btn');
 
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
@@ -698,24 +704,17 @@ document.addEventListener('DOMContentLoaded', () => {
      if (!currentProductId) { /* ... gestion erreur ... */ return; }
     if (productIdElement) productIdElement.textContent = currentProductId;
 
-    // --- Attacher les NOUVEAUX écouteurs pour la modal ---
-    if (modalCloseBtn) {
-        modalCloseBtn.addEventListener('click', closeModal);
-    } else { console.error("Bouton Fermer Modal non trouvé!"); }
-
-    if (modalOverlay) {
-        // Ferme si on clique sur le fond noir (l'overlay lui-même)
-        modalOverlay.addEventListener('click', (event) => {
-            if (event.target === modalOverlay) {
-                closeModal();
-            }
-        });
-    } else { console.error("Overlay Modal non trouvé!"); }
-
-    // --- Attacher les écouteurs existants ---
-    if (saveChangesButton) {
-        saveChangesButton.addEventListener('click', handleSaveChanges);
-    } else { /* ... erreur ... */ }
+    // --- Attacher les écouteurs d'événements ---
+    // Modal Fermer
+    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
+    if (modalOverlay) modalOverlay.addEventListener('click', (event) => { if (event.target === modalOverlay) closeModal(); });
+    // Bouton Sauver (rôles)
+    if (saveChangesButton) saveChangesButton.addEventListener('click', handleSaveChanges);
+    // NOUVEAUX: Boutons d'action dans la modale
+    if (modalCropBtn) modalCropBtn.addEventListener('click', startCropping);
+    if (modalCropValidateBtn) modalCropValidateBtn.addEventListener('click', validateCropping);
+    if (modalCropCancelBtn) modalCropCancelBtn.addEventListener('click', cancelCropping);
+    // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration); // Pour plus tard
 
     // Note: Les listeners pour SortableJS sont ajoutés dans initializeSortable
     // Note: Les listeners pour les boutons 'x' et '⚙️' sont ajoutés dans createThumbnail/createCarouselItem
