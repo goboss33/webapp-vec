@@ -690,6 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
     modalPrevBtn = document.getElementById('modal-prev-btn');
     modalNextBtn = document.getElementById('modal-next-btn');
     modalActions = document.getElementById('modal-actions');
+    modalImageInfo = document.getElementById('modal-image-info');
     // Éléments pour Cropper
     modalCropperContainer = document.getElementById('modal-cropper-container');
     imageToCropElement = document.getElementById('image-to-crop');
