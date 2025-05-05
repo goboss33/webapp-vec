@@ -269,3 +269,107 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
 .dropzone .thumbnail-container .sortable-ghost p {
     display: none !important; /* Masque contenu interne du placeholder */
 }
+
+/* --- Style pour le bouton Réglages --- */
+.settings-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.1em; /* Taille de l'icône engrenage */
+    padding: 2px 4px;
+    line-height: 1;
+    color: var(--tg-theme-hint-color, #555);
+    margin-left: 5px; /* Espace par rapport à l'info ID dans carousel */
+}
+.settings-btn:hover {
+    background-color: #eee;
+    border-color: #aaa;
+}
+/* Positionnement spécifique pour le bouton sur les miniatures */
+.thumbnail-wrapper .settings-btn {
+    position: absolute;
+    bottom: -7px; /* Ajuste pour le positionner */
+    right: -7px; /* Ajuste */
+    width: 18px; /* Taille similaire au bouton supprimer */
+    height: 18px;
+    font-size: 12px;
+    line-height: 14px; /* Ajuster */
+    background-color: rgba(0, 100, 200, 0.8); /* Bleu */
+    border-color: rgba(0,0,0,0.2);
+    color: white;
+     box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.thumbnail-wrapper .settings-btn:hover {
+     background-color: rgba(0, 120, 255, 0.9);
+}
+/* Cache le bouton réglage sur le carousel (temporaire si on veut que les actions soient que sur les vignettes) */
+/* Ou ajuste le style pour qu'il soit moins proéminent */
+/* .carousel-image-container .settings-btn { display: none; } */
+
+
+/* --- Styles pour la Modal --- */
+.modal-overlay {
+    position: fixed; /* Reste en place même si on scrolle */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Fond semi-transparent */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Au-dessus de tout */
+}
+
+.modal-content {
+    background-color: var(--tg-theme-bg-color, #fff);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%; /* Largeur sur mobile */
+    max-width: 600px; /* Largeur max sur desktop */
+    position: relative;
+    max-height: 90vh; /* Hauteur max */
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--tg-theme-hint-color, #aaa);
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+}
+.modal-close:hover {
+    color: var(--tg-theme-text-color, #333);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.2em;
+}
+
+.modal-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Espace les flèches */
+    margin-bottom: 15px;
+    flex-shrink: 0; /* Empêche de rétrécir */
+}
+
+#modal-image {
+    display: block;
+    max-width: calc(100% - 80px); /* Largeur max moins les flèches */
+    max-height: 60vh; /* Hauteur max pour l'image */
+    object-fit: contain; /* Pour voir toute l'image */
+    margin: 0 auto; /* Centrer si moins large */
+}
