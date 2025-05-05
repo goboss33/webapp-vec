@@ -289,16 +289,22 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
 /* Positionnement spécifique pour le bouton sur les miniatures */
 .thumbnail-wrapper .settings-btn {
     position: absolute;
-    bottom: -7px; /* Ajuste pour le positionner */
-    right: -7px; /* Ajuste */
-    width: 18px; /* Taille similaire au bouton supprimer */
+    /* MODIFIÉ: Positionner en bas à droite A L'INTERIEUR */
+    bottom: 2px;  /* Petite marge par rapport au bord bas */
+    right: 2px;   /* Petite marge par rapport au bord droit */
+    /* Styles précédents (taille, couleur, etc.) */
+    width: 18px;
     height: 18px;
-    font-size: 12px;
-    line-height: 14px; /* Ajuster */
     background-color: rgba(0, 100, 200, 0.8); /* Bleu */
-    border-color: rgba(0,0,0,0.2);
     color: white;
-     box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 3px; /* Légèrement arrondi */
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 14px; /* Ajuster pour centrer l'icône si besoin */
+    padding: 0;
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
 .thumbnail-wrapper .settings-btn:hover {
      background-color: rgba(0, 120, 255, 0.9);
