@@ -456,3 +456,73 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     /* Prendra la place restante si besoin et scrollera */
     overflow-y: auto;
 }
+
+/* --- Styles pour Swiper dans la Modale --- */
+.modal-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centre le Swiper si moins large */
+    margin-bottom: 15px;
+    /* flex-shrink: 0; */ /* On enlève pour laisser Swiper gérer */
+    position: relative; /* Pour positionner les boutons custom si besoin */
+    width: 100%; /* Prend toute la largeur dispo */
+    max-height: 65vh; /* Hauteur max pour cette section */
+    overflow: hidden; /* Cache ce qui dépasse de Swiper */
+}
+
+/* Conteneur Swiper principal */
+.modal-swiper {
+    width: 90%; /* Ajuste la largeur du slider */
+    max-width: 500px; /* Limite max */
+    height: auto; /* S'adapte à la hauteur de l'image */
+    margin: 0 10px; /* Espace pour les boutons */
+}
+
+/* Style pour chaque slide */
+.swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center; /* Centre l'image si plus petite */
+    background-color: var(--tg-theme-secondary-bg-color, #f8f8f8); /* Fond pour chaque slide */
+    height: auto; /* Important pour que Swiper calcule la hauteur */
+}
+
+/* Style pour l'image DANS une slide */
+.swiper-slide img {
+    display: block;
+    max-width: 100%;
+    max-height: 60vh; /* Limite la hauteur de l'image elle-même */
+    height: auto; /* Garde les proportions */
+    object-fit: contain;
+}
+
+/* Style pour les boutons de navigation personnalisés */
+.modal-nav-btn {
+    background: none;
+    border: none;
+    font-size: 2.5em; /* Un peu plus gros */
+    font-weight: bold;
+    color: var(--tg-theme-link-color, #007bff);
+    cursor: pointer;
+    padding: 0 5px; /* Ajuste le padding */
+    z-index: 10; /* Assure qu'ils sont cliquables */
+    line-height: 1;
+}
+.modal-nav-btn:hover {
+    opacity: 0.7;
+}
+/* Style pour les boutons désactivés (géré par Swiper) */
+.swiper-button-disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+/* Cache les boutons par défaut de Swiper si jamais ils apparaissent */
+.swiper-button-next, .swiper-button-prev {
+    display: none !important;
+}
+/* Cache les indicateurs de pagination par défaut */
+.swiper-pagination {
+    display: none !important;
+}
