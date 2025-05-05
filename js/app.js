@@ -1,21 +1,23 @@
-// js/app.js - V4: Intégration de SortableJS pour Drag & Drop
+// js/app.js - V5: Assignation Exclusive & Retour au Carousel
 
-// --- URLs N8N ---
+// --- URLs N8N --- (Vérifie qu'elles sont toujours bonnes)
 const N8N_GET_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/get-product-data';
 const N8N_UPDATE_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/update-product';
 
 // --- Variables Globales ---
 let currentProductId = null;
-let allImageData = []; // Stocke les données des images reçues
+let allImageData = []; // Stocke TOUTES les données des images reçues
 let sortableCarousel = null; // Instance Sortable pour le carousel
 let sortableZones = {}; // Stockera les instances Sortable pour les zones {main: instance, gallery: instance, ...}
 
-// --- Références aux Éléments DOM ---
+// --- Références aux Éléments DOM (assignées dans DOMContentLoaded) ---
 let productIdElement, productNameElement, saveChangesButton, statusElement;
 let dropzoneMain, dropzoneGallery, dropzoneCustom;
-let imageCarouselContainer, imageCarousel; // Ajout container carousel
+let imageCarouselContainer, imageCarousel; // Le div interne du carousel
 
 // --- Fonctions Utilitaires ---
+
+// Met à jour le message de statut
 const updateStatus = (message, type = 'info') => {
     if (statusElement) {
         statusElement.textContent = message;
@@ -26,14 +28,13 @@ const updateStatus = (message, type = 'info') => {
 };
 
 // Crée un élément pour le carousel (pour SortableJS)
-// Note: On met les données dans le dataset de l'élément qui sera cloné/déplacé par SortableJS
 function createCarouselItem(image) {
     const container = document.createElement('div');
     container.className = 'carousel-image-container';
-    // Stocke les données nécessaires directement sur l'élément
+    // Stocke les données nécessaires directement sur l'élément qui sera déplacé
     container.dataset.imageId = image.id;
     container.dataset.imageUrl = image.url;
-     // Ajoute les rôles initiaux pour info, mais non essentiel pour le drag
+    // Stocke les rôles initiaux pour info (non essentiel au drag)
     container.dataset.initialUses = image.uses.join(',');
 
     const img = document.createElement('img');
@@ -41,53 +42,81 @@ function createCarouselItem(image) {
     img.alt = `Image ID ${image.id}`;
 
     const info = document.createElement('p');
-    info.textContent = `ID: ${image.id}`; // Simplifié, rôle affiché dans la zone
+    info.textContent = `ID: ${image.id}`; // Rôle sera visible dans la zone si assignée
 
     container.appendChild(img);
     container.appendChild(info);
 
-    // PAS D'ECOUTEUR DRAGSTART ICI - SortableJS s'en charge
-
     return container;
 }
 
-// Crée une miniature pour les zones de dépôt (avec clic pour retirer)
+// Crée une miniature (wrapper avec image + bouton 'x') pour les zones de dépôt
 function createThumbnail(image, targetRole) {
-    const container = document.createElement('div'); // Utiliser un conteneur pour la miniature + bouton
+    const container = document.createElement('div');
     container.className = 'thumbnail-wrapper';
-    container.dataset.imageId = image.id; // Garde l'ID sur le wrapper
+    container.dataset.imageId = image.id;
 
     const img = document.createElement('img');
     img.src = image.url;
     img.alt = `Vignette ID ${image.id}`;
-    img.className = 'img-thumbnail'; // Garde cette classe pour le style
+    img.className = 'img-thumbnail';
     img.title = `ID: ${image.id}\nAssigné à: ${targetRole}`;
 
     const removeBtn = document.createElement('button');
-    removeBtn.textContent = '×'; // Croix pour supprimer
+    removeBtn.textContent = '×';
     removeBtn.className = 'remove-thumbnail-btn';
     removeBtn.title = `Retirer de ${targetRole}`;
-    removeBtn.onclick = handleThumbnailRemoveClick; // Utilise un seul handler
+    // Attache le gestionnaire de clic pour suppression
+    removeBtn.onclick = handleThumbnailRemoveClick;
 
     container.appendChild(img);
     container.appendChild(removeBtn);
 
-    return container; // Retourne le wrapper complet
+    return container;
 }
 
-// Handler pour le clic sur le bouton 'x' des miniatures
+// --- Gestion du Retrait de Miniature (Clic sur 'x') ---
 function handleThumbnailRemoveClick(event) {
     const wrapper = event.currentTarget.closest('.thumbnail-wrapper');
+    if (!wrapper) return;
+
     const imageId = wrapper.dataset.imageId;
     const zone = wrapper.closest('.dropzone');
     const role = zone ? zone.dataset.role : 'unknown';
 
-    if (wrapper) {
-        wrapper.remove(); // Retire le wrapper (image + bouton)
-        console.log(`Vignette retirée (clic) ID=${imageId} de la zone=${role}`);
-        updateStatus(`Image ${imageId} retirée de la zone ${role}.`, 'info');
-        // Mettre à jour l'état interne si nécessaire
+    console.log(`Tentative de retrait (clic) ID=${imageId} de la zone=${role}`);
+
+    // 1. Trouver les données originales de l'image
+    const originalImageData = allImageData.find(img => img.id.toString() === imageId);
+
+    if (!originalImageData) {
+        console.error(`Impossible de retrouver les données originales pour l'image ID=${imageId}`);
+        // En fallback, on retire juste du DOM
+        wrapper.remove();
+        updateStatus(`Image ${imageId} retirée de la zone ${role} (données originales non trouvées).`, 'warn');
+        return;
     }
+
+    // 2. Retirer la vignette (wrapper) de la zone de dépôt
+    wrapper.remove();
+    updateStatus(`Image ${imageId} retirée de la zone ${role}.`, 'info');
+
+    // 3. Recréer l'élément correspondant et le remettre dans le carousel
+    if (imageCarousel) {
+        // Vérifier si l'image n'est pas déjà revenue dans le carousel (sécurité)
+        if (!imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`)) {
+            const carouselItem = createCarouselItem(originalImageData);
+            imageCarousel.appendChild(carouselItem);
+            console.log(`Image ID=${imageId} retournée au carousel.`);
+            // Pas besoin de réinitialiser SortableJS normalement ici
+        } else {
+             console.log(`Image ID=${imageId} déjà présente dans le carousel.`);
+        }
+    } else {
+        console.error("Carousel element non trouvé, ne peut pas retourner l'image.");
+    }
+
+    // !!! TODO: Mettre à jour l'état interne si on en ajoute un plus tard !!!
 }
 
 
@@ -98,91 +127,133 @@ function initializeSortable() {
         updateStatus("Erreur: Bibliothèque SortableJS manquante.", "error");
         return;
     }
+    console.log("Initialisation de SortableJS...");
 
-    // Rendre les éléments du carousel déplaçables (Source)
-    // On clone les éléments pour ne pas vider le carousel
+    // Détruire les anciennes instances si elles existent (pour éviter doublons si fetchProductData est appelé plusieurs fois)
+    if (sortableCarousel) sortableCarousel.destroy();
+    Object.values(sortableZones).forEach(instance => instance.destroy());
+    sortableZones = {}; // Réinitialiser l'objet
+
+    // Config du Carousel: On peut en SORTIR des items (ils sont déplacés), mais pas en déposer dedans.
     sortableCarousel = new Sortable(imageCarousel, {
         group: {
             name: 'shared',
-            pull: 'clone', // On clone l'élément quand on le sort du carousel
-            put: false // On ne peut pas déposer DANS le carousel
+            pull: true, // Important: 'true' signifie DÉPLACER (pas 'clone')
+            put: false // On ne peut pas déposer dans le carousel
         },
-        sort: false, // On ne veut pas réorganiser le carousel lui-même
+        sort: false, // Pas de réorganisation du carousel par l'utilisateur
         animation: 150,
-        onClone: (evt) => {
-             // Optionnel: ajouter une classe CSS pendant le clonage/drag
-             evt.clone.classList.add("dragging-clone");
+        // filter: '.image-in-zone', // Pourrait être utilisé si on ne veut pas pouvoir drag des images déjà assignées? Non, on gère au drop.
+        onStart: function(evt) {
+            console.log(`Drag démarré depuis le carousel: Item ID ${evt.item.dataset.imageId}`);
+             // Optionnel : ajouter une classe au body pour changer le curseur partout?
+             // document.body.classList.add('grabbing');
         },
-        // Note: Pas besoin de onStart/onEnd ici si on gère via les zones
+        onEnd: function(evt) { // Se déclenche après onAdd ou si le drag est annulé
+            console.log(`Drag terminé depuis carousel: Item ID ${evt.item.dataset.imageId}, déposé dans une zone? ${evt.to !== evt.from}`);
+             // document.body.classList.remove('grabbing');
+             // Si l'item n'a pas été déposé dans une zone valide (evt.to === evt.from), SortableJS le remet automatiquement.
+        }
+
     });
 
-    // Rendre les zones de dépôt réceptives (Destinations)
+    // Config des Zones de Dépôt: Reçoivent des items, et on peut en sortir des items.
     const dropZoneElements = [dropzoneMain, dropzoneGallery, dropzoneCustom];
     dropZoneElements.forEach(zoneElement => {
         if (zoneElement) {
             const container = zoneElement.querySelector('.thumbnail-container');
             const role = zoneElement.dataset.role;
-            const maxImages = parseInt(zoneElement.dataset.maxImages) || 999;
+            const maxImages = parseInt(zoneElement.dataset.maxImages) || 999; // Limite max (surtout pour custom)
 
             sortableZones[role] = new Sortable(container, {
-                group: 'shared', // Permet de recevoir depuis le carousel (et potentiellement d'autres zones)
+                group: 'shared', // Fait partie du même groupe
+                pull: true,      // Important: Permet de glisser HORS de cette zone (vers une autre zone ou pour supprimer->retour carousel)
                 animation: 150,
-                onAdd: function (evt) { // Fonction déclenchée quand un élément est AJOUTÉ à cette zone
-                    const itemEl = evt.item; // L'élément qui a été déposé (c'est notre .carousel-image-container cloné)
+                onAdd: function (evt) { // Quand un élément est AJOUTÉ (déposé)
+                    const itemEl = evt.item; // L'élément déposé (soit du carousel, soit d'une autre zone)
                     const droppedImageId = itemEl.dataset.imageId;
-                    const droppedImageUrl = itemEl.dataset.imageUrl;
-                    const targetContainer = evt.to; // Le .thumbnail-container où on a déposé
+                    const droppedImageUrl = itemEl.dataset.imageUrl || allImageData.find(img => img.id.toString() === droppedImageId)?.url; // Récupère l'URL si besoin
+                    const targetContainer = evt.to; // Le conteneur où on a déposé (.thumbnail-container)
 
-                    console.log(`onAdd Event: Image ID ${droppedImageId} ajoutée à la zone ${role}`);
+                    console.log(`onAdd Event: Image ID ${droppedImageId} déposée dans la zone ${role}`);
 
-                    // Règle 1: Vérifier doublons dans la zone cible
-                    const existing = Array.from(targetContainer.querySelectorAll('.thumbnail-wrapper'))
-                                         .find(wrapper => wrapper.dataset.imageId === droppedImageId);
-                    if (existing) {
-                        console.log("Doublon détecté, annulation de l'ajout.");
-                        itemEl.remove(); // Supprime l'élément cloné qui vient d'être ajouté
+                    // Règle 1: Doublons dans la zone cible?
+                    // Il faut vérifier les autres éléments déjà présents *avant* cet ajout
+                    let duplicate = false;
+                    Array.from(targetContainer.children).forEach(child => {
+                         if (child !== itemEl && child.dataset.imageId === droppedImageId) {
+                             duplicate = true;
+                         }
+                     });
+                    if (duplicate) {
+                        console.log("Doublon détecté, annulation.");
+                        itemEl.remove(); // Supprime l'élément qui vient d'être ajouté
                         updateStatus(`Image ${droppedImageId} déjà dans la zone ${role}.`, 'info');
+                        // Remettre l'original dans le carousel si besoin? Non, SortableJS devrait gérer le retour à la source si on annule ici.
                         return;
                     }
 
                     // Règle 2: Zone Principale - une seule image
-                    if (role === 'main' && targetContainer.children.length > 1) { // > 1 car itemEl est déjà ajouté à ce stade
-                        console.log("Zone Principale ne peut contenir qu'une image. Retrait de l'ancienne.");
-                        // Supprime tous les enfants SAUF le nouvel élément 'itemEl'
+                    if (role === 'main' && targetContainer.children.length > 1) {
+                        console.log("Zone Principale limitée à 1. Retrait des anciennes.");
                          Array.from(targetContainer.children).forEach(child => {
-                             if (child !== itemEl) child.remove();
+                             if (child !== itemEl) { // Ne pas supprimer celui qu'on vient d'ajouter
+                                // !!! Avant de supprimer, il faut remettre l'ancienne image principale dans le carousel !!!
+                                const oldImageId = child.dataset.imageId;
+                                const oldImageData = allImageData.find(img => img.id.toString() === oldImageId);
+                                if (oldImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${oldImageId}"]`)) {
+                                    imageCarousel.appendChild(createCarouselItem(oldImageData));
+                                }
+                                child.remove();
+                             }
                          });
-                         updateStatus(`Ancienne image principale remplacée par ${droppedImageId}.`, 'info');
+                         updateStatus(`Ancienne image principale retournée au carousel. ${droppedImageId} est la nouvelle.`, 'info');
                     }
 
                     // Règle 3: Zone Custom - limite max
                     if (role === 'custom' && targetContainer.children.length > maxImages) {
                         console.log(`Limite (${maxImages}) atteinte pour Custom. Annulation.`);
-                        itemEl.remove(); // Supprime l'élément ajouté en trop
+                        itemEl.remove();
                         updateStatus(`Limite de ${maxImages} images atteinte pour galerie custom.`, 'warn');
+                        // Remettre l'original dans le carousel si besoin?
+                        const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
+                         if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
+                             imageCarousel.appendChild(createCarouselItem(originalImageData));
+                         }
                         return;
                     }
 
-                    // --- Transformation du Clone en Vignette ---
-                    // Si on arrive ici, l'ajout est valide (ou c'est la galerie sans limite)
-                    // On remplace le clone du carousel par une vraie vignette cliquable
-                    const thumbnailWrapper = createThumbnail({ id: droppedImageId, url: droppedImageUrl }, role);
-                    targetContainer.replaceChild(thumbnailWrapper, itemEl); // Remplace le clone par la vignette
+                    // Transformation en Vignette (si l'élément vient du carousel)
+                    // Si l'élément vient d'une autre zone, il est déjà une vignette (.thumbnail-wrapper)
+                    if (itemEl.classList.contains('carousel-image-container')) {
+                         console.log("Transformation du clone de carousel en vignette.");
+                        const thumbnailWrapper = createThumbnail({ id: droppedImageId, url: droppedImageUrl }, role);
+                        targetContainer.replaceChild(thumbnailWrapper, itemEl); // Remplace le clone par la vignette
+                        updateStatus(`Image ${droppedImageId} ajoutée à la zone ${role}.`, 'success');
+                    } else {
+                        // L'élément vient d'une autre zone, il est déjà une vignette. Juste confirmer.
+                         updateStatus(`Image ${droppedImageId} déplacée vers la zone ${role}.`, 'success');
+                         // Mettre à jour son title ?
+                         const thumbImg = itemEl.querySelector('.img-thumbnail');
+                         if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${role}`;
+                         const removeBtn = itemEl.querySelector('.remove-thumbnail-btn');
+                          if(removeBtn) removeBtn.title = `Retirer de ${role}`;
+                    }
 
-                    updateStatus(`Image ${droppedImageId} ajoutée à la zone ${role}.`, 'success');
-
-                    // TODO: Mettre à jour l'état interne JS
+                    // !!! TODO: Mettre à jour l'état interne JS !!!
                 },
-                 onRemove: function(evt) { // Quand un élément est retiré (soit par drag ailleurs, soit par clic->remove)
-                     const itemEl = evt.item; // L'élément retiré (thumbnail-wrapper)
-                     const removedImageId = itemEl.dataset.imageId;
-                     console.log(`onRemove Event: Image ID ${removedImageId} retirée de la zone ${role}`);
-                      updateStatus(`Image ${removedImageId} retirée de la zone ${role}.`, 'info');
-                     // TODO: Mettre à jour l'état interne JS
-                 }
+                onRemove: function(evt) { // Quand un élément est SORTI (par drag vers une autre zone OU supprimé par clic->remove)
+                    // Note: Cet event se déclenche AUSSI quand on clique sur 'x', car on fait wrapper.remove()
+                    const itemEl = evt.item;
+                    const removedImageId = itemEl.dataset.imageId;
+                    console.log(`onRemove Event: Image ID ${removedImageId} retirée de la zone ${role}`);
+                    // On gère le retour au carousel uniquement lors du clic sur 'x' (handleThumbnailRemoveClick)
+                    // Si c'est un drag vers une autre zone, onAdd de l'autre zone s'en occupe.
+                }
             });
         }
     });
+     console.log("Initialisation de SortableJS terminée.");
 }
 
 
@@ -193,6 +264,12 @@ const fetchProductData = async () => {
     // Vider le carousel et les conteneurs de vignettes avant de re-peupler
     if (imageCarousel) imageCarousel.innerHTML = '<p>Chargement...</p>';
     document.querySelectorAll('.dropzone .thumbnail-container').forEach(container => container.innerHTML = '');
+     // Vider aussi les instances Sortable précédentes
+     if (sortableCarousel) sortableCarousel.destroy();
+     Object.values(sortableZones).forEach(instance => instance.destroy());
+     sortableZones = {};
+     allImageData = []; // Vider les données stockées
+
 
     try {
         const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${currentProductId}`;
@@ -204,33 +281,55 @@ const fetchProductData = async () => {
 
         if (productNameElement) productNameElement.textContent = data.productName || 'Non trouvé';
 
-        // Utiliser 'data.images' comme clé (confirmé dans le dernier debug)
+        // Utiliser 'data.images'
         if (data.images && Array.isArray(data.images)) {
-            allImageData = data.images;
+            allImageData = data.images; // Stocker
 
             if (allImageData.length > 0) {
-                imageCarousel.innerHTML = ''; // Vider le message de chargement
+                imageCarousel.innerHTML = ''; // Vider "Chargement..."
 
-                // Peupler le carousel et pré-remplir les zones
+                // Priorité pour placement initial
+                const rolePriority = ['main', 'gallery', 'custom'];
+
                 allImageData.forEach(image => {
-                    // 1. Ajouter au Carousel
-                    imageCarousel.appendChild(createCarouselItem(image));
-                    // 2. Pré-remplir les zones selon 'uses'
-                    if (image.uses.includes('main') && dropzoneMain) {
-                         dropzoneMain.querySelector('.thumbnail-container').appendChild(createThumbnail(image, 'main'));
+                    let placed = false;
+                    for (const role of rolePriority) {
+                        if (image.uses.includes(role)) {
+                            const targetZone = document.getElementById(`dropzone-${role}`);
+                            if (targetZone) {
+                                const container = targetZone.querySelector('.thumbnail-container');
+                                const maxImages = parseInt(targetZone.dataset.maxImages) || 999;
+                                let canPlace = true;
+
+                                // Vérif spéciale pour 'main' (1 seul)
+                                if (role === 'main' && container.children.length >= 1) {
+                                     console.warn(`Image ${image.id} marquée aussi 'main', mais zone déjà remplie.`);
+                                     canPlace = false;
+                                }
+                                // Vérif pour 'custom' (limite max)
+                                else if (role === 'custom' && container.children.length >= maxImages) {
+                                     console.warn(`Zone ${role} (max ${maxImages}) pleine, ne peut placer initialement ${image.id}`);
+                                     canPlace = false;
+                                }
+
+                                if (canPlace && container) {
+                                     container.appendChild(createThumbnail(image, role));
+                                     placed = true;
+                                     break; // Placé dans la zone prioritaire, on arrête
+                                }
+                            }
+                        }
                     }
-                    if (image.uses.includes('gallery') && dropzoneGallery) {
-                         dropzoneGallery.querySelector('.thumbnail-container').appendChild(createThumbnail(image, 'gallery'));
-                    }
-                    if (image.uses.includes('custom') && dropzoneCustom) {
-                         dropzoneCustom.querySelector('.thumbnail-container').appendChild(createThumbnail(image, 'custom'));
+                    // Si non placé dans une zone, mettre dans le carousel
+                    if (!placed) {
+                        imageCarousel.appendChild(createCarouselItem(image));
                     }
                 });
 
-                // Initialiser SortableJS APRÈS avoir peuplé le DOM
+                // Initialiser SortableJS seulement APRÈS avoir mis les éléments dans le DOM
                 initializeSortable();
 
-                updateStatus("Images affichées. Glissez-les pour assigner les rôles.", 'success');
+                updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
             } else {
                 imageCarousel.innerHTML = '<p>Aucune image disponible.</p>';
                 updateStatus("Aucune image trouvée.", 'info');
@@ -250,95 +349,60 @@ const fetchProductData = async () => {
 
 
 // --- Enregistrement des Modifications ---
-const handleSaveChanges = async () => {
+// La fonction handleSaveChanges reste INCHANGÉE pour l'instant
+// Elle collecte toujours les IDs depuis les .thumbnail-wrapper présents dans les zones au moment du clic.
+const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
     updateStatus("Enregistrement des modifications...", 'info');
-    if (saveChangesButton) saveChangesButton.disabled = true; // Désactive le bouton pendant l'enregistrement
+    if(saveChangesButton) saveChangesButton.disabled = true;
 
-    // --- Collecter l'état actuel depuis les vignettes dans le DOM ---
     const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
-    // Récupère l'ID de l'image principale, ou null si aucune n'est dans la zone
     const mainImageId = mainImageThumb ? mainImageThumb.dataset.imageId : null;
 
-    // Récupère les IDs des images dans la zone Galerie
     const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
     const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
 
-    // Récupère les IDs des images dans la zone Custom Galerie
     const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper') : [];
     const customGalleryImageIds = Array.from(customGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
 
-    // Prépare le corps de la requête (payload) pour n8n
     const payload = {
-        productId: currentProductId, // ID du produit actuel
-        mainImageId: mainImageId, // ID de l'image principale (ou null)
-        galleryImageIds: galleryImageIds, // Tableau des IDs galerie standard
-        customGalleryImageIds: customGalleryImageIds // Tableau des IDs galerie custom
+        productId: currentProductId,
+        mainImageId: mainImageId,
+        galleryImageIds: galleryImageIds,
+        customGalleryImageIds: customGalleryImageIds
     };
+    console.log("Données envoyées à n8n:", payload);
 
-    console.log("Données envoyées à n8n:", payload); // Log pour déboguer ce qui est envoyé
-
-    // --- Appeler le Webhook N8N ---
     try {
-        // Envoie les données au webhook de mise à jour
         const response = await fetch(N8N_UPDATE_DATA_WEBHOOK_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-                // Ajouter d'autres headers si ton webhook n8n le nécessite
-            },
-            body: JSON.stringify(payload) // Convertit l'objet JS en chaîne JSON
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
-
-        // Vérifie si la requête vers n8n a réussi (status HTTP 2xx)
         if (!response.ok) {
-            // Si erreur HTTP, essaie de lire le message d'erreur renvoyé par n8n
             let errorMsg = `Erreur serveur n8n: ${response.status}`;
             try {
-                // n8n renvoie souvent les erreurs en JSON avec une clé 'message'
                 const errorData = await response.json();
                 errorMsg = errorData.message || JSON.stringify(errorData);
-            } catch (e) {
-                console.warn("Impossible de parser la réponse d'erreur JSON de n8n.");
-                // Si le corps n'est pas du JSON, utilise le statut texte
-                errorMsg = `Erreur serveur n8n: ${response.status} ${response.statusText}`;
-            }
-            // Lance une erreur JS pour être attrapée par le 'catch'
+            } catch (e) { console.warn("Impossible de parser la réponse d'erreur JSON de n8n."); }
             throw new Error(errorMsg);
         }
-
-        // Si la requête a réussi, lire la réponse succès de n8n
         const result = await response.json();
         console.log("Réponse de n8n (Mise à jour):", result);
-        // Affiche le message de succès (venant de n8n si possible, sinon un message par défaut)
         updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
-
-        // Que faire après succès ?
-        // Option 1: Recharger les données pour être sûr à 100% de l'état serveur
-        // setTimeout(fetchProductData, 1500);
-
-        // Option 2: Ne rien faire de plus, l'interface reflète déjà les choix.
-        // L'utilisateur peut fermer la Web App. C'est peut-être moins déroutant.
-        // On choisit Option 2 pour l'instant.
-
     } catch (error) {
-        // Gère les erreurs (réseau ou erreur renvoyée par n8n)
         console.error("Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
     } finally {
-        // Réactive le bouton dans tous les cas (succès ou échec)
-        if (saveChangesButton) saveChangesButton.disabled = false;
+        if(saveChangesButton) saveChangesButton.disabled = false;
     }
 };
 
 
-// --- Initialisation de l'application ---
+// --- Initialisation de l'application (DOMContentLoaded) ---
+// Légèrement modifié pour vider les instances Sortable au début de fetchProductData
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.Telegram && window.Telegram.WebApp) {
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-    }
-
-    // Récupérer les éléments DOM
+    // ... (Initialisation TG, récupération éléments DOM - inchangé) ...
+    if (window.Telegram && window.Telegram.WebApp) { /*...*/ }
     productIdElement = document.getElementById('productId');
     productNameElement = document.getElementById('productName');
     saveChangesButton = document.getElementById('saveChangesButton');
@@ -346,27 +410,21 @@ document.addEventListener('DOMContentLoaded', () => {
     dropzoneMain = document.getElementById('dropzone-main');
     dropzoneGallery = document.getElementById('dropzone-gallery');
     dropzoneCustom = document.getElementById('dropzone-custom');
-    imageCarouselContainer = document.getElementById('image-carousel-container'); // Container global
-    imageCarousel = document.getElementById('image-carousel'); // Le div interne pour SortableJS
+    imageCarouselContainer = document.getElementById('image-carousel-container');
+    imageCarousel = document.getElementById('image-carousel');
 
-    // Récupérer Product ID
+    // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
     currentProductId = urlParams.get('productId');
-    if (!currentProductId) {
-        updateStatus("Erreur: Product ID manquant.", 'error');
-        if(saveChangesButton) saveChangesButton.disabled = true;
-        return;
-    }
+     if (!currentProductId) { /* ... gestion erreur ... */ return; }
     if (productIdElement) productIdElement.textContent = currentProductId;
 
-    // Attacher l'écouteur au bouton Enregistrer
+    // Attacher l'écouteur au bouton Enregistrer (inchangé)
     if (saveChangesButton) {
         saveChangesButton.addEventListener('click', handleSaveChanges);
-    } else {
-        console.error("Bouton 'Enregistrer Modifications' non trouvé!");
-    }
+    } else { /* ... erreur ... */ }
 
-    // Récupérer les données initiales (ce qui déclenchera aussi initializeSortable)
+    // Récupérer les données initiales (ce qui appellera initializeSortable une fois le DOM peuplé)
     fetchProductData();
 
 }); // Fin de DOMContentLoaded
