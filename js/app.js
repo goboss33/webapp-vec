@@ -644,6 +644,8 @@ async function triggerCropWorkflow(imageData, cropData) {
     }
 
 
+
+    
     // --- Appel Fetch Réel (à décommenter quand le workflow N8N est prêt) ---
     
     const response = await fetch(N8N_CROP_IMAGE_WEBHOOK_URL, {
@@ -667,6 +669,8 @@ async function triggerCropWorkflow(imageData, cropData) {
         throw new Error(result.message || "La réponse du workflow de recadrage est invalide.");
     }
     return result; // Renvoyer le résultat (contenant newImageUrl)
+
+
     
 
     // --- Simulation en attendant le workflow N8N ---
