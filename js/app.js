@@ -31,10 +31,8 @@ const updateStatus = (message, type = 'info') => {
 function createCarouselItem(image) {
     const container = document.createElement('div');
     container.className = 'carousel-image-container';
-    // Stocke les données nécessaires directement sur l'élément qui sera déplacé
     container.dataset.imageId = image.id;
     container.dataset.imageUrl = image.url;
-    // Stocke les rôles initiaux pour info (non essentiel au drag)
     container.dataset.initialUses = image.uses.join(',');
 
     const img = document.createElement('img');
@@ -42,11 +40,22 @@ function createCarouselItem(image) {
     img.alt = `Image ID ${image.id}`;
 
     const info = document.createElement('p');
-    info.textContent = `ID: ${image.id}`; // Rôle sera visible dans la zone si assignée
+    info.textContent = `ID: ${image.id}`;
+
+    // --- Ajout du bouton Réglages ---
+    const settingsBtn = document.createElement('button');
+    settingsBtn.innerHTML = '&#9881;'; // Icône engrenage ⚙️
+    settingsBtn.className = 'settings-btn';
+    settingsBtn.title = 'Réglages pour cette image';
+    settingsBtn.dataset.imageId = image.id; // Stocke l'ID pour le retrouver facilement
+    settingsBtn.onclick = handleSettingsClick; // On ajoute le handler
+    // --- Fin Ajout ---
 
     container.appendChild(img);
     container.appendChild(info);
+    container.appendChild(settingsBtn); // Ajoute le bouton
 
+    // Pas besoin de D&D listeners ici, SortableJS gère le container
     return container;
 }
 
@@ -55,6 +64,7 @@ function createThumbnail(image, targetRole) {
     const container = document.createElement('div');
     container.className = 'thumbnail-wrapper';
     container.dataset.imageId = image.id;
+    container.dataset.imageUrl = image.url; // Ajoutons l'URL ici aussi
 
     const img = document.createElement('img');
     img.src = image.url;
@@ -62,15 +72,25 @@ function createThumbnail(image, targetRole) {
     img.className = 'img-thumbnail';
     img.title = `ID: ${image.id}\nAssigné à: ${targetRole}`;
 
+    // Bouton supprimer 'x'
     const removeBtn = document.createElement('button');
     removeBtn.textContent = '×';
     removeBtn.className = 'remove-thumbnail-btn';
     removeBtn.title = `Retirer de ${targetRole}`;
-    // Attache le gestionnaire de clic pour suppression
     removeBtn.onclick = handleThumbnailRemoveClick;
+
+     // --- Ajout du bouton Réglages ---
+     const settingsBtn = document.createElement('button');
+     settingsBtn.innerHTML = '&#9881;'; // Icône engrenage ⚙️
+     settingsBtn.className = 'settings-btn thumbnail-settings-btn'; // Classe additionnelle pour styling si besoin
+     settingsBtn.title = 'Réglages pour cette image';
+     settingsBtn.dataset.imageId = image.id;
+     settingsBtn.onclick = handleSettingsClick;
+     // --- Fin Ajout ---
 
     container.appendChild(img);
     container.appendChild(removeBtn);
+    container.appendChild(settingsBtn); // Ajoute le bouton Réglages
 
     return container;
 }
@@ -117,6 +137,18 @@ function handleThumbnailRemoveClick(event) {
     }
 
     // !!! TODO: Mettre à jour l'état interne si on en ajoute un plus tard !!!
+}
+
+function handleSettingsClick(event) {
+    const button = event.currentTarget;
+    const imageId = button.dataset.imageId;
+    console.log(`Clic sur Réglages pour Image ID: ${imageId}`);
+
+    // --- Logique pour ouvrir la modal (prochaine étape) ---
+    // 1. Récupérer les infos complètes de l'image (on l'a dans allImageData)
+    // 2. Déterminer la source (carousel ou quelle zone?)
+    // 3. Peupler et afficher la modal
+    alert(`Ouverture des réglages pour l'image ${imageId} (à implémenter)`); // Placeholder
 }
 
 
