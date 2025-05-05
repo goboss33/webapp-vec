@@ -629,8 +629,8 @@ async function triggerCropWorkflow(imageData, cropData) {
             height: Math.round(cropData.height)
         }
         // Ajouter targetWidth/Height ici si on veut un recadrage à taille fixe (ex: 1024)
-        targetWidth: 1024,
-        targetHeight: 1024
+        //targetWidth: 1024,
+        //targetHeight: 1024
     };
 
     // Vérifie si l'URL du webhook est définie
