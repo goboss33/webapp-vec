@@ -6,14 +6,18 @@ const N8N_UPDATE_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/u
 
 // --- Variables Globales ---
 let currentProductId = null;
-let allImageData = []; // Stocke TOUTES les données des images reçues
-let sortableCarousel = null; // Instance Sortable pour le carousel
-let sortableZones = {}; // Stockera les instances Sortable pour les zones {main: instance, gallery: instance, ...}
+let allImageData = [];
+let sortableCarousel = null;
+let sortableZones = {};
+let modalSwiperInstance = null; // Instance Swiper pour la modale
+let modalImageList = []; // Liste des images affichées dans la modale
+let currentModalIndex = 0; // Index de l'image affichée dans la modale
 
-// --- Références aux Éléments DOM (assignées dans DOMContentLoaded) ---
+// --- Références aux Éléments DOM ---
 let productIdElement, productNameElement, saveChangesButton, statusElement;
 let dropzoneMain, dropzoneGallery, dropzoneCustom;
-let imageCarouselContainer, imageCarousel; // Le div interne du carousel
+let imageCarouselContainer, imageCarousel;
+let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions; // Ajout swiper wrapper & actions
 
 // --- Fonctions Utilitaires ---
 
@@ -138,19 +142,6 @@ function handleThumbnailRemoveClick(event) {
 
     // !!! TODO: Mettre à jour l'état interne si on en ajoute un plus tard !!!
 }
-
-function handleSettingsClick(event) {
-    const button = event.currentTarget;
-    const imageId = button.dataset.imageId;
-    console.log(`Clic sur Réglages pour Image ID: ${imageId}`);
-
-    // --- Logique pour ouvrir la modal (prochaine étape) ---
-    // 1. Récupérer les infos complètes de l'image (on l'a dans allImageData)
-    // 2. Déterminer la source (carousel ou quelle zone?)
-    // 3. Peupler et afficher la modal
-    alert(`Ouverture des réglages pour l'image ${imageId} (à implémenter)`); // Placeholder
-}
-
 
 // --- Initialisation de SortableJS ---
 function initializeSortable() {
@@ -288,6 +279,54 @@ function initializeSortable() {
      console.log("Initialisation de SortableJS terminée.");
 }
 
+// --- Enregistrement des Modifications ---
+// Elle collecte toujours les IDs depuis les .thumbnail-wrapper présents dans les zones au moment du clic.
+const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
+    updateStatus("Enregistrement des modifications...", 'info');
+    if(saveChangesButton) saveChangesButton.disabled = true;
+
+    const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
+    const mainImageId = mainImageThumb ? mainImageThumb.dataset.imageId : null;
+
+    const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
+    const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
+
+    const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper') : [];
+    const customGalleryImageIds = Array.from(customGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
+
+    const payload = {
+        productId: currentProductId,
+        mainImageId: mainImageId,
+        galleryImageIds: galleryImageIds,
+        customGalleryImageIds: customGalleryImageIds
+    };
+    console.log("Données envoyées à n8n:", payload);
+
+    try {
+        const response = await fetch(N8N_UPDATE_DATA_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            let errorMsg = `Erreur serveur n8n: ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.message || JSON.stringify(errorData);
+            } catch (e) { console.warn("Impossible de parser la réponse d'erreur JSON de n8n."); }
+            throw new Error(errorMsg);
+        }
+        const result = await response.json();
+        console.log("Réponse de n8n (Mise à jour):", result);
+        updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
+    } catch (error) {
+        console.error("Erreur lors de l'enregistrement via n8n:", error);
+        updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
+    } finally {
+        if(saveChangesButton) saveChangesButton.disabled = false;
+    }
+};
+
 // --- NOUVELLE Logique de la Modal ---
 
 // Ouvre la modal et affiche l'image correspondante
@@ -423,57 +462,6 @@ const fetchProductData = async () => {
         if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur chargement.</p>';
     }
 };
-
-
-// --- Enregistrement des Modifications ---
-// La fonction handleSaveChanges reste INCHANGÉE pour l'instant
-// Elle collecte toujours les IDs depuis les .thumbnail-wrapper présents dans les zones au moment du clic.
-const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
-    updateStatus("Enregistrement des modifications...", 'info');
-    if(saveChangesButton) saveChangesButton.disabled = true;
-
-    const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
-    const mainImageId = mainImageThumb ? mainImageThumb.dataset.imageId : null;
-
-    const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
-    const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
-
-    const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper') : [];
-    const customGalleryImageIds = Array.from(customGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
-
-    const payload = {
-        productId: currentProductId,
-        mainImageId: mainImageId,
-        galleryImageIds: galleryImageIds,
-        customGalleryImageIds: customGalleryImageIds
-    };
-    console.log("Données envoyées à n8n:", payload);
-
-    try {
-        const response = await fetch(N8N_UPDATE_DATA_WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        if (!response.ok) {
-            let errorMsg = `Erreur serveur n8n: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMsg = errorData.message || JSON.stringify(errorData);
-            } catch (e) { console.warn("Impossible de parser la réponse d'erreur JSON de n8n."); }
-            throw new Error(errorMsg);
-        }
-        const result = await response.json();
-        console.log("Réponse de n8n (Mise à jour):", result);
-        updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
-    } catch (error) {
-        console.error("Erreur lors de l'enregistrement via n8n:", error);
-        updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
-    } finally {
-        if(saveChangesButton) saveChangesButton.disabled = false;
-    }
-};
-
 
 // --- Initialisation de l'application ---
 document.addEventListener('DOMContentLoaded', () => {
