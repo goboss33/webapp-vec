@@ -21,7 +21,7 @@ let currentCroppingImage = null; // Données de l'image en cours de recadrage
 let productIdElement, productNameElement, saveChangesButton, statusElement;
 let dropzoneMain, dropzoneGallery, dropzoneCustom;
 let imageCarouselContainer, imageCarousel;
-let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions; // Ajout swiper wrapper & actions
+let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
 let modalCropperContainer, imageToCropElement, modalCropBtn, modalMockupBtn, modalCropValidateBtn, modalCropCancelBtn;
 
 // --- Fonctions Utilitaires ---
