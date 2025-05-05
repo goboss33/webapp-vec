@@ -464,6 +464,110 @@ function handleSettingsClick(event) {
     openImageModal(imageId); // Ouvre la modal pour cette image
 }
 
+// --- NOUVELLE Logique de Recadrage (Cropper.js) ---
+
+// Initialise l'interface de recadrage
+function startCropping() {
+    if (currentModalIndex < 0 || currentModalIndex >= modalImageList.length) {
+        console.error("Index d'image modal invalide pour démarrer le recadrage.");
+        return;
+    }
+    currentCroppingImage = modalImageList[currentModalIndex]; // Stocke l'image à recadrer
+    console.log(`Démarrage recadrage pour Image ID: ${currentCroppingImage.id}`);
+
+    // 1. Préparer l'interface visuelle
+    if (modalSwiperContainer) modalSwiperContainer.style.display = 'none'; // Cache Swiper
+    if (modalPrevBtn) modalPrevBtn.style.display = 'none'; // Cache nav Swiper
+    if (modalNextBtn) modalNextBtn.style.display = 'none';
+    if (modalImageInfo) modalImageInfo.style.display = 'none'; // Cache infos sous Swiper
+    if (modalCropBtn) modalCropBtn.style.display = 'none'; // Cache bouton "Recadrer"
+    if (modalMockupBtn) modalMockupBtn.style.display = 'none'; // Cache autres actions
+
+    if (modalCropperContainer && imageToCropElement) {
+        imageToCropElement.src = currentCroppingImage.url; // Met l'image dans l'élément dédié
+        modalCropperContainer.style.display = 'block'; // Affiche le conteneur du cropper
+    } else {
+        console.error("Éléments DOM pour Cropper non trouvés.");
+        return;
+    }
+    if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'inline-block'; // Affiche Valider
+    if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'inline-block'; // Affiche Annuler
+
+    // 2. Initialiser Cropper.js
+    if (cropperInstance) { // Détruire l'ancienne instance si elle existe
+        cropperInstance.destroy();
+    }
+    cropperInstance = new Cropper(imageToCropElement, {
+        // Options Cropper.js :
+        viewMode: 1, // Ne pas sortir des limites de l'image
+        dragMode: 'move', // Permet de déplacer l'image sous le cadre
+        // aspectRatio: 1, // Pour forcer un carré (ex: 1/1). Mettre NaN pour libre.
+        autoCropArea: 0.8, // Taille initiale du cadre (80%)
+        movable: true,
+        rotatable: false, // Désactiver rotation
+        scalable: false, // Désactiver échelle image (zoom via cropbox)
+        zoomable: true, // Permet de zoomer l'image
+        zoomOnWheel: true,
+        guides: true, // Affiche la grille 3x3 par défaut
+        background: false, // Fond transparent derrière l'image
+        responsive: true, // S'adapte aux changements de taille
+        // checkOrientation: false, // Si problèmes avec images mobiles tournées
+        // Pour la grille 50x50 et magnétisme: PAS D'OPTION SIMPLE.
+        // Nécessiterait des plugins ou du code custom sur les events 'cropmove', 'crop'. À voir plus tard.
+    });
+    console.log("Cropper.js initialisé.");
+    updateStatus("Ajustez le cadre de recadrage.", "info");
+}
+
+// Annule l'opération de recadrage
+function cancelCropping() {
+    console.log("Annulation du recadrage.");
+    if (cropperInstance) {
+        cropperInstance.destroy(); // Détruit l'instance Cropper
+        cropperInstance = null;
+    }
+    currentCroppingImage = null;
+    resetModalToActionView(); // Restaure l'affichage normal de la modale
+    updateStatus("Recadrage annulé.", "info");
+}
+
+// Réinitialise la modal à son état initial (vue Swiper, boutons actions)
+function resetModalToActionView() {
+     if (modalCropperContainer) modalCropperContainer.style.display = 'none'; // Cache Cropper
+     if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'none'; // Cache Valider/Annuler
+     if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'none';
+
+     if (modalSwiperContainer) modalSwiperContainer.style.display = 'block'; // Montre Swiper
+     if (modalPrevBtn) modalPrevBtn.style.display = 'block'; // Montre nav Swiper (état géré par Swiper)
+     if (modalNextBtn) modalNextBtn.style.display = 'block';
+     if (modalImageInfo) modalImageInfo.style.display = 'block'; // Montre infos
+     if (modalCropBtn) modalCropBtn.style.display = 'inline-block'; // Montre bouton "Recadrer"
+     if (modalMockupBtn) modalMockupBtn.style.display = 'inline-block'; // Montre autres actions
+}
+
+
+// Valide le recadrage (pour l'instant, loggue les données)
+function validateCropping() {
+    if (!cropperInstance || !currentCroppingImage) {
+        console.error("Aucune instance Cropper ou image en cours pour valider.");
+        return;
+    }
+
+    // Récupère les données du recadrage (arrondies à l'entier le plus proche)
+    const cropData = cropperInstance.getData(true);
+    console.log("Données de Recadrage:", cropData);
+    console.log("Image Originale:", currentCroppingImage);
+
+    // TODO: Étape suivante -> Envoyer ces données à N8N
+
+    // Pour l'instant, on affiche une alerte et on annule le mode crop
+    alert(`Recadrage demandé pour Image ${currentCroppingImage.id}:\nX: ${cropData.x}, Y: ${cropData.y}\nLargeur: ${cropData.width}, Hauteur: ${cropData.height}\n(Logique d'envoi à implémenter)`);
+
+    // Optionnel: Revenir à la vue normale après validation (ou laisser en mode crop?)
+    cancelCropping(); // Pour l'instant on revient en arrière après l'alerte
+    updateStatus("Données de recadrage prêtes (voir console). Envoi à implémenter.", "info");
+}
+
 // --- Récupération Initiale des Données ---
 const fetchProductData = async () => {
     updateStatus("Récupération des données produit...", 'info');
