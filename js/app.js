@@ -1,23 +1,28 @@
 // js/app.js - V5: Assignation Exclusive & Retour au Carousel
 
-// --- URLs N8N --- (Vérifie qu'elles sont toujours bonnes)
+// --- URLs N8N ---
 const N8N_GET_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/get-product-data';
 const N8N_UPDATE_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/update-product';
+// TODO: Ajouter l'URL du nouveau webhook pour le recadrage
+// const N8N_CROP_IMAGE_WEBHOOK_URL = 'URL_DU_WEBHOOK_RECAGRAGE';
 
 // --- Variables Globales ---
 let currentProductId = null;
 let allImageData = [];
 let sortableCarousel = null;
 let sortableZones = {};
-let modalSwiperInstance = null; // Instance Swiper pour la modale
-let modalImageList = []; // Liste des images affichées dans la modale
-let currentModalIndex = 0; // Index de l'image affichée dans la modale
+let modalSwiperInstance = null;
+let modalImageList = [];
+let currentModalIndex = 0;
+let cropperInstance = null; // Instance Cropper.js active
+let currentCroppingImage = null; // Données de l'image en cours de recadrage
 
 // --- Références aux Éléments DOM ---
 let productIdElement, productNameElement, saveChangesButton, statusElement;
 let dropzoneMain, dropzoneGallery, dropzoneCustom;
 let imageCarouselContainer, imageCarousel;
 let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions; // Ajout swiper wrapper & actions
+let modalCropperContainer, imageToCropElement, modalCropBtn, modalMockupBtn, modalCropValidateBtn, modalCropCancelBtn;
 
 // --- Fonctions Utilitaires ---
 
@@ -427,6 +432,8 @@ function openImageModal(imageId) {
          return; // Ne pas afficher la modal si Swiper échoue
     }
 
+    // Assurer l'état initial des boutons d'action et du cropper
+    resetModalToActionView(); // Réinitialise l'affichage (cache cropper, montre actions)
 
     // 6. Afficher la modal
     if (modalOverlay) modalOverlay.style.display = 'flex';
@@ -441,7 +448,12 @@ function closeModal() {
         modalSwiperInstance = null;
          console.log("Instance Swiper détruite.");
     }
-     console.log("Modal fermée.");
+     if (cropperInstance) { // Détruit Cropper s'il était actif
+        cropperInstance.destroy();
+        cropperInstance = null;
+    }
+    currentCroppingImage = null; // Oublie l'image en cours de recadrage
+    console.log("Modal fermée et instances nettoyées.");
 }
 
 // Gestionnaire de Clic pour le bouton Réglages (⚙️) - Appelle openImageModal
