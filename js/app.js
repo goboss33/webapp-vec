@@ -327,41 +327,120 @@ const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
     }
 };
 
-// --- NOUVELLE Logique de la Modal ---
+// --- Logique de la Modal (Mise à jour pour Swiper) ---
 
-// Ouvre la modal et affiche l'image correspondante
+// Met à jour les infos affichées sous l'image dans la modale
+function updateModalInfo(index) {
+    if (index >= 0 && index < modalImageList.length) {
+        const imageData = modalImageList[index];
+        if (modalImageId) modalImageId.textContent = imageData.id;
+        if (modalImageRoles) modalImageRoles.textContent = imageData.uses.join(', ') || 'Aucun';
+        currentModalIndex = index; // Met à jour l'index courant
+        console.log(`Modal info mise à jour pour slide ${index}, ID: ${imageData.id}`);
+
+        // TODO: Mettre à jour l'état des boutons d'action si besoin
+        // (par ex, désactiver "Générer Mockup" si déjà fait)
+    }
+}
+
+// Ouvre la modal et initialise Swiper
 function openImageModal(imageId) {
     console.log(`Ouverture modal pour image ID: ${imageId}`);
-    // Trouve les données complètes de l'image dans notre tableau global
-    const imageData = allImageData.find(img => img.id.toString() === imageId);
+    // 1. Déterminer la liste d'images à afficher
+    // Pour l'instant, on affiche TOUTES les images du produit
+    // TODO: Plus tard, on pourrait affiner pour n'afficher que celles de la zone cliquée + carousel ?
+    modalImageList = [...allImageData]; // Copie de toutes les images
 
-    if (!imageData) {
-        console.error(`Données non trouvées pour l'image ID ${imageId}`);
-        updateStatus(`Erreur: Impossible de trouver les données pour l'image ${imageId}.`, 'error');
+    // 2. Trouver l'index de départ
+    const initialIndex = modalImageList.findIndex(img => img.id.toString() === imageId);
+    if (initialIndex === -1) {
+        console.error(`Image ID ${imageId} non trouvée dans modalImageList.`);
+        updateStatus(`Erreur: image ${imageId} non trouvée.`, 'error');
         return;
     }
+    currentModalIndex = initialIndex;
+    console.log(`Index initial: ${initialIndex}`);
 
-    // Met à jour le contenu de la modal AVANT de l'afficher
-    if (modalImage) {
-         modalImage.src = imageData.url; // Affiche l'image cliquée
-         modalImage.alt = `Image ID ${imageId} en grand`;
+    // 3. Peupler le wrapper Swiper dynamiquement
+    if (modalSwiperWrapper) {
+        modalSwiperWrapper.innerHTML = ''; // Vider les anciens slides
+        modalImageList.forEach(imageData => {
+            const slide = document.createElement('div');
+            slide.className = 'swiper-slide';
+            const img = document.createElement('img');
+            img.src = imageData.url;
+            img.alt = `Image ID ${imageData.id}`;
+            // Lazy loading natif ou Swiper ? Swiper a des options pour ça.
+             img.loading = 'lazy'; // Ajout lazy loading simple
+            slide.appendChild(img);
+            modalSwiperWrapper.appendChild(slide);
+        });
+        console.log(`${modalImageList.length} slides créés pour Swiper.`);
+    } else {
+         console.error("Wrapper Swiper (#modal-swiper-wrapper) non trouvé !");
+         return;
     }
-    if (modalImageId) modalImageId.textContent = imageData.id; // Affiche l'ID
-    if (modalImageRoles) modalImageRoles.textContent = imageData.uses.join(', ') || 'Aucun'; // Affiche les rôles
 
-    // Logique de navigation Préc/Suiv (pour plus tard)
-    // Pour l'instant, on désactive les boutons
-    if (modalPrevBtn) modalPrevBtn.style.visibility = 'hidden'; // Ou disabled = true
-    if (modalNextBtn) modalNextBtn.style.visibility = 'hidden'; // Ou disabled = true
-    // TODO: Stocker l'ID courant et la liste d'images source pour la navigation future
+    // 4. Détruire l'ancienne instance Swiper si elle existe
+    if (modalSwiperInstance) {
+        modalSwiperInstance.destroy(true, true);
+        modalSwiperInstance = null;
+         console.log("Ancienne instance Swiper détruite.");
+    }
 
-    // Affiche la modal (en changeant le display CSS)
+    // 5. Initialiser Swiper
+    try {
+         modalSwiperInstance = new Swiper('.modal-swiper', {
+             // Options Swiper
+             initialSlide: initialIndex, // Commence sur l'image cliquée
+             spaceBetween: 10, // Espace entre slides (si visibles)
+             // Navigation avec nos boutons personnalisés
+             navigation: {
+               nextEl: '#modal-next-btn',
+               prevEl: '#modal-prev-btn',
+             },
+              // Optionnel: autres modules utiles
+              keyboard: { // Contrôle clavier
+                enabled: true,
+              },
+             // lazy: true, // Chargement lazy des images géré par Swiper
+             // loop: modalImageList.length > 1, // Boucle si plus d'une image?
+             // observer: true, // Met à jour Swiper si le DOM change (utile?)
+             // observeParents: true,
+
+             // Événement quand le slide change
+             on: {
+                 slideChange: function () {
+                     console.log(`Slide changé vers index: ${this.activeIndex}`);
+                     updateModalInfo(this.activeIndex); // Met à jour les infos (ID, Rôles)
+                 },
+                  init: function() {
+                      // Met à jour les infos pour le slide initial juste après l'init
+                      updateModalInfo(this.activeIndex);
+                       console.log("Swiper initialisé.");
+                  }
+             },
+         });
+    } catch (e) {
+         console.error("Erreur lors de l'initialisation de Swiper:", e);
+         updateStatus("Erreur initialisation Swiper.", 'error');
+         return; // Ne pas afficher la modal si Swiper échoue
+    }
+
+
+    // 6. Afficher la modal
     if (modalOverlay) modalOverlay.style.display = 'flex';
 }
 
-// Ferme la modal
+// Ferme la modal et détruit Swiper
 function closeModal() {
-    if (modalOverlay) modalOverlay.style.display = 'none'; // Cache la modal
+    if (modalOverlay) modalOverlay.style.display = 'none';
+    // Détruire l'instance Swiper pour libérer la mémoire et éviter conflits
+    if (modalSwiperInstance) {
+        modalSwiperInstance.destroy(true, true); // true, true nettoie tout (listeners, styles)
+        modalSwiperInstance = null;
+         console.log("Instance Swiper détruite.");
+    }
      console.log("Modal fermée.");
 }
 
