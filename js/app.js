@@ -885,8 +885,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveChangesButton) saveChangesButton.addEventListener('click', handleSaveChanges);
     // NOUVEAUX: Boutons d'action dans la modale
     if (modalCropBtn) modalCropBtn.addEventListener('click', startCropping);
-    if (modalCropValidateBtn) modalCropValidateBtn.addEventListener('click', validateCropping);
-    if (modalCropCancelBtn) modalCropCancelBtn.addEventListener('click', cancelCropping);
+    // Dans DOMContentLoaded, modifier les listeners :
+     if (modalCropValidateBtn) {
+         modalCropValidateBtn.addEventListener('click', () => {
+             console.log("Clic détecté sur Valider Recadrage"); // Log de test
+             validateCropping();
+         });
+     }
+     if (modalCropCancelBtn) {
+         modalCropCancelBtn.addEventListener('click', () => {
+             console.log("Clic détecté sur Annuler Recadrage"); // Log de test
+             cancelCropping();
+         });
+     }
     // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration); // Pour plus tard
 
     // Note: Les listeners pour SortableJS sont ajoutés dans initializeSortable
