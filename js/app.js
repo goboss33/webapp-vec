@@ -3,8 +3,8 @@
 // --- URLs N8N ---
 const N8N_GET_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/get-product-data';
 const N8N_UPDATE_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/update-product';
-// TODO: Ajouter l'URL du nouveau webhook pour le recadrage
-// const N8N_CROP_IMAGE_WEBHOOK_URL = 'URL_DU_WEBHOOK_RECAGRAGE';
+
+const N8N_CROP_IMAGE_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/crop-n-replace-img';
 
 // --- Variables Globales ---
 let currentProductId = null;
@@ -566,6 +566,161 @@ function cancelCropping() {
     resetModalToActionView(); // Restaure l'affichage normal de la modale
     updateStatus("Recadrage annulé.", "info");
 }
+
+// Met à jour l'URL d'une image partout dans l'UI et dans les données
+function updateImageAfterCrop(imageId, newImageUrl) {
+    console.log(`Mise à jour URL pour Image ID ${imageId} vers ${newImageUrl}`);
+
+    // 1. Mettre à jour dans notre tableau de données global
+    const imageIndexInData = allImageData.findIndex(img => img.id.toString() === imageId);
+    if (imageIndexInData !== -1) {
+        allImageData[imageIndexInData].url = newImageUrl;
+        // Si l'image avait aussi une URL de thumbnail différente (peu probable ici), on la mettrait aussi à jour
+    }
+
+    // 2. Mettre à jour dans le carousel principal
+    const carouselItemContainer = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`);
+    if (carouselItemContainer) {
+        const imgInCarousel = carouselItemContainer.querySelector('img');
+        if (imgInCarousel) imgInCarousel.src = newImageUrl;
+        carouselItemContainer.dataset.imageUrl = newImageUrl; // Met à jour l'URL stockée aussi
+    }
+
+    // 3. Mettre à jour dans les zones de dépôt (toutes)
+    document.querySelectorAll(`.thumbnail-wrapper[data-image-id="${imageId}"]`).forEach(wrapper => {
+        const imgInZone = wrapper.querySelector('.img-thumbnail');
+        if (imgInZone) imgInZone.src = newImageUrl;
+        wrapper.dataset.imageUrl = newImageUrl; // Met à jour l'URL stockée aussi
+    });
+
+    // 4. Mettre à jour dans la modale Swiper (si elle est ouverte ou rouverte)
+    // Il faut trouver le bon slide et changer le src de l'image dedans
+    // Swiper peut nécessiter une mise à jour pour voir le changement si on ne le détruit pas
+    if (modalSwiperInstance && modalSwiperWrapper) {
+        const slideIndex = modalImageList.findIndex(img => img.id.toString() === imageId);
+        if (slideIndex !== -1 && modalSwiperInstance.slides[slideIndex]) {
+             const imgInSlide = modalSwiperInstance.slides[slideIndex].querySelector('img');
+             if (imgInSlide) imgInSlide.src = newImageUrl;
+             console.log(`URL mise à jour dans Swiper slide index ${slideIndex}`);
+             // modalSwiperInstance.update(); // Peut être nécessaire si Swiper ne refresh pas auto
+        }
+         // Mettre aussi à jour l'image si c'est celle affichée actuellement HORS Swiper (si on changeait le DOM)
+         // Mais comme on revient à la vue Swiper, c'est géré au dessus.
+    }
+    console.log(`Toutes les instances de l'image ${imageId} mises à jour avec la nouvelle URL.`);
+}
+
+// Fonction qui appelle le workflow n8n pour le recadrage
+async function triggerCropWorkflow(imageData, cropData) {
+    console.log(`Appel du workflow N8N pour recadrer l'image ID: ${imageData.id}`);
+    updateStatus(`Recadrage image ${imageData.id} en cours...`, 'info');
+    // Désactiver les boutons pendant l'appel
+    if(modalCropValidateBtn) modalCropValidateBtn.disabled = true;
+    if(modalCropCancelBtn) modalCropCancelBtn.disabled = true;
+
+    const payload = {
+        productId: currentProductId, // Peut être utile pour nommer/classer côté WP
+        imageId: imageData.id,
+        imageUrl: imageData.url, // URL originale
+        crop: { // Coordonnées (entières)
+            x: Math.round(cropData.x),
+            y: Math.round(cropData.y),
+            width: Math.round(cropData.width),
+            height: Math.round(cropData.height)
+        }
+        // Ajouter targetWidth/Height ici si on veut un recadrage à taille fixe (ex: 1024)
+        // targetWidth: 1024,
+        // targetHeight: 1024
+    };
+
+    // Vérifie si l'URL du webhook est définie
+    if (!N8N_CROP_IMAGE_WEBHOOK_URL || N8N_CROP_IMAGE_WEBHOOK_URL === 'YOUR_CROP_IMAGE_WEBHOOK_URL_HERE') {
+        console.error("URL du webhook de recadrage non configurée !");
+        updateStatus("Erreur: URL du webhook de recadrage manquante.", "error");
+        // Simuler une réponse d'échec pour débloquer l'UI
+         if(modalCropValidateBtn) modalCropValidateBtn.disabled = false;
+         if(modalCropCancelBtn) modalCropCancelBtn.disabled = false;
+        throw new Error("URL du webhook de recadrage non configurée.");
+    }
+
+
+    // --- Appel Fetch Réel (à décommenter quand le workflow N8N est prêt) ---
+    /*
+    const response = await fetch(N8N_CROP_IMAGE_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        let errorMsg = `Erreur serveur n8n (crop): ${response.status}`;
+        try {
+            const errorData = await response.json();
+            errorMsg = errorData.message || JSON.stringify(errorData);
+        } catch (e) { console.warn("Impossible de parser l'erreur JSON n8n (crop)."); }
+        throw new Error(errorMsg);
+    }
+
+    const result = await response.json(); // Ex: { status: 'success', newImageUrl: '...', message: '...' }
+    console.log("Réponse du workflow recadrage:", result);
+    if (!result || result.status !== 'success' || !result.newImageUrl) {
+        throw new Error(result.message || "La réponse du workflow de recadrage est invalide.");
+    }
+    return result; // Renvoyer le résultat (contenant newImageUrl)
+    */
+
+    // --- Simulation en attendant le workflow N8N ---
+    console.warn("APPEL N8N SIMULÉ - Aucune image réellement recadrée.");
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simule délai réseau/traitement
+    // Simule une nouvelle URL (ajoute juste un timestamp pour la déco)
+    const simulatedNewUrl = `${imageData.url}?cropped=${Date.now()}`;
+    if(modalCropValidateBtn) modalCropValidateBtn.disabled = false; // Réactiver après simulation
+    if(modalCropCancelBtn) modalCropCancelBtn.disabled = false;
+    return { status: 'success', newImageUrl: simulatedNewUrl, message: 'Recadrage simulé réussi !' };
+    // --- Fin Simulation ---
+}
+
+// Valide le recadrage : récupère data, appelle workflow, met à jour UI
+async function validateCropping() { // Ajout de async ici
+    if (!cropperInstance || !currentCroppingImage) {
+        console.error("Aucune instance Cropper ou image pour valider.");
+        return;
+    }
+
+    // Récupère les données du recadrage (arrondies)
+    const cropData = cropperInstance.getData(true);
+    console.log("Données de Recadrage validées:", cropData);
+    console.log("Image Originale:", currentCroppingImage);
+
+    // Désactiver les boutons et montrer chargement (géré dans triggerCropWorkflow)
+    updateStatus(`Recadrage image ${currentCroppingImage.id} en cours...`, 'info');
+
+    try {
+        // Appeler le workflow N8N (qui est async)
+        const result = await triggerCropWorkflow(currentCroppingImage, cropData);
+
+        // Si succès (réel ou simulé)
+        if (result && result.status === 'success' && result.newImageUrl) {
+            // Mettre à jour toutes les instances de l'image dans l'UI
+            updateImageAfterCrop(currentCroppingImage.id.toString(), result.newImageUrl);
+            updateStatus(result.message || "Image recadrée avec succès !", 'success');
+        } else {
+            // Si triggerCropWorkflow renvoie une erreur ou format incorrect
+             throw new Error(result.message || "Erreur inconnue lors du recadrage.");
+        }
+
+    } catch (error) {
+        // Gérer les erreurs venant de triggerCropWorkflow
+        console.error("Échec du processus de recadrage:", error);
+        updateStatus(`Erreur recadrage: ${error.message}`, 'error');
+        // L'UI est peut-être déjà réinitialisée par triggerCropWorkflow en cas d'erreur là-bas
+    } finally {
+        // Dans tous les cas (succès ou échec géré), on revient à la vue normale de la modale
+        // Note: La réactivation des boutons est maintenant dans triggerCropWorkflow ou ici si on veut
+        cancelCropping(); // Réutilise cancel pour nettoyer Cropper et restaurer la vue
+    }
+}
+
 
 // Réinitialise la modal à son état initial (vue Swiper, boutons actions)
 function resetModalToActionView() {
