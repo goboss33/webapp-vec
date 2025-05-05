@@ -736,29 +736,6 @@ function resetModalToActionView() {
      if (modalMockupBtn) modalMockupBtn.style.display = 'inline-block'; // Montre autres actions
 }
 
-
-// Valide le recadrage (pour l'instant, loggue les données)
-function validateCropping() {
-    if (!cropperInstance || !currentCroppingImage) {
-        console.error("Aucune instance Cropper ou image en cours pour valider.");
-        return;
-    }
-
-    // Récupère les données du recadrage (arrondies à l'entier le plus proche)
-    const cropData = cropperInstance.getData(true);
-    console.log("Données de Recadrage:", cropData);
-    console.log("Image Originale:", currentCroppingImage);
-
-    // TODO: Étape suivante -> Envoyer ces données à N8N
-
-    // Pour l'instant, on affiche une alerte et on annule le mode crop
-    alert(`Recadrage demandé pour Image ${currentCroppingImage.id}:\nX: ${cropData.x}, Y: ${cropData.y}\nLargeur: ${cropData.width}, Hauteur: ${cropData.height}\n(Logique d'envoi à implémenter)`);
-
-    // Optionnel: Revenir à la vue normale après validation (ou laisser en mode crop?)
-    cancelCropping(); // Pour l'instant on revient en arrière après l'alerte
-    updateStatus("Données de recadrage prêtes (voir console). Envoi à implémenter.", "info");
-}
-
 // --- Récupération Initiale des Données ---
 const fetchProductData = async () => {
     updateStatus("Récupération des données produit...", 'info');
