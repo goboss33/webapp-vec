@@ -74,8 +74,16 @@
                 <p>ID: <span id="modal-image-id"></span></p>
                 <p>Rôles Actuels: <span id="modal-image-roles"></span></p>
             </div>
+
+            <div id="modal-cropper-container" style="display: none; margin-bottom: 15px; max-height: 50vh; overflow: hidden;">
+                 <img id="image-to-crop" src="" alt="Image à recadrer" style="max-width: 100%;">
+            </div>
+
             <div id="modal-actions">
-                <p>Actions futures ici...</p>
+                 <button id="modal-crop-btn" class="action-btn">Recadrer</button>
+                 <button id="modal-mockup-btn" class="action-btn" disabled>Générer Mockup (Bientôt)</button>
+                 <button id="modal-crop-validate-btn" class="action-btn success-btn" style="display: none;">Valider Recadrage</button>
+                 <button id="modal-crop-cancel-btn" class="action-btn cancel-btn" style="display: none;">Annuler</button>
             </div>
         </div>
     </div>
