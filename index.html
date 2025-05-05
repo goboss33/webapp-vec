@@ -50,6 +50,24 @@
 
     <button id="saveChangesButton">Enregistrer Modifications</button> <p id="status" class="status-message"></p>
 
+    <div id="image-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <button id="modal-close-btn" class="modal-close">&times;</button>
+            <h2>Réglages de l'Image</h2>
+            <div class="modal-image-container">
+                <button id="modal-prev-btn" class="modal-nav-btn">&lt;</button>
+                <img id="modal-image" src="" alt="Image en grand">
+                <button id="modal-next-btn" class="modal-nav-btn">&gt;</button>
+            </div>
+            <div id="modal-image-info">
+                <p>ID: <span id="modal-image-id"></span></p>
+                <p>Rôles Actuels: <span id="modal-image-roles"></span></p>
+                </div>
+            <div id="modal-actions">
+                <p>Actions futures ici...</p>
+            </div>
+        </div>
+    </div>
     <script src="js/app.js"></script>
 </body>
 </html>
