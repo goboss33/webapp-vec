@@ -288,6 +288,51 @@ function initializeSortable() {
      console.log("Initialisation de SortableJS terminée.");
 }
 
+// --- NOUVELLE Logique de la Modal ---
+
+// Ouvre la modal et affiche l'image correspondante
+function openImageModal(imageId) {
+    console.log(`Ouverture modal pour image ID: ${imageId}`);
+    // Trouve les données complètes de l'image dans notre tableau global
+    const imageData = allImageData.find(img => img.id.toString() === imageId);
+
+    if (!imageData) {
+        console.error(`Données non trouvées pour l'image ID ${imageId}`);
+        updateStatus(`Erreur: Impossible de trouver les données pour l'image ${imageId}.`, 'error');
+        return;
+    }
+
+    // Met à jour le contenu de la modal AVANT de l'afficher
+    if (modalImage) {
+         modalImage.src = imageData.url; // Affiche l'image cliquée
+         modalImage.alt = `Image ID ${imageId} en grand`;
+    }
+    if (modalImageId) modalImageId.textContent = imageData.id; // Affiche l'ID
+    if (modalImageRoles) modalImageRoles.textContent = imageData.uses.join(', ') || 'Aucun'; // Affiche les rôles
+
+    // Logique de navigation Préc/Suiv (pour plus tard)
+    // Pour l'instant, on désactive les boutons
+    if (modalPrevBtn) modalPrevBtn.style.visibility = 'hidden'; // Ou disabled = true
+    if (modalNextBtn) modalNextBtn.style.visibility = 'hidden'; // Ou disabled = true
+    // TODO: Stocker l'ID courant et la liste d'images source pour la navigation future
+
+    // Affiche la modal (en changeant le display CSS)
+    if (modalOverlay) modalOverlay.style.display = 'flex';
+}
+
+// Ferme la modal
+function closeModal() {
+    if (modalOverlay) modalOverlay.style.display = 'none'; // Cache la modal
+     console.log("Modal fermée.");
+}
+
+// Gestionnaire de Clic pour le bouton Réglages (⚙️) - Appelle openImageModal
+function handleSettingsClick(event) {
+    const button = event.currentTarget;
+    const imageId = button.dataset.imageId; // Récupère l'ID depuis le bouton
+    console.log(`Clic sur Réglages pour Image ID: ${imageId}`);
+    openImageModal(imageId); // Ouvre la modal pour cette image
+}
 
 // --- Récupération Initiale des Données ---
 const fetchProductData = async () => {
