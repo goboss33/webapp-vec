@@ -475,11 +475,12 @@ const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
 };
 
 
-// --- Initialisation de l'application (DOMContentLoaded) ---
-// Légèrement modifié pour vider les instances Sortable au début de fetchProductData
+// --- Initialisation de l'application ---
 document.addEventListener('DOMContentLoaded', () => {
-    // ... (Initialisation TG, récupération éléments DOM - inchangé) ...
+    // ... (Init TG SDK - inchangé) ...
     if (window.Telegram && window.Telegram.WebApp) { /*...*/ }
+
+    // Récupère les références aux éléments DOM (y compris ceux de la modal)
     productIdElement = document.getElementById('productId');
     productNameElement = document.getElementById('productName');
     saveChangesButton = document.getElementById('saveChangesButton');
@@ -489,6 +490,14 @@ document.addEventListener('DOMContentLoaded', () => {
     dropzoneCustom = document.getElementById('dropzone-custom');
     imageCarouselContainer = document.getElementById('image-carousel-container');
     imageCarousel = document.getElementById('image-carousel');
+    // Éléments de la modal
+    modalOverlay = document.getElementById('image-modal');
+    modalCloseBtn = document.getElementById('modal-close-btn');
+    modalImage = document.getElementById('modal-image');
+    modalImageId = document.getElementById('modal-image-id');
+    modalImageRoles = document.getElementById('modal-image-roles');
+    modalPrevBtn = document.getElementById('modal-prev-btn');
+    modalNextBtn = document.getElementById('modal-next-btn');
 
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
@@ -496,12 +505,29 @@ document.addEventListener('DOMContentLoaded', () => {
      if (!currentProductId) { /* ... gestion erreur ... */ return; }
     if (productIdElement) productIdElement.textContent = currentProductId;
 
-    // Attacher l'écouteur au bouton Enregistrer (inchangé)
+    // --- Attacher les NOUVEAUX écouteurs pour la modal ---
+    if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', closeModal);
+    } else { console.error("Bouton Fermer Modal non trouvé!"); }
+
+    if (modalOverlay) {
+        // Ferme si on clique sur le fond noir (l'overlay lui-même)
+        modalOverlay.addEventListener('click', (event) => {
+            if (event.target === modalOverlay) {
+                closeModal();
+            }
+        });
+    } else { console.error("Overlay Modal non trouvé!"); }
+
+    // --- Attacher les écouteurs existants ---
     if (saveChangesButton) {
         saveChangesButton.addEventListener('click', handleSaveChanges);
     } else { /* ... erreur ... */ }
 
-    // Récupérer les données initiales (ce qui appellera initializeSortable une fois le DOM peuplé)
+    // Note: Les listeners pour SortableJS sont ajoutés dans initializeSortable
+    // Note: Les listeners pour les boutons 'x' et '⚙️' sont ajoutés dans createThumbnail/createCarouselItem
+
+    // Récupérer les données initiales
     fetchProductData();
 
 }); // Fin de DOMContentLoaded
