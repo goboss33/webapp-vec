@@ -469,55 +469,91 @@ function handleSettingsClick(event) {
 // Initialise l'interface de recadrage
 function startCropping() {
     if (currentModalIndex < 0 || currentModalIndex >= modalImageList.length) {
-        console.error("Index d'image modal invalide pour démarrer le recadrage.");
+        console.error("Index modal invalide.");
         return;
     }
-    currentCroppingImage = modalImageList[currentModalIndex]; // Stocke l'image à recadrer
+    currentCroppingImage = modalImageList[currentModalIndex];
     console.log(`Démarrage recadrage pour Image ID: ${currentCroppingImage.id}`);
 
-    // 1. Préparer l'interface visuelle
-    if (modalSwiperContainer) modalSwiperContainer.style.display = 'none'; // Cache Swiper
-    if (modalPrevBtn) modalPrevBtn.style.display = 'none'; // Cache nav Swiper
+    // 1. Préparer l'interface visuelle (cacher Swiper, montrer boutons Valider/Annuler)
+    if (modalSwiperContainer) modalSwiperContainer.style.display = 'none';
+    if (modalPrevBtn) modalPrevBtn.style.display = 'none';
     if (modalNextBtn) modalNextBtn.style.display = 'none';
-    if (modalImageInfo) modalImageInfo.style.display = 'none'; // Cache infos sous Swiper
-    if (modalCropBtn) modalCropBtn.style.display = 'none'; // Cache bouton "Recadrer"
-    if (modalMockupBtn) modalMockupBtn.style.display = 'none'; // Cache autres actions
+    if (modalImageInfo) modalImageInfo.style.display = 'none';
+    if (modalCropBtn) modalCropBtn.style.display = 'none';
+    if (modalMockupBtn) modalMockupBtn.style.display = 'none';
+    if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'none'; // Cacher aussi au début
+    if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'none';
 
+    // 2. Préparer l'image et le conteneur pour Cropper
     if (modalCropperContainer && imageToCropElement) {
-        imageToCropElement.src = currentCroppingImage.url; // Met l'image dans l'élément dédié
-        modalCropperContainer.style.display = 'block'; // Affiche le conteneur du cropper
-    } else {
-        console.error("Éléments DOM pour Cropper non trouvés.");
-        return;
-    }
-    if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'inline-block'; // Affiche Valider
-    if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'inline-block'; // Affiche Annuler
+        // Détruire l'ancienne instance Cropper si elle existe
+        if (cropperInstance) {
+            cropperInstance.destroy();
+            cropperInstance = null;
+            console.log("Ancienne instance Cropper détruite.");
+        }
+         // Réinitialiser l'état de l'image avant chargement
+         imageToCropElement.src = ""; // Important pour redéclencher onload
+         imageToCropElement.style.opacity = '0';
+         imageToCropElement.classList.remove('loaded');
+         modalCropperContainer.style.display = 'block'; // Afficher le conteneur MAINTENANT
 
-    // 2. Initialiser Cropper.js
-    if (cropperInstance) { // Détruire l'ancienne instance si elle existe
-        cropperInstance.destroy();
+        // 3. Attendre que l'image soit chargée AVANT d'initialiser Cropper
+        imageToCropElement.onload = () => {
+            console.log("Image chargée dans le conteneur Cropper.");
+            imageToCropElement.style.opacity = '1'; // Afficher l'image chargée
+            imageToCropElement.classList.add('loaded');
+
+            // 4. Initialiser Cropper.js sur l'image chargée
+            try {
+                 cropperInstance = new Cropper(imageToCropElement, {
+                    viewMode: 1, // Important: limite le cadre à la zone de l'image
+                    dragMode: 'move',
+                    // aspectRatio: 1, // Pour forcer carré (décommenter si besoin)
+                    autoCropArea: 0.85,
+                    movable: true,
+                    rotatable: false,
+                    scalable: false,
+                    zoomable: true,
+                    zoomOnWheel: true,
+                    guides: true, // La grille 3x3
+                    background: false,
+                    responsive: true,
+                    // checkOrientation: false, // Peut être utile pour photos mobiles
+
+                    ready() { // Se déclenche quand Cropper est prêt
+                        console.log("Cropper.js est prêt !");
+                        // Afficher les boutons seulement MAINTENANT
+                         if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'inline-block';
+                         if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'inline-block';
+                         updateStatus("Ajustez le cadre de recadrage.", "info");
+                    }
+                 });
+             } catch(e) {
+                 console.error("Erreur initialisation Cropper.js:", e);
+                 updateStatus("Erreur initialisation Recadrage.", "error");
+                 cancelCropping(); // Annuler si Cropper échoue
+             }
+        };
+
+        // Gérer aussi le cas où l'image ne peut pas être chargée
+         imageToCropElement.onerror = () => {
+             console.error(`Erreur de chargement de l'image pour Cropper: ${currentCroppingImage.url}`);
+             updateStatus("Erreur: Impossible de charger l'image pour le recadrage.", "error");
+             cancelCropping(); // Annuler si l'image ne charge pas
+         };
+
+        // Définir la source de l'image (ce qui déclenche l'événement 'onload' ou 'onerror')
+        console.log(`Chargement de ${currentCroppingImage.url} pour Cropper...`);
+        imageToCropElement.src = currentCroppingImage.url;
+
+    } else {
+        console.error("Éléments DOM #modal-cropper-container ou #image-to-crop non trouvés.");
+        resetModalToActionView(); // Revenir à l'état normal
     }
-    cropperInstance = new Cropper(imageToCropElement, {
-        // Options Cropper.js :
-        viewMode: 1, // Ne pas sortir des limites de l'image
-        dragMode: 'move', // Permet de déplacer l'image sous le cadre
-        // aspectRatio: 1, // Pour forcer un carré (ex: 1/1). Mettre NaN pour libre.
-        autoCropArea: 0.8, // Taille initiale du cadre (80%)
-        movable: true,
-        rotatable: false, // Désactiver rotation
-        scalable: false, // Désactiver échelle image (zoom via cropbox)
-        zoomable: true, // Permet de zoomer l'image
-        zoomOnWheel: true,
-        guides: true, // Affiche la grille 3x3 par défaut
-        background: false, // Fond transparent derrière l'image
-        responsive: true, // S'adapte aux changements de taille
-        // checkOrientation: false, // Si problèmes avec images mobiles tournées
-        // Pour la grille 50x50 et magnétisme: PAS D'OPTION SIMPLE.
-        // Nécessiterait des plugins ou du code custom sur les events 'cropmove', 'crop'. À voir plus tard.
-    });
-    console.log("Cropper.js initialisé.");
-    updateStatus("Ajustez le cadre de recadrage.", "info");
 }
+
 
 // Annule l'opération de recadrage
 function cancelCropping() {
