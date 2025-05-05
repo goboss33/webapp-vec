@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn("SDK Telegram WebApp non détecté. Fonctionnement hors Telegram?");
     }
 
-    // Récupère les références aux éléments DOM (y compris ceux de la modal)
+    // Récupérer TOUS les éléments DOM nécessaires
     productIdElement = document.getElementById('productId');
     productNameElement = document.getElementById('productName');
     saveChangesButton = document.getElementById('saveChangesButton');
@@ -565,14 +565,16 @@ document.addEventListener('DOMContentLoaded', () => {
     dropzoneCustom = document.getElementById('dropzone-custom');
     imageCarouselContainer = document.getElementById('image-carousel-container');
     imageCarousel = document.getElementById('image-carousel');
-    // Éléments de la modal
+    // Éléments Modal
     modalOverlay = document.getElementById('image-modal');
     modalCloseBtn = document.getElementById('modal-close-btn');
-    modalImage = document.getElementById('modal-image');
+    // Note: On ne prend plus #modal-image directement mais le wrapper
+    modalSwiperWrapper = document.getElementById('modal-swiper-wrapper');
     modalImageId = document.getElementById('modal-image-id');
     modalImageRoles = document.getElementById('modal-image-roles');
     modalPrevBtn = document.getElementById('modal-prev-btn');
     modalNextBtn = document.getElementById('modal-next-btn');
+    modalActions = document.getElementById('modal-actions'); // Pour les futurs boutons
 
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
