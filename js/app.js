@@ -477,8 +477,16 @@ const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
 
 // --- Initialisation de l'application ---
 document.addEventListener('DOMContentLoaded', () => {
-    // ... (Init TG SDK - inchangé) ...
-    if (window.Telegram && window.Telegram.WebApp) { /*...*/ }
+    // Initialise le SDK Telegram SI il est disponible
+    if (window.Telegram && window.Telegram.WebApp) {
+        console.log("SDK Telegram WebApp détecté. Initialisation...");
+        Telegram.WebApp.ready(); // Indique à Telegram que la WebApp est chargée et prête
+        Telegram.WebApp.expand(); // Demande à la WebApp de s'agrandir à sa hauteur maximale
+        // Optionnel : Activer la confirmation avant de fermer la WebApp
+        // Telegram.WebApp.enableClosingConfirmation();
+    } else {
+        console.warn("SDK Telegram WebApp non détecté. Fonctionnement hors Telegram?");
+    }
 
     // Récupère les références aux éléments DOM (y compris ceux de la modal)
     productIdElement = document.getElementById('productId');
