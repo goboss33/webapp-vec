@@ -308,6 +308,44 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
 /* .carousel-image-container .settings-btn { display: none; } */
 
 
+/* --- Style pour le bouton Réglages --- */
+.settings-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.1em; /* Taille de l'icône engrenage */
+    padding: 2px 4px;
+    line-height: 1;
+    color: var(--tg-theme-hint-color, #555);
+    margin-left: 5px; /* Espace par rapport à l'info ID dans carousel */
+}
+.settings-btn:hover {
+    background-color: #eee;
+    border-color: #aaa;
+}
+/* Positionnement spécifique pour le bouton sur les miniatures */
+.thumbnail-wrapper .settings-btn {
+    position: absolute;
+    bottom: -7px; /* Ajuste pour le positionner */
+    right: -7px; /* Ajuste */
+    width: 18px; /* Taille similaire au bouton supprimer */
+    height: 18px;
+    font-size: 12px;
+    line-height: 14px; /* Ajuster */
+    background-color: rgba(0, 100, 200, 0.8); /* Bleu */
+    border-color: rgba(0,0,0,0.2);
+    color: white;
+     box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.thumbnail-wrapper .settings-btn:hover {
+     background-color: rgba(0, 120, 255, 0.9);
+}
+/* Cache le bouton réglage sur le carousel (temporaire si on veut que les actions soient que sur les vignettes) */
+/* Ou ajuste le style pour qu'il soit moins proéminent */
+/* .carousel-image-container .settings-btn { display: none; } */
+
+
 /* --- Styles pour la Modal --- */
 .modal-overlay {
     position: fixed; /* Reste en place même si on scrolle */
@@ -372,4 +410,43 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     max-height: 60vh; /* Hauteur max pour l'image */
     object-fit: contain; /* Pour voir toute l'image */
     margin: 0 auto; /* Centrer si moins large */
+}
+
+.modal-nav-btn {
+    background: none;
+    border: none;
+    font-size: 2em;
+    font-weight: bold;
+    color: var(--tg-theme-link-color, #007bff);
+    cursor: pointer;
+    padding: 0 10px;
+}
+.modal-nav-btn:hover {
+    opacity: 0.7;
+}
+/* Cacher les boutons si pas de navigation possible (sera géré en JS) */
+.modal-nav-btn[disabled] {
+    opacity: 0.3;
+    cursor: default;
+}
+
+
+#modal-image-info {
+    font-size: 0.9em;
+    color: var(--tg-theme-hint-color, #555);
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+}
+#modal-image-info p {
+    margin: 2px 0;
+}
+
+#modal-actions {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+    text-align: center;
+    /* Prendra la place restante si besoin et scrollera */
+    overflow-y: auto;
 }
