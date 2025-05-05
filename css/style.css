@@ -573,8 +573,33 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
 
 /* Conteneur pour l'image à recadrer */
 #modal-cropper-container {
-    width: 100%; /* Prend la largeur */
+    width: 100%;
     background-color: #222; /* Fond sombre pour voir les bords */
-    /* La hauteur max est définie inline ou par JS */
+    /* max-height: 50vh; */ /* ON RETIRE CETTE LIGNE */
+    overflow: hidden; /* Garder pour Cropper */
+    display: none; /* Reste caché initialement */
+    margin-bottom: 15px;
+    /* Laisser Cropper gérer la hauteur interne */
 }
-/* Cropper.js ajoutera ses propres styles, on n'a pas besoin de styler #image-to-crop ici */
+#image-to-crop {
+     display: block; /* Important pour que Cropper prenne les bonnes dimensions */
+     max-width: 100%; /* L'image prendra la largeur, Cropper gère le reste */
+     /* Pas de hauteur ou max-height ici */
+     opacity: 0; /* Cacher pendant le chargement */
+     transition: opacity 0.3s; /* Petite transition */
+}
+#image-to-crop.loaded {
+    opacity: 1; /* Afficher quand chargée */
+}
+.cropper-container {
+    direction: ltr;
+    font-size: 0;
+    line-height: 0;
+    position: relative;
+    -ms-touch-action: none;
+    touch-action: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
