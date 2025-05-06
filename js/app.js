@@ -23,6 +23,7 @@ let dropzoneMain, dropzoneGallery, dropzoneCustom;
 let imageCarouselContainer, imageCarousel;
 let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
 let modalCropperContainer, imageToCropElement, modalCropBtn, modalMockupBtn, modalCropValidateBtn, modalCropCancelBtn;
+let loadingOverlay;
 
 // --- Fonctions Utilitaires ---
 
@@ -725,6 +726,21 @@ async function validateCropping() { // Ajout de async ici
     }
 }
 
+// Nouvelles fonctions
+function showLoading(message = "Traitement en cours...") {
+    if (loadingOverlay) {
+         const p = loadingOverlay.querySelector('p');
+         if (p) p.textContent = message;
+         loadingOverlay.style.display = 'flex';
+    }
+    // Optionnel : désactiver les boutons principaux ?
+    if(saveChangesButton) saveChangesButton.disabled = true;
+}
+function hideLoading() {
+    if (loadingOverlay) loadingOverlay.style.display = 'none';
+     // Réactiver les boutons si besoin (géré aussi dans les finally des appels fetch)
+     // if(saveChangesButton) saveChangesButton.disabled = false;
+}
 
 // Réinitialise la modal à son état initial (vue Swiper, boutons actions)
 function resetModalToActionView() {
@@ -870,7 +886,8 @@ document.addEventListener('DOMContentLoaded', () => {
     modalMockupBtn = document.getElementById('modal-mockup-btn');
     modalCropValidateBtn = document.getElementById('modal-crop-validate-btn');
     modalCropCancelBtn = document.getElementById('modal-crop-cancel-btn');
-
+    loadingOverlay = document.getElementById('loading-overlay');
+    
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
     currentProductId = urlParams.get('productId');
@@ -884,7 +901,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bouton Sauver (rôles)
     if (saveChangesButton) saveChangesButton.addEventListener('click', handleSaveChanges);
     // NOUVEAUX: Boutons d'action dans la modale
-    if (modalCropBtn) modalCropBtn.addEventListener('click', startCropping);
+    if (modalCropBtn) modalCropBtn.addEventListener('click', startCropping);    
     // Dans DOMContentLoaded, modifier les listeners :
      if (modalCropValidateBtn) {
          modalCropValidateBtn.addEventListener('click', () => {
