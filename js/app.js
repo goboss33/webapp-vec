@@ -287,7 +287,7 @@ function initializeSortable() {
 
 // --- Enregistrement des Modifications ---
 // Elle collecte toujours les IDs depuis les .thumbnail-wrapper présents dans les zones au moment du clic.
-const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
+const handleSaveChanges = async () =>
     updateStatus("Enregistrement des modifications...", 'info');
     if(saveChangesButton) saveChangesButton.disabled = true;
 
@@ -535,8 +535,15 @@ function startCropping() {
                  });
                 
                  console.log("Instance Cropper.js créée.");
-                 if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'inline-block';
-                 if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'inline-block';
+                 // Afficher les boutons ET s'assurer qu'ils sont actifs
+                 if (modalCropValidateBtn) {
+                      modalCropValidateBtn.style.display = 'inline-block';
+                      modalCropValidateBtn.disabled = false; // Assure qu'il est actif
+                 }
+                 if (modalCropCancelBtn) {
+                      modalCropCancelBtn.style.display = 'inline-block';
+                      modalCropCancelBtn.disabled = false; // Assure qu'il est actif
+                 }
                  updateStatus("Ajustez le cadre de recadrage.", "info");
 
              } catch(e) {
