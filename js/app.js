@@ -608,8 +608,10 @@ function cancelCropping() {
     // Détacher les écouteurs pour éviter fuites mémoire ou doublons
     if(modalCropValidateBtn) modalCropValidateBtn.onclick = null;
     if(modalCropCancelBtn) modalCropCancelBtn.onclick = null;
+    // Cacher l'affichage des données de recadrage
+    if (cropperDataDisplay) cropperDataDisplay.style.display = 'none';
 
-    resetModalToActionView(); // Restaure l'affichage normal de la modale
+    resetModalToActionView();
     updateStatus("Recadrage annulé.", "info");
 }
 
@@ -758,8 +760,7 @@ function resetModalToActionView() {
      // Cache et désactive (par sécurité) les boutons de validation/annulation
      if (modalCropValidateBtn) { modalCropValidateBtn.style.display = 'none'; modalCropValidateBtn.disabled = true; }
      if (modalCropCancelBtn) { modalCropCancelBtn.style.display = 'none'; modalCropCancelBtn.disabled = true; }
-
-     // Affiche les éléments de la vue normale et active les boutons
+     if (cropperDataDisplay) cropperDataDisplay.style.display = 'none';
      if (modalSwiperContainer) modalSwiperContainer.style.display = 'block';
      if (modalPrevBtn) modalPrevBtn.style.display = 'block'; // Etat géré par Swiper
      if (modalNextBtn) modalNextBtn.style.display = 'block';
