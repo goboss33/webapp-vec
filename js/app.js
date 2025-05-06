@@ -17,6 +17,7 @@ let modalImageList = [];
 let currentModalIndex = 0;
 let cropperInstance = null; // Instance Cropper.js active
 let currentCroppingImage = null; // Données de l'image en cours de recadrage
+let currentEditActionContext = null;
 
 // --- Références aux Éléments DOM ---
 let productIdElement, productNameElement, saveChangesButton, statusElement;
@@ -26,6 +27,7 @@ let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalI
 let modalCropperContainer, imageToCropElement, modalCropBtn, modalMockupBtn, modalCropValidateBtn, modalCropCancelBtn;
 let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer; 
 let modalRemoveWatermarkBtn;
+let editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn;
 let loadingOverlay;
 
 // --- Fonctions Utilitaires ---
@@ -1047,7 +1049,10 @@ document.addEventListener('DOMContentLoaded', () => {
     cropperAspectRatioButtonsContainer = document.getElementById('cropper-aspect-ratio-buttons');        
     loadingOverlay = document.getElementById('loading-overlay');
     modalRemoveWatermarkBtn = document.getElementById('modal-remove-watermark-btn');
-    
+    editActionConfirmationOverlay = document.getElementById('edit-action-confirmation');
+    confirmActionReplaceBtn = document.getElementById('confirm-action-replace');
+    confirmActionNewBtn = document.getElementById('confirm-action-new');
+    confirmActionCancelBtn = document.getElementById('confirm-action-cancel');
     
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
@@ -1108,6 +1113,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Bouton Mockup (Action principale)
     // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration);
+
+    if (confirmActionReplaceBtn) confirmActionReplaceBtn.addEventListener('click', () => executeConfirmedAction('replace'));
+    if (confirmActionNewBtn) confirmActionNewBtn.addEventListener('click', () => executeConfirmedAction('new'));
+    if (confirmActionCancelBtn) confirmActionCancelBtn.addEventListener('click', hideEditActionConfirmation);
     
     // Récupérer les données initiales
     fetchProductData();
