@@ -309,7 +309,7 @@ const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
     console.log("Données envoyées à n8n:", payload);
 
     try {
-        showLoading()
+        showLoading();
         const response = await fetch(N8N_UPDATE_DATA_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -326,13 +326,14 @@ const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
         const result = await response.json();
         console.log("Réponse de n8n (Mise à jour):", result);
         updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
-        hideLoading()
+        hideLoading();
     } catch (error) {
         console.error("Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
-        hideLoading()
+        hideLoading();
     } finally {
         if(saveChangesButton) saveChangesButton.disabled = false;
+        hideLoading();
     }
 };
 
