@@ -817,6 +817,175 @@ async function handleRemoveWatermark() {
     // sera déplacé dans la nouvelle fonction executeConfirmedAction().
 }
 
+function showEditActionConfirmation() {
+    if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'flex';
+    // Optionnel: cacher les boutons d'action principaux de la modale pendant ce choix
+    if (modalActions) modalActions.style.display = 'none';
+    if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'none'; // Cacher si visible
+    if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'none';   // Cacher si visible
+    if (cropperDataDisplay) cropperDataDisplay.style.display = 'none';
+    if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'none';
+}
+
+function hideEditActionConfirmation() {
+    if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'none';
+    currentEditActionContext = null; // Réinitialiser le contexte
+    // Réafficher les bons boutons selon si on était en mode crop ou non
+    if (cropperInstance) { // Si on était en mode crop, réafficher les boutons de crop
+        if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'inline-block';
+        if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'inline-block';
+        if (cropperDataDisplay) cropperDataDisplay.style.display = 'block';
+        if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'flex';
+    } else { // Sinon, réafficher les actions principales de la modale
+        if (modalActions) modalActions.style.display = 'flex'; // ou 'block'
+    }
+}
+
+// Nouvelle fonction pour exécuter l'action après confirmation (remplacer ou nouvelle image)
+async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 'new'
+    if (!currentEditActionContext) {
+        console.error("Aucun contexte d'action d'édition trouvé pour exécuter.");
+        updateStatus("Erreur : Contexte d'action manquant.", "error");
+        hideEditActionConfirmation(); // S'assurer de cacher la sous-modale
+        // Restaurer l'état de la modale principale
+        if (cropperInstance) { // Si on était en mode crop, annuler proprement
+            cancelCropping();
+        } else { // Sinon, réinitialiser la vue modale standard
+            resetModalToActionView();
+        }
+        return;
+    }
+
+    const { type, imageData, payloadData } = currentEditActionContext;
+    let webhookUrl = '';
+    const basePayload = {
+        productId: currentProductId,
+        imageId: imageData.id, // L'ID de l'image originale (pour remplacement ou comme référence)
+        imageUrl: imageData.url.split('?')[0], // Envoyer l'URL de base
+        editMode: editMode // 'replace' ou 'new' -> sera utilisé par n8n
+    };
+
+    // Fusionner payloadData (spécifique à l'action, ex: données de crop) avec basePayload
+    const finalPayload = { ...basePayload, ...payloadData };
+
+    console.log(`Exécution de l'action: ${type}, Mode: ${editMode}, Payload:`, finalPayload);
+    showLoading(`Traitement de l'image (${type}, Mode: ${editMode})...`);
+    updateStatus(`Traitement (${type}, Mode: ${editMode}) en cours...`, 'info');
+    hideEditActionConfirmation(); // Cacher la sous-modale de confirmation maintenant que l'action est lancée
+
+    if (type === 'crop') {
+        webhookUrl = N8N_CROP_IMAGE_WEBHOOK_URL;
+    } else if (type === 'removeWatermark') {
+        webhookUrl = N8N_REMOVE_WATERMARK_WEBHOOK_URL;
+    }
+    // Bientôt: else if (type === 'mockup') { webhookUrl = N8N_MOCKUP_WEBHOOK_URL; }
+    else {
+        console.error(`Type d'action inconnu lors de l'exécution: ${type}`);
+        hideLoading();
+        updateStatus(`Erreur: Type d'action inconnu '${type}'.`, 'error');
+        if (cropperInstance) cancelCropping(); else resetModalToActionView();
+        return;
+    }
+
+    try {
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(finalPayload)
+        });
+
+        // Gestion complète de l'erreur HTTP
+        if (!response.ok) {
+            let errorMsg = `Erreur serveur n8n (${type}, ${editMode}): ${response.status} ${response.statusText}`;
+            try {
+                const errorData = await response.json();
+                // Si errorData.message existe, l'utiliser, sinon une sérialisation de l'erreur.
+                errorMsg = errorData.message || (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
+            } catch (e) {
+                // Si le corps de la réponse d'erreur n'est pas du JSON valide ou est vide
+                console.warn(`Impossible de parser la réponse d'erreur JSON de n8n pour ${type} (${response.status}). Corps de la réponse:`, await response.text().catch(() => '[corps illisible]'));
+                // errorMsg reste tel que défini au-dessus (status + statusText)
+            }
+            throw new Error(errorMsg); // Lance une erreur qui sera attrapée par le bloc catch plus bas
+        }
+
+        const result = await response.json();
+        console.log(`Réponse du workflow n8n (${type}, ${editMode}):`, result);
+
+        // Vérifier si la réponse contient bien ce qu'on attend
+        if (!result || result.status !== 'success' || !result.newImageUrl) {
+            throw new Error(result.message || `Réponse invalide du workflow n8n pour '${type}' en mode '${editMode}'. 'newImageUrl' manquant ou statut incorrect.`);
+        }
+
+        // Le traitement de la réponse est différent si c'est une nouvelle image ou un remplacement
+        if (editMode === 'replace') {
+            // L'ID de l'image originale (imageData.id) a été remplacée.
+            // On met à jour son URL partout avec result.newImageUrl.
+            updateImageAfterCrop(imageData.id.toString(), result.newImageUrl);
+            updateStatus(`Image (ID: ${imageData.id}) remplacée avec succès via '${type}' !`, 'success');
+        } else { // editMode === 'new'
+            // Une NOUVELLE image a été créée et ajoutée à la galerie par n8n.
+            // n8n DOIT renvoyer l'ID et l'URL de cette NOUVELLE image.
+            if (!result.newImageId) { // Assurez-vous que votre workflow n8n renvoie 'newImageId' pour le mode 'new'
+                 throw new Error("L'ID de la nouvelle image ('newImageId') est manquant dans la réponse n8n pour le mode 'new'.");
+            }
+            const newImageObject = {
+                id: result.newImageId,       // L'ID du NOUVEL attachment WordPress
+                url: result.newImageUrl,     // L'URL de la nouvelle image (avec cache-buster si applicable)
+                status: 'current',           // On la considère comme 'current' car fraîchement ajoutée
+                uses: ['gallery']            // Par défaut, on suppose qu'elle est ajoutée à la galerie standard
+            };
+            allImageData.push(newImageObject); // Ajouter aux données globales de la Web App
+
+            // Ajouter la nouvelle image au carousel des images disponibles dans l'UI
+            if (imageCarousel) {
+                const carouselItem = createCarouselItem(newImageObject);
+                imageCarousel.appendChild(carouselItem);
+                // Optionnel : faire défiler pour voir la nouvelle image si le carousel est scrollable
+                // imageCarousel.scrollLeft = imageCarousel.scrollWidth;
+            }
+
+            // Mettre à jour la liste d'images de la modale Swiper si elle est ouverte
+            if (modalSwiperInstance && modalSwiperWrapper) {
+                modalImageList.push(newImageObject); // Ajouter à la liste source de Swiper
+                const slide = document.createElement('div');
+                slide.className = 'swiper-slide';
+                const img = document.createElement('img');
+                img.src = newImageObject.url;
+                img.alt = `Image ID ${newImageObject.id}`;
+                img.loading = 'lazy'; // Si vous utilisez le lazy loading
+                slide.appendChild(img);
+                modalSwiperWrapper.appendChild(slide); // Ajouter le nouveau slide au DOM
+                modalSwiperInstance.update(); // Informer Swiper qu'il y a eu des changements
+            }
+            updateStatus(`Nouvelle image (ID: ${newImageObject.id}) ajoutée avec succès via '${type}' !`, 'success');
+        }
+
+        // Quitter proprement le mode recadrage si l'action était 'crop'
+        if (type === 'crop' && cropperInstance) {
+            cancelCropping(); // cancelCropping appelle resetModalToActionView
+        } else if (type === 'removeWatermark' || (type === 'mockup' && !cropperInstance) ) { // Si ce n'était pas une action de crop ou si le crop était déjà fermé
+            resetModalToActionView(); // Assurer que la modale est dans un état propre et les boutons réactivés
+        }
+
+    } catch (error) {
+        console.error(`Échec de l'action '${type}' en mode '${editMode}':`, error);
+        updateStatus(`Erreur (${type}, ${editMode}): ${error.message}`, 'error');
+        // En cas d'erreur, s'assurer de restaurer l'état correct des boutons de la modale principale
+        if (cropperInstance) { // Si l'erreur s'est produite alors qu'on était en mode recadrage
+            cancelCropping();
+        } else { // Sinon, réinitialiser la vue modale standard
+            resetModalToActionView();
+        }
+    } finally {
+        hideLoading(); // Toujours cacher l'indicateur de chargement à la fin
+        // La réactivation des boutons d'action de la modale (Recadrer, Retirer Watermark, etc.)
+        // est gérée par cancelCropping() ou resetModalToActionView() qui sont appelés dans le try/catch.
+        // Il n'est normalement pas nécessaire de les réactiver manuellement ici en plus.
+        console.log(`Fin du traitement pour action '${type}', mode '${editMode}'.`);
+    }
+}
+
 // Réinitialise la modal à son état initial (vue Swiper, boutons actions standards)
 function resetModalToActionView() {
      if (modalCropperContainer) modalCropperContainer.style.display = 'none';
