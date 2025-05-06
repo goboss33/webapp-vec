@@ -469,6 +469,28 @@ function handleSettingsClick(event) {
     openImageModal(imageId); // Ouvre la modal pour cette image
 }
 
+// --- Indicateur de Chargement ---
+function showLoading(message = "Traitement en cours...") {
+    if (loadingOverlay) {
+        const p = loadingOverlay.querySelector('p');
+        if (p) p.textContent = message;
+        loadingOverlay.style.display = 'flex';
+    }
+    // Désactiver les boutons principaux pour éviter double-clic
+    if(saveChangesButton) saveChangesButton.disabled = true;
+    if(modalCropValidateBtn) modalCropValidateBtn.disabled = true; // Désactiver si visible
+    if(modalCropCancelBtn) modalCropCancelBtn.disabled = true; // Désactiver si visible
+    console.log("Affichage indicateur chargement.");
+}
+function hideLoading() {
+    if (loadingOverlay) loadingOverlay.style.display = 'none';
+    // Réactiver les boutons
+    if(saveChangesButton) saveChangesButton.disabled = false;
+     if(modalCropValidateBtn) modalCropValidateBtn.disabled = false;
+     if(modalCropCancelBtn) modalCropCancelBtn.disabled = false;
+     console.log("Masquage indicateur chargement.");
+}
+
 // --- NOUVELLE Logique de Recadrage (Cropper.js) ---
 
 // Initialise l'interface de recadrage
@@ -741,26 +763,6 @@ async function validateCropping() { // Ajout de async ici
         cancelCropping(); // Réutilise cancel pour nettoyer Cropper et restaurer la vue
         hideLoading();
     }
-}
-
-// Nouvelles fonctions
-function showLoading(message = "Traitement en cours...") {
-    if (loadingOverlay) {
-         const p = loadingOverlay.querySelector('p');
-         if (p) p.textContent = message;
-         loadingOverlay.style.display = 'flex';
-    }
-    // Optionnel : désactiver les boutons principaux ?
-    if(saveChangesButton) saveChangesButton.disabled = true;
-}
-function hideLoading() {
-    if (loadingOverlay) loadingOverlay.style.display = 'none';
-    // Réactiver les boutons qui auraient pu être désactivés
-    if(saveChangesButton) saveChangesButton.disabled = false;
-     if(modalCropValidateBtn) modalCropValidateBtn.disabled = false; // Réactive Valider Recadrage
-     if(modalCropCancelBtn) modalCropCancelBtn.disabled = false; // Réactive Annuler Recadrage
-     // Note: L'état final des boutons (visibles/cachés) est géré par resetModalToActionView ou startCropping
-     console.log("Masquage indicateur chargement et réactivation boutons.");
 }
 
 // Réinitialise la modal à son état initial (vue Swiper, boutons actions)
