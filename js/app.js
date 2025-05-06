@@ -288,6 +288,7 @@ function initializeSortable() {
 // --- Enregistrement des Modifications ---
 // Elle collecte toujours les IDs depuis les .thumbnail-wrapper présents dans les zones au moment du clic.
 const handleSaveChanges = async () =>
+    showLoading("Sauvegarde des rôles...");
     updateStatus("Enregistrement des modifications...", 'info');
     if(saveChangesButton) saveChangesButton.disabled = true;
 
@@ -309,7 +310,6 @@ const handleSaveChanges = async () =>
     console.log("Données envoyées à n8n:", payload);
 
     try {
-        showLoading();
         const response = await fetch(N8N_UPDATE_DATA_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -326,11 +326,9 @@ const handleSaveChanges = async () =>
         const result = await response.json();
         console.log("Réponse de n8n (Mise à jour):", result);
         updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
-        hideLoading();
     } catch (error) {
         console.error("Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
-        hideLoading();
     } finally {
         if(saveChangesButton) saveChangesButton.disabled = false;
         hideLoading();
