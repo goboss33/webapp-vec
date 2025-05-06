@@ -514,8 +514,6 @@ function startCropping() {
         imageToCropElement.src = ""; imageToCropElement.style.opacity = '0'; imageToCropElement.classList.remove('loaded');
         modalCropperContainer.style.display = 'block';
 
-        imageToCropElement.onload = () => {
-
         // 3. Attendre que l'image soit chargée AVANT d'initialiser Cropper
         imageToCropElement.onload = () => {
             console.log("Image chargée dans le conteneur Cropper.");
@@ -579,7 +577,6 @@ function startCropping() {
         // Définir la source de l'image (ce qui déclenche l'événement 'onload' ou 'onerror')
         console.log(`Chargement de ${currentCroppingImage.url} pour Cropper...`);
         imageToCropElement.src = currentCroppingImage.url;
-
     } else {
         console.error("Éléments DOM #modal-cropper-container ou #image-to-crop non trouvés.");
         resetModalToActionView(); // Revenir à l'état normal
