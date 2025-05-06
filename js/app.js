@@ -25,6 +25,7 @@ let imageCarouselContainer, imageCarousel;
 let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
 let modalCropperContainer, imageToCropElement, modalCropBtn, modalMockupBtn, modalCropValidateBtn, modalCropCancelBtn;
 let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer; 
+let modalRemoveWatermarkBtn;
 let loadingOverlay;
 
 // --- Fonctions Utilitaires ---
@@ -942,6 +943,8 @@ document.addEventListener('DOMContentLoaded', () => {
     cropDataHeight = document.getElementById('crop-data-height');
     cropperAspectRatioButtonsContainer = document.getElementById('cropper-aspect-ratio-buttons');        
     loadingOverlay = document.getElementById('loading-overlay');
+    modalRemoveWatermarkBtn = document.getElementById('modal-remove-watermark-btn');
+    
     
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
