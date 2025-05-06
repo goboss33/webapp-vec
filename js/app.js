@@ -534,7 +534,7 @@ function startCropping() {
                  cropperInstance = new Cropper(imageToCropElement, {
                     viewMode: 1,
                     dragMode: 'move',
-                    aspectRatio: 1 / 1,
+                    //aspectRatio: 1 / 1,
                     autoCropArea: 0.85,
                     movable: true,
                     rotatable: false,
@@ -552,20 +552,52 @@ function startCropping() {
                     },
                     ready() {
                         console.log("Cropper.js est prêt (ready event)!");
-                        if (modalCropValidateBtn) { modalCropValidateBtn.style.display = 'inline-block'; modalCropValidateBtn.disabled = false; modalCropValidateBtn.onclick = validateCropping;}
-                        if (modalCropCancelBtn) { modalCropCancelBtn.style.display = 'inline-block'; modalCropCancelBtn.disabled = false; modalCropCancelBtn.onclick = cancelCropping;}
-
-                        // Afficher le conteneur des données de recadrage
-                        if (cropperDataDisplay) cropperDataDisplay.style.display = 'block';
-
-                        // Mettre à jour les données une première fois au cas où 'crop' n'est pas immédiatement déclenché
+                    
+                        // VOTRE CODE ORIGINAL - à conserver pour les boutons Valider/Annuler
+                        if (modalCropValidateBtn) {
+                            modalCropValidateBtn.style.display = 'inline-block';
+                            modalCropValidateBtn.disabled = false;
+                            modalCropValidateBtn.onclick = validateCropping; // Assurez-vous que validateCropping est bien défini
+                        }
+                        if (modalCropCancelBtn) {
+                            modalCropCancelBtn.style.display = 'inline-block';
+                            modalCropCancelBtn.disabled = false;
+                            modalCropCancelBtn.onclick = cancelCropping; // Assurez-vous que cancelCropping est bien défini
+                        }
+                    
+                        // AJOUTS POUR LES DIMENSIONS ET LES BOUTONS DE RATIO
+                        // Afficher le conteneur des données de recadrage (dimensions en px)
+                        if (cropperDataDisplay) {
+                            cropperDataDisplay.style.display = 'block';
+                        }
+                    
+                        // Afficher le conteneur des boutons de ratio d'aspect
+                        if (cropperAspectRatioButtonsContainer) {
+                            cropperAspectRatioButtonsContainer.style.display = 'flex'; // Ou 'block' selon votre CSS
+                        }
+                    
+                        // Mettre à jour les données de dimensions une première fois
                         const initialCropData = cropperInstance.getData(true); // true pour arrondir
                         if (cropDataX) cropDataX.textContent = initialCropData.x;
                         if (cropDataY) cropDataY.textContent = initialCropData.y;
                         if (cropDataWidth) cropDataWidth.textContent = initialCropData.width;
                         if (cropDataHeight) cropDataHeight.textContent = initialCropData.height;
-
-                        updateStatus("Ajustez le cadre de recadrage.", "info");
+                    
+                        // Appliquer un ratio par défaut (par exemple, Carré)
+                        // et mettre en évidence le bouton correspondant
+                        if (cropperAspectRatioButtonsContainer && cropperInstance) {
+                            const defaultRatioButton = cropperAspectRatioButtonsContainer.querySelector('.aspect-btn[data-ratio="1/1"]'); // Cible le bouton Carré
+                            if (defaultRatioButton) {
+                                defaultRatioButton.click(); // Simule un clic pour appliquer le ratio et le style actif
+                            } else {
+                                cropperInstance.setAspectRatio(NaN); // Fallback: Ratio libre si aucun bouton "Carré" n'est trouvé
+                                // Si vous avez un bouton "Libre" et que vous voulez qu'il soit le défaut s'il n'y a pas de "Carré":
+                                // const freeRatioButton = cropperAspectRatioButtonsContainer.querySelector('.aspect-btn[data-ratio="NaN"]');
+                                // if (freeRatioButton) freeRatioButton.click();
+                            }
+                        }
+                    
+                        updateStatus("Ajustez le cadre et le ratio de recadrage.", "info");
                     }
                  });
                  console.log("Instance Cropper.js créée (appel new Cropper).");
@@ -611,7 +643,8 @@ function cancelCropping() {
     if(modalCropCancelBtn) modalCropCancelBtn.onclick = null;
     // Cacher l'affichage des données de recadrage
     if (cropperDataDisplay) cropperDataDisplay.style.display = 'none';
-
+    if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'none';
+    
     resetModalToActionView();
     updateStatus("Recadrage annulé.", "info");
 }
@@ -762,6 +795,7 @@ function resetModalToActionView() {
      if (modalCropValidateBtn) { modalCropValidateBtn.style.display = 'none'; modalCropValidateBtn.disabled = true; }
      if (modalCropCancelBtn) { modalCropCancelBtn.style.display = 'none'; modalCropCancelBtn.disabled = true; }
      if (cropperDataDisplay) cropperDataDisplay.style.display = 'none';
+     if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'none';
      if (modalSwiperContainer) modalSwiperContainer.style.display = 'block';
      if (modalPrevBtn) modalPrevBtn.style.display = 'block'; // Etat géré par Swiper
      if (modalNextBtn) modalNextBtn.style.display = 'block';
