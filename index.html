@@ -78,10 +78,17 @@
             <div id="modal-cropper-container" style="display: none; margin-bottom: 15px; max-height: 50vh; overflow: hidden;">
                 <img id="image-to-crop" src="" alt="Image à recadrer" style="max-width: 100%;">
             </div>
+
             
             <div id="cropper-data-display" style="text-align: center; margin-bottom: 10px; font-size: 0.9em; display: none;">
                 <p>X: <span id="crop-data-x">0</span>px | Y: <span id="crop-data-y">0</span>px</p>
                 <p>Largeur: <span id="crop-data-width">0</span>px | Hauteur: <span id="crop-data-height">0</span>px</p>
+            </div>
+            <div id="cropper-aspect-ratio-buttons" style="text-align: center; margin-bottom: 10px; display: none; flex-wrap: wrap; justify-content: center; gap: 5px;">
+                <button class="action-btn aspect-btn" data-ratio="1/1">Carré (1:1)</button>
+                <button class="action-btn aspect-btn" data-ratio="16/9">16:9</button>
+                <button class="action-btn aspect-btn" data-ratio="4/3">4:3</button>
+                <button class="action-btn aspect-btn" data-ratio="NaN">Libre</button>
             </div>
             <div id="modal-actions">
                 <button id="modal-crop-btn" class="action-btn">Recadrer</button>
