@@ -23,7 +23,7 @@ let dropzoneMain, dropzoneGallery, dropzoneCustom;
 let imageCarouselContainer, imageCarousel;
 let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
 let modalCropperContainer, imageToCropElement, modalCropBtn, modalMockupBtn, modalCropValidateBtn, modalCropCancelBtn;
-let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight; 
+let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer; 
 let loadingOverlay;
 
 // --- Fonctions Utilitaires ---
@@ -905,6 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cropDataY = document.getElementById('crop-data-y');
     cropDataWidth = document.getElementById('crop-data-width');
     cropDataHeight = document.getElementById('crop-data-height');
+    cropperAspectRatioButtonsContainer = document.getElementById('cropper-aspect-ratio-buttons');        
     loadingOverlay = document.getElementById('loading-overlay');
     
     // ... (Récupération productId - inchangé) ...
@@ -930,6 +931,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (saveChangesButton) saveChangesButton.addEventListener('click', handleSaveChanges);
     // Bouton Recadrer (Action principale)
     if (modalCropBtn) modalCropBtn.addEventListener('click', startCropping);
+    // Attacher les écouteurs d'événements aux boutons de ratio
+    if (cropperAspectRatioButtonsContainer) {
+        const ratioButtons = cropperAspectRatioButtonsContainer.querySelectorAll('.aspect-btn');
+        ratioButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                if (cropperInstance) {
+                    const ratioString = button.dataset.ratio;
+                    let newRatio;
+
+                    if (ratioString === "NaN" || ratioString === "null" || ratioString === "") { // Gérer 'NaN' et autres pour "libre"
+                        newRatio = NaN; // Cropper.js comprend NaN pour un ratio libre
+                    } else {
+                        const parts = ratioString.split('/');
+                        if (parts.length === 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1])) && parseFloat(parts[1]) !== 0) {
+                            newRatio = parseFloat(parts[0]) / parseFloat(parts[1]);
+                        } else {
+                            console.warn(`Ratio invalide: ${ratioString}. Passage en mode libre.`);
+                            newRatio = NaN; // Fallback en mode libre si le ratio est mal formé
+                        }
+                    }
+                    console.log(`Application du ratio: ${newRatio}`);
+                    cropperInstance.setAspectRatio(newRatio);
+
+                    // Mettre en évidence le bouton actif (styling optionnel)
+                    ratioButtons.forEach(btn => btn.classList.remove('active-ratio')); // 'active-ratio' est une classe CSS que vous pouvez définir
+                    button.classList.add('active-ratio');
+                }
+            });
+        });
+    }
     // Bouton Mockup (Action principale)
     // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration);
     
