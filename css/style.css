@@ -603,3 +603,36 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     -ms-user-select: none;
     user-select: none;
 }
+
+/* Styles pour l'indicateur de chargement */
+#loading-overlay {
+    position: fixed; /* Couvre toute la page */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fond semi-transparent */
+    z-index: 2000; /* Au dessus de tout, même la modale */
+    display: flex;
+    flex-direction: column; /* Aligner spinner et texte */
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+}
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 4px solid #fff;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+#loading-overlay p {
+    font-size: 1em;
+}
