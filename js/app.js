@@ -905,6 +905,7 @@ function resetModalToActionView() {
      if (modalNextBtn) modalNextBtn.style.display = 'block';
      if (modalImageInfo) modalImageInfo.style.display = 'block';
      if (modalCropBtn) { modalCropBtn.style.display = 'inline-block'; modalCropBtn.disabled = false; }
+    if (modalRemoveWatermarkBtn) { modalRemoveWatermarkBtn.style.display = 'inline-block'; modalRemoveWatermarkBtn.disabled = false; }
      if (modalMockupBtn) { modalMockupBtn.style.display = 'inline-block'; modalMockupBtn.disabled = false; } // Active aussi mockup
 }
 
