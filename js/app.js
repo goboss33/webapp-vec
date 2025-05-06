@@ -906,39 +906,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bouton Sauver (rôles) (Peut rester direct)
     if (saveChangesButton) saveChangesButton.addEventListener('click', handleSaveChanges);
 
-    // NOUVEAU: Délégation d'événements pour les boutons DANS #modal-actions
-    if (modalActions) {
-        modalActions.addEventListener('click', (event) => {
-            // Trouve le bouton le plus proche sur lequel on a cliqué (gère clic sur icône/texte intérieur)
-            const targetButton = event.target.closest('button');
-            // Si on n'a pas cliqué sur un bouton, on ne fait rien
-            if (!targetButton) return;
-
-            console.log(`Clic délégué détecté dans modal-actions sur: #${targetButton.id}`); // Log de debug
-
-            // Déclenche la bonne fonction en fonction de l'ID du bouton cliqué
-            switch (targetButton.id) {
-                case 'modal-crop-btn':
-                    startCropping();
-                    break;
-                case 'modal-crop-validate-btn':
-                    console.log("Clic Valider Recadrage (via délégation)"); // Log pour vérifier
-                    validateCropping();
-                    break;
-                case 'modal-crop-cancel-btn':
-                     console.log("Clic Annuler Recadrage (via délégation)"); // Log pour vérifier
-                    cancelCropping();
-                    break;
-                case 'modal-mockup-btn':
-                    // startMockupGeneration(); // Logique future
-                    alert("Fonctionnalité Mockup à implémenter.");
-                    break;
-                // Ajouter d'autres cas pour d'autres boutons d'action ici
-            }
-        });
-    } else {
-         console.error("Conteneur d'actions modal (#modal-actions) non trouvé!");
+    // --- Attacher les écouteurs d'événements ---
+    // Modal Fermer
+    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
+    if (modalOverlay) modalOverlay.addEventListener('click', (event) => { if (event.target === modalOverlay) closeModal(); });
+    // Bouton Sauver (rôles)
+    if (saveChangesButton) saveChangesButton.addEventListener('click', handleSaveChanges);
+    // NOUVEAUX: Boutons d'action dans la modale
+    if (modalCropBtn) modalCropBtn.addEventListener('click', startCropping);
+    if (modalCropValidateBtn) {
+         modalCropValidateBtn.addEventListener('click', () => {
+             console.log("Clic détecté sur Valider Recadrage"); // Log de test
+             validateCropping();
+         });
     }
+    if (modalCropCancelBtn) {
+         modalCropCancelBtn.addEventListener('click', () => {
+              console.log("Clic détecté sur Annuler Recadrage"); // Log de test
+             cancelCropping();
+         });
+    }
+    // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration); // Pour plus tard
 
     // On a supprimé les addEventListener directs pour modalCropBtn, modalCropValidateBtn, modalCropCancelBtn
     // car ils sont maintenant gérés par la délégation ci-dessus.
