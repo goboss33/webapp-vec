@@ -591,10 +591,14 @@ function startCropping() {
 function cancelCropping() {
     console.log("Annulation du recadrage.");
     if (cropperInstance) {
-        cropperInstance.destroy(); // Détruit l'instance Cropper
+        cropperInstance.destroy();
         cropperInstance = null;
     }
     currentCroppingImage = null;
+    // Détacher les écouteurs pour éviter fuites mémoire ou doublons
+    if(modalCropValidateBtn) modalCropValidateBtn.onclick = null;
+    if(modalCropCancelBtn) modalCropCancelBtn.onclick = null;
+
     resetModalToActionView(); // Restaure l'affichage normal de la modale
     updateStatus("Recadrage annulé.", "info");
 }
