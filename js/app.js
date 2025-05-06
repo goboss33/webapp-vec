@@ -526,14 +526,18 @@ function startCropping() {
                     responsive: true,
                     // checkOrientation: false, // Peut être utile pour photos mobiles
 
-                    ready() { // Se déclenche quand Cropper est prêt
-                        console.log("Cropper.js est prêt ! (ready event)");
+                    ready() {
+                        // L'événement ready est toujours utile pour le log
+                        console.log("Cropper.js est prêt (ready event)!");
+                        // Mais on n'affiche PLUS les boutons ici.
                     }
-                     console.log("Instance Cropper.js créée.");
-                     if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'inline-block';
-                     if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'inline-block';
-                     updateStatus("Ajustez le cadre de recadrage.", "info");
                  });
+                
+                 console.log("Instance Cropper.js créée.");
+                 if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'inline-block';
+                 if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'inline-block';
+                 updateStatus("Ajustez le cadre de recadrage.", "info");
+
              } catch(e) {
                  console.error("Erreur initialisation Cropper.js:", e);
                  updateStatus("Erreur initialisation Recadrage.", "error");
