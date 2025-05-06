@@ -633,7 +633,7 @@ function updateImageAfterCrop(imageId, newImageUrl) {
              const imgInSlide = modalSwiperInstance.slides[slideIndex].querySelector('img');
              if (imgInSlide) imgInSlide.src = newImageUrl;
              console.log(`URL mise à jour dans Swiper slide index ${slideIndex}`);
-             // modalSwiperInstance.update(); // Peut être nécessaire si Swiper ne refresh pas auto
+             modalSwiperInstance.update(); // Peut être nécessaire si Swiper ne refresh pas auto
         }
          // Mettre aussi à jour l'image si c'est celle affichée actuellement HORS Swiper (si on changeait le DOM)
          // Mais comme on revient à la vue Swiper, c'est géré au dessus.
