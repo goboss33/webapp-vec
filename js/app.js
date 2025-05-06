@@ -642,15 +642,24 @@ function cancelCropping() {
         cropperInstance.destroy();
         cropperInstance = null;
     }
-    currentCroppingImage = null;
-    // Détacher les écouteurs pour éviter fuites mémoire ou doublons
-    if(modalCropValidateBtn) modalCropValidateBtn.onclick = null;
-    if(modalCropCancelBtn) modalCropCancelBtn.onclick = null;
-    // Cacher l'affichage des données de recadrage
+    currentCroppingImage = null; // Oublier l'image qui était en cours de recadrage
+
+    // Détacher les écouteurs spécifiques aux boutons de validation/annulation du recadrage
+    if (modalCropValidateBtn) modalCropValidateBtn.onclick = null;
+    if (modalCropCancelBtn) modalCropCancelBtn.onclick = null;
+
+    // Cacher les éléments spécifiques à l'interface de recadrage
     if (cropperDataDisplay) cropperDataDisplay.style.display = 'none';
     if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'none';
-    
+    // if (finalCanvasSettings) finalCanvasSettings.style.display = 'none'; // Si vous aviez ajouté cela
+
+    // Cacher aussi l'overlay de confirmation d'action s'il était visible
+    if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'none';
+    currentEditActionContext = null; // Réinitialiser le contexte au cas où
+
+    // Réinitialiser la vue de la modale à son état d'affichage Swiper / actions principales
     resetModalToActionView();
+
     updateStatus("Recadrage annulé.", "info");
 }
 
@@ -987,20 +996,51 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
 }
 
 // Réinitialise la modal à son état initial (vue Swiper, boutons actions standards)
+// et s'assure que les overlays/confirmations spécifiques sont cachés.
 function resetModalToActionView() {
-     if (modalCropperContainer) modalCropperContainer.style.display = 'none';
-     // Cache et désactive (par sécurité) les boutons de validation/annulation
-     if (modalCropValidateBtn) { modalCropValidateBtn.style.display = 'none'; modalCropValidateBtn.disabled = true; }
-     if (modalCropCancelBtn) { modalCropCancelBtn.style.display = 'none'; modalCropCancelBtn.disabled = true; }
-     if (cropperDataDisplay) cropperDataDisplay.style.display = 'none';
-     if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'none';
-     if (modalSwiperContainer) modalSwiperContainer.style.display = 'block';
-     if (modalPrevBtn) modalPrevBtn.style.display = 'block'; // Etat géré par Swiper
-     if (modalNextBtn) modalNextBtn.style.display = 'block';
-     if (modalImageInfo) modalImageInfo.style.display = 'block';
-     if (modalCropBtn) { modalCropBtn.style.display = 'inline-block'; modalCropBtn.disabled = false; }
-    if (modalRemoveWatermarkBtn) { modalRemoveWatermarkBtn.style.display = 'inline-block'; modalRemoveWatermarkBtn.disabled = false; }
-     if (modalMockupBtn) { modalMockupBtn.style.display = 'inline-block'; modalMockupBtn.disabled = false; } // Active aussi mockup
+    console.log("Réinitialisation de la vue de la modale aux actions standard.");
+
+    // 1. Cacher tous les éléments spécifiques au mode recadrage
+    if (modalCropperContainer) modalCropperContainer.style.display = 'none';
+    if (modalCropValidateBtn) {
+        modalCropValidateBtn.style.display = 'none';
+        modalCropValidateBtn.disabled = true; // Désactiver par sécurité
+    }
+    if (modalCropCancelBtn) {
+        modalCropCancelBtn.style.display = 'none';
+        modalCropCancelBtn.disabled = true; // Désactiver par sécurité
+    }
+    if (cropperDataDisplay) cropperDataDisplay.style.display = 'none';
+    if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'none';
+    // if (finalCanvasSettings) finalCanvasSettings.style.display = 'none'; // Si vous aviez ajouté cela
+
+    // 2. Cacher l'overlay de confirmation d'action (au cas où)
+    if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'none';
+    // currentEditActionContext est typiquement remis à null par hideEditActionConfirmation ou après exécution
+
+    // 3. Afficher les éléments de la vue "normale" de la modale (Swiper et actions principales)
+    if (modalSwiperContainer) modalSwiperContainer.style.display = 'block';
+    if (modalPrevBtn) modalPrevBtn.style.display = 'block'; // Leur état activé/désactivé est géré par Swiper
+    if (modalNextBtn) modalNextBtn.style.display = 'block';
+    if (modalImageInfo) modalImageInfo.style.display = 'block'; // Infos de l'image (ID, Rôles)
+
+    // 4. Afficher le conteneur des boutons d'action principaux et réactiver les boutons
+    if (modalActions) modalActions.style.display = 'flex'; // Ou 'block', selon votre CSS pour l'alignement de ces boutons
+
+    if (modalCropBtn) {
+        modalCropBtn.style.display = 'inline-block';
+        modalCropBtn.disabled = false;
+    }
+    if (modalRemoveWatermarkBtn) {
+        modalRemoveWatermarkBtn.style.display = 'inline-block';
+        modalRemoveWatermarkBtn.disabled = false;
+    }
+    if (modalMockupBtn) { // Si vous avez un bouton mockup
+        modalMockupBtn.style.display = 'inline-block';
+        // Laissez son état 'disabled' tel quel s'il est géré ailleurs (par exemple, s'il est toujours désactivé)
+        // Sinon, si son activation dépend de l'état de la modale :
+        // modalMockupBtn.disabled = false;
+    }
 }
 
 // --- Récupération Initiale des Données ---
