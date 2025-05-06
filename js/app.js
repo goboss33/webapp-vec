@@ -551,12 +551,20 @@ function startCropping() {
                     },
                     ready() {
                         console.log("Cropper.js est prêt (ready event)!");
-                        // On peut garder l'affichage des boutons ici si on préfère
-                        // ou les afficher juste après new Cropper(...) comme avant.
-                        // Laissons-les ici pour l'instant, c'est plus sûr.
-                         if (modalCropValidateBtn) { modalCropValidateBtn.style.display = 'inline-block'; modalCropValidateBtn.disabled = false; modalCropValidateBtn.onclick = validateCropping;}
-                         if (modalCropCancelBtn) { modalCropCancelBtn.style.display = 'inline-block'; modalCropCancelBtn.disabled = false; modalCropCancelBtn.onclick = cancelCropping;}
-                         updateStatus("Ajustez le cadre de recadrage.", "info");
+                        if (modalCropValidateBtn) { modalCropValidateBtn.style.display = 'inline-block'; modalCropValidateBtn.disabled = false; modalCropValidateBtn.onclick = validateCropping;}
+                        if (modalCropCancelBtn) { modalCropCancelBtn.style.display = 'inline-block'; modalCropCancelBtn.disabled = false; modalCropCancelBtn.onclick = cancelCropping;}
+
+                        // Afficher le conteneur des données de recadrage
+                        if (cropperDataDisplay) cropperDataDisplay.style.display = 'block';
+
+                        // Mettre à jour les données une première fois au cas où 'crop' n'est pas immédiatement déclenché
+                        const initialCropData = cropperInstance.getData(true); // true pour arrondir
+                        if (cropDataX) cropDataX.textContent = initialCropData.x;
+                        if (cropDataY) cropDataY.textContent = initialCropData.y;
+                        if (cropDataWidth) cropDataWidth.textContent = initialCropData.width;
+                        if (cropDataHeight) cropDataHeight.textContent = initialCropData.height;
+
+                        updateStatus("Ajustez le cadre de recadrage.", "info");
                     }
                  });
                  console.log("Instance Cropper.js créée (appel new Cropper).");
