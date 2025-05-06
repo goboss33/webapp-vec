@@ -527,12 +527,12 @@ function startCropping() {
                     // checkOrientation: false, // Peut être utile pour photos mobiles
 
                     ready() { // Se déclenche quand Cropper est prêt
-                        console.log("Cropper.js est prêt !");
-                        // Afficher les boutons seulement MAINTENANT
-                         if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'inline-block';
-                         if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'inline-block';
-                         updateStatus("Ajustez le cadre de recadrage.", "info");
+                        console.log("Cropper.js est prêt ! (ready event)");
                     }
+                     console.log("Instance Cropper.js créée.");
+                     if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'inline-block';
+                     if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'inline-block';
+                     updateStatus("Ajustez le cadre de recadrage.", "info");
                  });
              } catch(e) {
                  console.error("Erreur initialisation Cropper.js:", e);
