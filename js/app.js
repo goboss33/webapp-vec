@@ -874,6 +874,14 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
         editMode: editMode // 'replace' ou 'new' -> sera utilisé par n8n
     };
 
+    // Si editMode est 'new', nous devons envoyer l'état actuel de la galerie standard
+    // pour que n8n puisse y ajouter la nouvelle image sans écraser les modifs locales.
+    if (editMode === 'new') {
+        const currentGalleryThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
+        const currentGalleryImageIds = Array.from(currentGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
+        basePayload.currentGalleryImageIds = currentGalleryImageIds; // Ajoute les IDs actuels de la galerie au payload
+    }
+
     // Fusionner payloadData (spécifique à l'action, ex: données de crop) avec basePayload
     const finalPayload = { ...basePayload, ...payloadData };
 
@@ -928,46 +936,51 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
 
         // Le traitement de la réponse est différent si c'est une nouvelle image ou un remplacement
         if (editMode === 'replace') {
-            // L'ID de l'image originale (imageData.id) a été remplacée.
-            // On met à jour son URL partout avec result.newImageUrl.
             updateImageAfterCrop(imageData.id.toString(), result.newImageUrl);
             updateStatus(`Image (ID: ${imageData.id}) remplacée avec succès via '${type}' !`, 'success');
         } else { // editMode === 'new'
-            // Une NOUVELLE image a été créée et ajoutée à la galerie par n8n.
-            // n8n DOIT renvoyer l'ID et l'URL de cette NOUVELLE image.
-            if (!result.newImageId) { // Assurez-vous que votre workflow n8n renvoie 'newImageId' pour le mode 'new'
+            if (!result.newImageId) {
                  throw new Error("L'ID de la nouvelle image ('newImageId') est manquant dans la réponse n8n pour le mode 'new'.");
             }
-            const newImageObject = {
-                id: result.newImageId,       // L'ID du NOUVEL attachment WordPress
-                url: result.newImageUrl,     // L'URL de la nouvelle image (avec cache-buster si applicable)
-                status: 'current',           // On la considère comme 'current' car fraîchement ajoutée
-                uses: ['gallery']            // Par défaut, on suppose qu'elle est ajoutée à la galerie standard
-            };
-            allImageData.push(newImageObject); // Ajouter aux données globales de la Web App
+            // n8n a ajouté la nouvelle image à la galerie (basée sur currentGalleryImageIds + la nouvelle)
+            // et a mis à jour le produit dans WordPress.
+            // Enhanced_Product_Image_History a été mis à jour par les endpoints WP.
+            // La Web App doit maintenant refléter l'ajout de cette nouvelle image.
 
-            // Ajouter la nouvelle image au carousel des images disponibles dans l'UI
-            if (imageCarousel) {
-                const carouselItem = createCarouselItem(newImageObject);
-                imageCarousel.appendChild(carouselItem);
-                // Optionnel : faire défiler pour voir la nouvelle image si le carousel est scrollable
-                // imageCarousel.scrollLeft = imageCarousel.scrollWidth;
+            const newImageObject = {
+                id: result.newImageId,
+                url: result.newImageUrl,
+                status: 'current',
+                uses: ['gallery'] // Par défaut, car on l'ajoute à la galerie
+            };
+            allImageData.push(newImageObject);
+
+            // Ajouter visuellement la nouvelle image à la *zone de galerie* dans l'UI
+            if (dropzoneGallery) {
+                const galleryContainer = dropzoneGallery.querySelector('.thumbnail-container');
+                if (galleryContainer) {
+                    // Vérifier si l'image n'y est pas déjà par une autre manip (peu probable ici)
+                    if (!galleryContainer.querySelector(`.thumbnail-wrapper[data-image-id="${newImageObject.id}"]`)) {
+                        const thumbnail = createThumbnail(newImageObject, 'gallery'); // 'gallery' est le rôle
+                        galleryContainer.appendChild(thumbnail);
+                    }
+                }
             }
 
-            // Mettre à jour la liste d'images de la modale Swiper si elle est ouverte
+            // Mettre à jour aussi la modale Swiper si elle est ouverte
             if (modalSwiperInstance && modalSwiperWrapper) {
-                modalImageList.push(newImageObject); // Ajouter à la liste source de Swiper
+                modalImageList.push(newImageObject);
                 const slide = document.createElement('div');
                 slide.className = 'swiper-slide';
                 const img = document.createElement('img');
                 img.src = newImageObject.url;
                 img.alt = `Image ID ${newImageObject.id}`;
-                img.loading = 'lazy'; // Si vous utilisez le lazy loading
+                img.loading = 'lazy';
                 slide.appendChild(img);
-                modalSwiperWrapper.appendChild(slide); // Ajouter le nouveau slide au DOM
-                modalSwiperInstance.update(); // Informer Swiper qu'il y a eu des changements
+                modalSwiperWrapper.appendChild(slide);
+                modalSwiperInstance.update();
             }
-            updateStatus(`Nouvelle image (ID: ${newImageObject.id}) ajoutée avec succès via '${type}' !`, 'success');
+            updateStatus(`Nouvelle image (ID: ${newImageObject.id}) ajoutée à la galerie via '${type}' !`, 'success');
         }
 
         // Quitter proprement le mode recadrage si l'action était 'crop'
