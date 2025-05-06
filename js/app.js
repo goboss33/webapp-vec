@@ -23,7 +23,7 @@ let dropzoneMain, dropzoneGallery, dropzoneCustom;
 let imageCarouselContainer, imageCarousel;
 let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
 let modalCropperContainer, imageToCropElement, modalCropBtn, modalMockupBtn, modalCropValidateBtn, modalCropCancelBtn;
-let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight; //
+let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight; 
 let loadingOverlay;
 
 // --- Fonctions Utilitaires ---
