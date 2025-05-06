@@ -309,6 +309,7 @@ const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
     console.log("Données envoyées à n8n:", payload);
 
     try {
+        showLoading()
         const response = await fetch(N8N_UPDATE_DATA_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -325,9 +326,11 @@ const handleSaveChanges = async () => { /* ... Code précédent inchangé ... */
         const result = await response.json();
         console.log("Réponse de n8n (Mise à jour):", result);
         updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
+        hideLoading()
     } catch (error) {
         console.error("Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
+        hideLoading()
     } finally {
         if(saveChangesButton) saveChangesButton.disabled = false;
     }
@@ -646,7 +649,7 @@ async function triggerCropWorkflow(imageData, cropData) {
 
 
 
-    
+    showLoading()
     // --- Appel Fetch Réel (à décommenter quand le workflow N8N est prêt) ---
     
     const response = await fetch(N8N_CROP_IMAGE_WEBHOOK_URL, {
@@ -713,12 +716,13 @@ async function validateCropping() { // Ajout de async ici
             // Si triggerCropWorkflow renvoie une erreur ou format incorrect
              throw new Error(result.message || "Erreur inconnue lors du recadrage.");
         }
-
+        hideLoading()
     } catch (error) {
         // Gérer les erreurs venant de triggerCropWorkflow
         console.error("Échec du processus de recadrage:", error);
         updateStatus(`Erreur recadrage: ${error.message}`, 'error');
         // L'UI est peut-être déjà réinitialisée par triggerCropWorkflow en cas d'erreur là-bas
+        hideLoading()
     } finally {
         // Dans tous les cas (succès ou échec géré), on revient à la vue normale de la modale
         // Note: La réactivation des boutons est maintenant dans triggerCropWorkflow ou ici si on veut
