@@ -90,6 +90,18 @@
                 <button class="action-btn aspect-btn" data-ratio="4/3">4:3</button>
                 <button class="action-btn aspect-btn" data-ratio="NaN">Libre</button>
             </div>
+
+            <div id="edit-action-confirmation" class="edit-action-confirmation-overlay" style="display: none;">
+                <div class="edit-action-confirmation-content">
+                    <h4>Confirmer l'action</h4>
+                    <p>Que souhaitez-vous faire avec l'image modifiée ?</p>
+                    <div class="edit-action-confirmation-buttons">
+                        <button id="confirm-action-replace" class="action-btn success-btn">Remplacer l'image actuelle</button>
+                        <button id="confirm-action-new" class="action-btn">Ajouter comme nouvelle image</button>
+                        <button id="confirm-action-cancel" class="action-btn cancel-btn">Annuler l'opération</button>
+                    </div>
+                </div>
+            </div>
             <div id="modal-actions">
                 <button id="modal-crop-btn" class="action-btn">Recadrer</button>
                 <button id="modal-remove-watermark-btn" class="action-btn">Retirer Watermark</button>
