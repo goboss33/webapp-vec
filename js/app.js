@@ -287,7 +287,7 @@ function initializeSortable() {
 
 // --- Enregistrement des Modifications ---
 // Elle collecte toujours les IDs depuis les .thumbnail-wrapper présents dans les zones au moment du clic.
-const handleSaveChanges = async () =>
+const handleSaveChanges = async () => {
     showLoading("Sauvegarde des rôles...");
     updateStatus("Enregistrement des modifications...", 'info');
     if(saveChangesButton) saveChangesButton.disabled = true;
