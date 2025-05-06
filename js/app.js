@@ -720,17 +720,18 @@ async function validateCropping() { // Ajout de async ici
             // Si triggerCropWorkflow renvoie une erreur ou format incorrect
              throw new Error(result.message || "Erreur inconnue lors du recadrage.");
         }
-        hideLoading()
+        hideLoading();
     } catch (error) {
         // Gérer les erreurs venant de triggerCropWorkflow
         console.error("Échec du processus de recadrage:", error);
         updateStatus(`Erreur recadrage: ${error.message}`, 'error');
         // L'UI est peut-être déjà réinitialisée par triggerCropWorkflow en cas d'erreur là-bas
-        hideLoading()
+        hideLoading();
     } finally {
         // Dans tous les cas (succès ou échec géré), on revient à la vue normale de la modale
         // Note: La réactivation des boutons est maintenant dans triggerCropWorkflow ou ici si on veut
         cancelCropping(); // Réutilise cancel pour nettoyer Cropper et restaurer la vue
+        hideLoading();
     }
 }
 
