@@ -914,30 +914,45 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modal Fermer
     if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
     if (modalOverlay) modalOverlay.addEventListener('click', (event) => { if (event.target === modalOverlay) closeModal(); });
+
     // Bouton Sauver (rôles)
     if (saveChangesButton) saveChangesButton.addEventListener('click', handleSaveChanges);
-    // NOUVEAUX: Boutons d'action dans la modale
-    if (modalCropBtn) modalCropBtn.addEventListener('click', startCropping);
-    if (modalCropValidateBtn) {
-         modalCropValidateBtn.addEventListener('click', () => {
-             console.log("Clic détecté sur Valider Recadrage"); // Log de test
-             validateCropping();
-         });
+
+    // NOUVEAU: Délégation d'événements pour les boutons DANS #modal-actions
+    if (modalActions) {
+        modalActions.addEventListener('click', (event) => {
+            const targetButton = event.target.closest('button');
+            if (!targetButton) return; // Ignore les clics hors des boutons
+
+            console.log(`Clic délégué détecté dans modal-actions sur: #${targetButton.id}`);
+
+            // Vérifie si le bouton est désactivé AVANT d'agir
+            if (targetButton.disabled) {
+                console.log(`Bouton ${targetButton.id} est désactivé, action ignorée.`);
+                return;
+            }
+
+            switch (targetButton.id) {
+                case 'modal-crop-btn':
+                    startCropping();
+                    break;
+                case 'modal-crop-validate-btn':
+                    console.log("Appel validateCropping via délégation");
+                    validateCropping();
+                    break;
+                case 'modal-crop-cancel-btn':
+                    console.log("Appel cancelCropping via délégation");
+                    cancelCropping();
+                    break;
+                case 'modal-mockup-btn':
+                    alert("Fonctionnalité Mockup à implémenter.");
+                    break;
+            }
+        });
+    } else {
+         console.error("Conteneur d'actions modal (#modal-actions) non trouvé!");
     }
-    if (modalCropCancelBtn) {
-         modalCropCancelBtn.addEventListener('click', () => {
-              console.log("Clic détecté sur Annuler Recadrage"); // Log de test
-             cancelCropping();
-         });
-    }
-    // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration); // Pour plus tard
-
-    // On a supprimé les addEventListener directs pour modalCropBtn, modalCropValidateBtn, modalCropCancelBtn
-    // car ils sont maintenant gérés par la délégation ci-dessus.
-
-    // Note: Les listeners pour SortableJS sont ajoutés dans initializeSortable
-    // Note: Les listeners pour les boutons 'x' et '⚙️' sont ajoutés dynamiquement dans createThumbnail/createCarouselItem et devraient être moins affectés, mais on pourrait aussi utiliser la délégation pour eux si besoin.
-
+    
     // Récupérer les données initiales
     fetchProductData();
 
