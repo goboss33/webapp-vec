@@ -911,41 +911,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Bouton Sauver (rôles)
     if (saveChangesButton) saveChangesButton.addEventListener('click', handleSaveChanges);
-
-    // NOUVEAU: Délégation d'événements pour les boutons DANS #modal-actions
-    if (modalActions) {
-        modalActions.addEventListener('click', (event) => {
-            const targetButton = event.target.closest('button');
-            if (!targetButton) return; // Ignore les clics hors des boutons
-
-            console.log(`Clic délégué détecté dans modal-actions sur: #${targetButton.id}`);
-
-            // Vérifie si le bouton est désactivé AVANT d'agir
-            if (targetButton.disabled) {
-                console.log(`Bouton ${targetButton.id} est désactivé, action ignorée.`);
-                return;
-            }
-
-            switch (targetButton.id) {
-                case 'modal-crop-btn':
-                    startCropping();
-                    break;
-                case 'modal-crop-validate-btn':
-                    console.log("Appel validateCropping via délégation");
-                    validateCropping();
-                    break;
-                case 'modal-crop-cancel-btn':
-                    console.log("Appel cancelCropping via délégation");
-                    cancelCropping();
-                    break;
-                case 'modal-mockup-btn':
-                    alert("Fonctionnalité Mockup à implémenter.");
-                    break;
-            }
-        });
-    } else {
-         console.error("Conteneur d'actions modal (#modal-actions) non trouvé!");
-    }
+    // Bouton Recadrer (Action principale)
+    if (modalCropBtn) modalCropBtn.addEventListener('click', startCropping);
+    // Bouton Mockup (Action principale)
+    // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration);
     
     // Récupérer les données initiales
     fetchProductData();
