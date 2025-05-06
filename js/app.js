@@ -1,4 +1,4 @@
-// js/app.js - V5: Assignation Exclusive & Retour au Carousel
+// js/app.js - V11.1: Assignation Exclusive & Retour au Carousel
 
 // --- URLs N8N ---
 const N8N_GET_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/get-product-data';
@@ -547,8 +547,8 @@ function startCropping() {
                         // On peut garder l'affichage des boutons ici si on préfère
                         // ou les afficher juste après new Cropper(...) comme avant.
                         // Laissons-les ici pour l'instant, c'est plus sûr.
-                         if (modalCropValidateBtn) { modalCropValidateBtn.style.display = 'inline-block'; modalCropValidateBtn.disabled = false; }
-                         if (modalCropCancelBtn) { modalCropCancelBtn.style.display = 'inline-block'; modalCropCancelBtn.disabled = false; }
+                         if (modalCropValidateBtn) { modalCropValidateBtn.style.display = 'inline-block'; modalCropValidateBtn.disabled = false; modalCropValidateBtn.onclick = validateCropping;}
+                         if (modalCropCancelBtn) { modalCropCancelBtn.style.display = 'inline-block'; modalCropCancelBtn.disabled = false; modalCropCancelBtn.onclick = cancelCropping;}
                          updateStatus("Ajustez le cadre de recadrage.", "info");
                     }
                  });
