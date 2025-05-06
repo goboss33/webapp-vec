@@ -606,7 +606,7 @@ function cancelCropping() {
 // Met à jour l'URL d'une image partout dans l'UI et dans les données
 function updateImageAfterCrop(imageId, newImageUrl) {
     console.log(`Mise à jour URL pour Image ID ${imageId} vers ${newImageUrl}`);
-
+    
     // 1. Mettre à jour dans notre tableau de données global
     const imageIndexInData = allImageData.findIndex(img => img.id.toString() === imageId);
     if (imageIndexInData !== -1) {
@@ -649,10 +649,8 @@ function updateImageAfterCrop(imageId, newImageUrl) {
 // Fonction qui appelle le workflow n8n pour le recadrage
 async function triggerCropWorkflow(imageData, cropData) {
     console.log(`Appel du workflow N8N pour recadrer l'image ID: ${imageData.id}`);
+    showLoading(`Recadrage image ${imageData.id}...`); // Affiche indicateur + désactive boutons
     updateStatus(`Recadrage image ${imageData.id} en cours...`, 'info');
-    // Désactiver les boutons pendant l'appel
-    if(modalCropValidateBtn) modalCropValidateBtn.disabled = true;
-    if(modalCropCancelBtn) modalCropCancelBtn.disabled = true;
 
     const payload = {
         productId: currentProductId, // Peut être utile pour nommer/classer côté WP
@@ -673,51 +671,35 @@ async function triggerCropWorkflow(imageData, cropData) {
     if (!N8N_CROP_IMAGE_WEBHOOK_URL || N8N_CROP_IMAGE_WEBHOOK_URL === 'YOUR_CROP_IMAGE_WEBHOOK_URL_HERE') {
         console.error("URL du webhook de recadrage non configurée !");
         updateStatus("Erreur: URL du webhook de recadrage manquante.", "error");
-        // Simuler une réponse d'échec pour débloquer l'UI
-         if(modalCropValidateBtn) modalCropValidateBtn.disabled = false;
-         if(modalCropCancelBtn) modalCropCancelBtn.disabled = false;
-        throw new Error("URL du webhook de recadrage non configurée.");
+        return { status: 'error', message: 'URL du webhook de recadrage non configurée.' };
     }
 
-
-
-    
-    // --- Appel Fetch Réel (à décommenter quand le workflow N8N est prêt) ---
-    showLoading();
-    const response = await fetch(N8N_CROP_IMAGE_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-        let errorMsg = `Erreur serveur n8n (crop): ${response.status}`;
-        try {
-            const errorData = await response.json();
-            errorMsg = errorData.message || JSON.stringify(errorData);
-        } catch (e) { console.warn("Impossible de parser l'erreur JSON n8n (crop)."); }
-        throw new Error(errorMsg);
-    }
-
-    const result = await response.json(); // Ex: { status: 'success', newImageUrl: '...', message: '...' }
-    console.log("Réponse du workflow recadrage:", result);
-    if (!result || result.status !== 'success' || !result.newImageUrl) {
-        throw new Error(result.message || "La réponse du workflow de recadrage est invalide.");
-    }
-    return result; // Renvoyer le résultat (contenant newImageUrl)
-
-
-    
-
-    // --- Simulation en attendant le workflow N8N ---
-    console.warn("APPEL N8N SIMULÉ - Aucune image réellement recadrée.");
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simule délai réseau/traitement
-    // Simule une nouvelle URL (ajoute juste un timestamp pour la déco)
-    const simulatedNewUrl = `${imageData.url}?cropped=${Date.now()}`;
-    if(modalCropValidateBtn) modalCropValidateBtn.disabled = false; // Réactiver après simulation
-    if(modalCropCancelBtn) modalCropCancelBtn.disabled = false;
-    return { status: 'success', newImageUrl: simulatedNewUrl, message: 'Recadrage simulé réussi !' };
-    // --- Fin Simulation ---
+    try {
+         // --- Appel Fetch Réel
+        const response = await fetch(N8N_CROP_IMAGE_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            let errorMsg = `Erreur serveur n8n (crop): ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.message || JSON.stringify(errorData);
+            } catch (e) { console.warn("Impossible de parser l'erreur JSON n8n (crop)."); }
+            throw new Error(errorMsg);
+        }
+        const result = await response.json(); // Ex: { status: 'success', newImageUrl: '...', message: '...' }
+        console.log("Réponse du workflow recadrage:", result);
+        if (!result || result.status !== 'success' || !result.newImageUrl) {
+            throw new Error(result.message || "La réponse du workflow de recadrage est invalide.");
+        }
+        return result; // Renvoyer le résultat (contenant newImageUrl)
+     } catch (error) {
+          console.error("Erreur dans fetch triggerCropWorkflow :", error);
+          // Renvoyer un objet d'erreur standardisé
+          return { status: 'error', message: error.message };
+     }
 }
 
 // Valide le recadrage : récupère data, appelle workflow, met à jour UI
@@ -732,9 +714,8 @@ async function validateCropping() { // Ajout de async ici
     console.log("Données de Recadrage validées:", cropData);
     console.log("Image Originale:", currentCroppingImage);
 
-    // Désactiver les boutons et montrer chargement (géré dans triggerCropWorkflow)
     updateStatus(`Recadrage image ${currentCroppingImage.id} en cours...`, 'info');
-
+    let result = null;
     try {
         // Appeler le workflow N8N (qui est async)
         const result = await triggerCropWorkflow(currentCroppingImage, cropData);
@@ -748,33 +729,33 @@ async function validateCropping() { // Ajout de async ici
             // Si triggerCropWorkflow renvoie une erreur ou format incorrect
              throw new Error(result.message || "Erreur inconnue lors du recadrage.");
         }
-        hideLoading();
     } catch (error) {
         // Gérer les erreurs venant de triggerCropWorkflow
         console.error("Échec du processus de recadrage:", error);
         updateStatus(`Erreur recadrage: ${error.message}`, 'error');
         // L'UI est peut-être déjà réinitialisée par triggerCropWorkflow en cas d'erreur là-bas
-        hideLoading();
     } finally {
-        // Dans tous les cas (succès ou échec géré), on revient à la vue normale de la modale
-        // Note: La réactivation des boutons est maintenant dans triggerCropWorkflow ou ici si on veut
-        cancelCropping(); // Réutilise cancel pour nettoyer Cropper et restaurer la vue
-        hideLoading();
+        // Ce bloc s'exécute toujours, que le try réussisse ou échoue
+        console.log("Bloc Finally de validateCropping");
+        hideLoading(); // Cache l'indicateur et réactive les boutons
+        cancelCropping(); // Nettoie Cropper et restaure la vue Swiper
     }
 }
 
-// Réinitialise la modal à son état initial (vue Swiper, boutons actions)
+// Réinitialise la modal à son état initial (vue Swiper, boutons actions standards)
 function resetModalToActionView() {
-     if (modalCropperContainer) modalCropperContainer.style.display = 'none'; // Cache Cropper
-     if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'none'; // Cache Valider/Annuler
-     if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'none';
+     if (modalCropperContainer) modalCropperContainer.style.display = 'none';
+     // Cache et désactive (par sécurité) les boutons de validation/annulation
+     if (modalCropValidateBtn) { modalCropValidateBtn.style.display = 'none'; modalCropValidateBtn.disabled = true; }
+     if (modalCropCancelBtn) { modalCropCancelBtn.style.display = 'none'; modalCropCancelBtn.disabled = true; }
 
-     if (modalSwiperContainer) modalSwiperContainer.style.display = 'block'; // Montre Swiper
-     if (modalPrevBtn) modalPrevBtn.style.display = 'block'; // Montre nav Swiper (état géré par Swiper)
+     // Affiche les éléments de la vue normale et active les boutons
+     if (modalSwiperContainer) modalSwiperContainer.style.display = 'block';
+     if (modalPrevBtn) modalPrevBtn.style.display = 'block'; // Etat géré par Swiper
      if (modalNextBtn) modalNextBtn.style.display = 'block';
-     if (modalImageInfo) modalImageInfo.style.display = 'block'; // Montre infos
-     if (modalCropBtn) modalCropBtn.style.display = 'inline-block'; // Montre bouton "Recadrer"
-     if (modalMockupBtn) modalMockupBtn.style.display = 'inline-block'; // Montre autres actions
+     if (modalImageInfo) modalImageInfo.style.display = 'block';
+     if (modalCropBtn) { modalCropBtn.style.display = 'inline-block'; modalCropBtn.disabled = false; }
+     if (modalMockupBtn) { modalMockupBtn.style.display = 'inline-block'; modalMockupBtn.disabled = false; } // Active aussi mockup
 }
 
 // --- Récupération Initiale des Données ---
