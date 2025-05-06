@@ -543,6 +543,12 @@ function startCropping() {
                     guides: true,
                     background: false,
                     responsive: true,
+                    crop(event) {
+                        if (cropDataX) cropDataX.textContent = Math.round(event.detail.x);
+                        if (cropDataY) cropDataY.textContent = Math.round(event.detail.y);
+                        if (cropDataWidth) cropDataWidth.textContent = Math.round(event.detail.width);
+                        if (cropDataHeight) cropDataHeight.textContent = Math.round(event.detail.height);
+                    },
                     ready() {
                         console.log("Cropper.js est prêt (ready event)!");
                         // On peut garder l'affichage des boutons ici si on préfère
