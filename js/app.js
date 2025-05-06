@@ -654,9 +654,9 @@ async function triggerCropWorkflow(imageData, cropData) {
 
 
 
-    showLoading()
-    // --- Appel Fetch Réel (à décommenter quand le workflow N8N est prêt) ---
     
+    // --- Appel Fetch Réel (à décommenter quand le workflow N8N est prêt) ---
+    showLoading();
     const response = await fetch(N8N_CROP_IMAGE_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
