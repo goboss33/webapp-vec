@@ -534,14 +534,15 @@ function startCropping() {
                  cropperInstance = new Cropper(imageToCropElement, {
                     viewMode: 1,
                     dragMode: 'move',
+                    aspectRatio: 1 / 1,
                     autoCropArea: 0.85,
                     movable: true,
                     rotatable: false,
-                    scalable: false,
+                    scalable: true,
                     zoomable: true,
                     zoomOnWheel: true,
                     guides: true,
-                    background: false,
+                    background: true,
                     responsive: true,
                     crop(event) {
                         if (cropDataX) cropDataX.textContent = Math.round(event.detail.x);
