@@ -755,8 +755,12 @@ function showLoading(message = "Traitement en cours...") {
 }
 function hideLoading() {
     if (loadingOverlay) loadingOverlay.style.display = 'none';
-     // Réactiver les boutons si besoin (géré aussi dans les finally des appels fetch)
-     // if(saveChangesButton) saveChangesButton.disabled = false;
+    // Réactiver les boutons qui auraient pu être désactivés
+    if(saveChangesButton) saveChangesButton.disabled = false;
+     if(modalCropValidateBtn) modalCropValidateBtn.disabled = false; // Réactive Valider Recadrage
+     if(modalCropCancelBtn) modalCropCancelBtn.disabled = false; // Réactive Annuler Recadrage
+     // Note: L'état final des boutons (visibles/cachés) est géré par resetModalToActionView ou startCropping
+     console.log("Masquage indicateur chargement et réactivation boutons.");
 }
 
 // Réinitialise la modal à son état initial (vue Swiper, boutons actions)
