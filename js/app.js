@@ -507,22 +507,14 @@ function startCropping() {
     if (modalImageInfo) modalImageInfo.style.display = 'none';
     if (modalCropBtn) modalCropBtn.style.display = 'none';
     if (modalMockupBtn) modalMockupBtn.style.display = 'none';
-    if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'none'; // Cacher aussi au début
-    if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'none';
 
     // 2. Préparer l'image et le conteneur pour Cropper
     if (modalCropperContainer && imageToCropElement) {
-        // Détruire l'ancienne instance Cropper si elle existe
-        if (cropperInstance) {
-            cropperInstance.destroy();
-            cropperInstance = null;
-            console.log("Ancienne instance Cropper détruite.");
-        }
-         // Réinitialiser l'état de l'image avant chargement
-         imageToCropElement.src = ""; // Important pour redéclencher onload
-         imageToCropElement.style.opacity = '0';
-         imageToCropElement.classList.remove('loaded');
-         modalCropperContainer.style.display = 'block'; // Afficher le conteneur MAINTENANT
+        if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+        imageToCropElement.src = ""; imageToCropElement.style.opacity = '0'; imageToCropElement.classList.remove('loaded');
+        modalCropperContainer.style.display = 'block';
+
+        imageToCropElement.onload = () => {
 
         // 3. Attendre que l'image soit chargée AVANT d'initialiser Cropper
         imageToCropElement.onload = () => {
@@ -555,14 +547,18 @@ function startCropping() {
                  });
                 
                  console.log("Instance Cropper.js créée.");
-                 // Afficher les boutons ET s'assurer qu'ils sont actifs
+                 // Afficher et ACTIVER les boutons Valider/Annuler
                  if (modalCropValidateBtn) {
-                      modalCropValidateBtn.style.display = 'inline-block';
-                      modalCropValidateBtn.disabled = false; // Assure qu'il est actif
+                     modalCropValidateBtn.style.display = 'inline-block';
+                     modalCropValidateBtn.disabled = false;
+                      // Attacher l'écouteur ICI
+                      modalCropValidateBtn.onclick = validateCropping; // Attache directe
                  }
                  if (modalCropCancelBtn) {
-                      modalCropCancelBtn.style.display = 'inline-block';
-                      modalCropCancelBtn.disabled = false; // Assure qu'il est actif
+                     modalCropCancelBtn.style.display = 'inline-block';
+                     modalCropCancelBtn.disabled = false;
+                      // Attacher l'écouteur ICI
+                      modalCropCancelBtn.onclick = cancelCropping; // Attache directe
                  }
                  updateStatus("Ajustez le cadre de recadrage.", "info");
 
