@@ -642,3 +642,35 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     color: var(--tg-theme-button-text-color, #fff);
     border-color: var(--tg-theme-button-color, #007bff);
 }
+
+/* Styles pour la confirmation d'action d'édition */
+.edit-action-confirmation-overlay {
+    position: absolute; /* Ou fixed si vous voulez qu'elle couvre toute la modale principale */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.95); /* Fond blanc semi-transparent pour couvrir les actions en dessous */
+    z-index: 10; /* Pour être au-dessus des autres éléments de la modale, mais sous l'overlay principal */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.edit-action-confirmation-content {
+    background-color: var(--tg-theme-bg-color, #fff);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.edit-action-confirmation-content h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.edit-action-confirmation-buttons button {
+    margin: 5px;
+}
