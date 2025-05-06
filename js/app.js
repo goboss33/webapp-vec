@@ -23,6 +23,7 @@ let dropzoneMain, dropzoneGallery, dropzoneCustom;
 let imageCarouselContainer, imageCarousel;
 let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
 let modalCropperContainer, imageToCropElement, modalCropBtn, modalMockupBtn, modalCropValidateBtn, modalCropCancelBtn;
+let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight; //
 let loadingOverlay;
 
 // --- Fonctions Utilitaires ---
@@ -883,6 +884,11 @@ document.addEventListener('DOMContentLoaded', () => {
     modalMockupBtn = document.getElementById('modal-mockup-btn');
     modalCropValidateBtn = document.getElementById('modal-crop-validate-btn');
     modalCropCancelBtn = document.getElementById('modal-crop-cancel-btn');
+    cropperDataDisplay = document.getElementById('cropper-data-display');
+    cropDataX = document.getElementById('crop-data-x');
+    cropDataY = document.getElementById('crop-data-y');
+    cropDataWidth = document.getElementById('crop-data-width');
+    cropDataHeight = document.getElementById('crop-data-height');
     loadingOverlay = document.getElementById('loading-overlay');
     
     // ... (Récupération productId - inchangé) ...
