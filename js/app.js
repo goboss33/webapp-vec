@@ -753,145 +753,68 @@ async function triggerCropWorkflow(imageData, cropData) {
      }
 }
 
-// Valide le recadrage : récupère data, appelle workflow, met à jour UI
-async function validateCropping() { // Ajout de async ici
+// Valide le recadrage : stocke le contexte, puis affiche la confirmation.
+async function validateCropping() {
     if (!cropperInstance || !currentCroppingImage) {
         console.error("Aucune instance Cropper ou image pour valider.");
+        updateStatus("Erreur : Aucune image ou recadrage actif.", "error");
         return;
     }
 
     // Récupère les données du recadrage (arrondies)
-    const cropData = cropperInstance.getData(true);
-    console.log("Données de Recadrage validées:", cropData);
-    console.log("Image Originale:", currentCroppingImage);
+    const cropData = cropperInstance.getData(true); // true pour arrondir les valeurs
+    console.log("Données de Recadrage prêtes pour confirmation:", cropData);
+    console.log("Image Originale concernée:", currentCroppingImage);
 
-    updateStatus(`Recadrage image ${currentCroppingImage.id} en cours...`, 'info');
-    let result = null;
-    try {
-        // Appeler le workflow N8N (qui est async)
-        const result = await triggerCropWorkflow(currentCroppingImage, cropData);
-
-        // Si succès (réel ou simulé)
-        if (result && result.status === 'success' && result.newImageUrl) {
-            // Mettre à jour toutes les instances de l'image dans l'UI
-            updateImageAfterCrop(currentCroppingImage.id.toString(), result.newImageUrl);
-            updateStatus(result.message || "Image recadrée avec succès !", 'success');
-        } else {
-            // Si triggerCropWorkflow renvoie une erreur ou format incorrect
-             throw new Error(result.message || "Erreur inconnue lors du recadrage.");
+    // Stocker le contexte de l'action pour une utilisation ultérieure
+    // après que l'utilisateur ait fait son choix (remplacer ou nouveau).
+    currentEditActionContext = {
+        type: 'crop', // Identifie le type d'opération
+        imageData: currentCroppingImage, // L'objet image sur lequel on travaille
+        payloadData: { // Données spécifiques à l'action de recadrage
+            crop: { // Les coordonnées et dimensions du recadrage
+                x: Math.round(cropData.x),
+                y: Math.round(cropData.y),
+                width: Math.round(cropData.width),
+                height: Math.round(cropData.height)
+            }
+            // Note: Si vous aviez des options de toile finale (targetCanvasWidth, etc.),
+            // vous les ajouteriez aussi ici dans payloadData.canvas par exemple.
         }
-    } catch (error) {
-        // Gérer les erreurs venant de triggerCropWorkflow
-        console.error("Échec du processus de recadrage:", error);
-        updateStatus(`Erreur recadrage: ${error.message}`, 'error');
-        // L'UI est peut-être déjà réinitialisée par triggerCropWorkflow en cas d'erreur là-bas
-    } finally {
-        // Ce bloc s'exécute toujours, que le try réussisse ou échoue
-        console.log("Bloc Finally de validateCropping");
-        hideLoading(); // Cache l'indicateur et réactive les boutons
-        cancelCropping(); // Nettoie Cropper et restaure la vue Swiper
-    }
-}
-
-// --- NOUVELLE FONCTION pour gérer le retrait du watermark ---
-async function handleRemoveWatermark() {
-    if (!currentCroppingImage && !(currentModalIndex >= 0 && currentModalIndex < modalImageList.length)) {
-        updateStatus("Aucune image sélectionnée pour retirer le watermark.", "warn");
-        return;
-    }
-
-    // currentCroppingImage est défini si on vient de Cropper, sinon on prend l'image de la modale
-    const imageToProcess = currentCroppingImage || modalImageList[currentModalIndex];
-
-    if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
-        updateStatus("Données de l'image invalides pour retirer le watermark.", "error");
-        return;
-    }
-
-    console.log(`Demande de retrait du watermark pour l'image ID: ${imageToProcess.id}`);
-    showLoading(`Retrait du watermark pour l'image ${imageToProcess.id}...`);
-    updateStatus(`Retrait du watermark pour l'image ${imageToProcess.id} en cours...`, 'info');
-
-    // Désactiver les boutons de la modale pendant le traitement
-    if (modalCropBtn) modalCropBtn.disabled = true;
-    if (modalRemoveWatermarkBtn) modalRemoveWatermarkBtn.disabled = true;
-    if (modalMockupBtn) modalMockupBtn.disabled = true;
-
-    const payload = {
-        productId: currentProductId,
-        imageId: imageToProcess.id,
-        imageUrl: imageToProcess.url.split('?')[0] // Envoyer l'URL de base sans cache-buster de session
     };
 
-    try {
-        const response = await fetch(N8N_REMOVE_WATERMARK_WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+    // Afficher la sous-modale de confirmation au lieu de lancer le workflow directement.
+    showEditActionConfirmation();
+    // Le reste de l'ancien code (try/catch/finally et appel à triggerCropWorkflow)
+    // sera déplacé dans la nouvelle fonction executeConfirmedAction().
+}
 
-        if (!response.ok) {
-            let errorMsg = `Erreur serveur n8n (watermark): ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMsg = errorData.message || JSON.stringify(errorData);
-            } catch (e) { console.warn("Impossible de parser l'erreur JSON n8n (watermark)."); }
-            throw new Error(errorMsg);
-        }
+// Gère la demande de retrait de watermark : stocke le contexte, puis affiche la confirmation.
+async function handleRemoveWatermark() {
+    // Déterminer l'image à traiter : celle du mode recadrage (currentCroppingImage)
+    // ou, si pas en mode recadrage, celle actuellement affichée dans la modale Swiper (modalImageList[currentModalIndex]).
+    const imageToProcess = cropperInstance ? currentCroppingImage : modalImageList[currentModalIndex];
 
-        const result = await response.json();
-        console.log("Réponse du workflow de retrait de watermark:", result);
-
-        if (result && result.status === 'success' && result.newImageUrl) {
-            // Mettre à jour toutes les instances de l'image dans l'UI
-            // La fonction updateImageAfterCrop est réutilisable ici !
-            updateImageAfterCrop(imageToProcess.id.toString(), result.newImageUrl);
-            updateStatus(result.message || "Watermark retiré avec succès et image mise à jour !", 'success');
-
-            // Si l'opération a réussi et qu'on était en mode Cropper, annuler le mode Cropper
-            // pour revenir à la vue Swiper et voir l'image mise à jour.
-            if (cropperInstance) {
-                cancelCropping(); // Cela va aussi appeler resetModalToActionView
-            } else {
-                // Si on n'était pas en mode Cropper, s'assurer que la vue modale est correcte
-                resetModalToActionView(); // Assure que les boutons sont réactivés etc.
-            }
-
-        } else {
-            throw new Error(result.message || "La réponse du workflow de retrait de watermark est invalide.");
-        }
-
-    } catch (error) {
-        console.error("Échec du processus de retrait de watermark:", error);
-        updateStatus(`Erreur retrait watermark: ${error.message}`, 'error');
-        // En cas d'erreur, s'assurer que les boutons sont réactivés si on n'est pas en mode cropper
-        // Si on est en mode cropper, cancelCropping s'en chargera (appelé dans le finally)
-        if (!cropperInstance) {
-             resetModalToActionView(); // Pour réactiver les boutons si pas en mode cropper
-        }
-    } finally {
-        // Si on était en mode Cropper et qu'il y a eu une erreur avant cancelCropping,
-        // ou si le try s'est bien passé mais sans appeler cancelCropping (ce qui ne devrait pas arriver ici)
-        // S'assurer que le mode cropper est quitté si une erreur survient pendant son activité.
-        // Cependant, si le succès appelle cancelCropping, ce finally pourrait être redondant pour cet aspect.
-        // Le plus simple est que showLoading/hideLoading s'occupent de l'état global des boutons.
-        hideLoading(); // Cache l'indicateur et réactive les boutons globaux
-
-        // S'assurer que les boutons d'action de la modale sont réactivés
-        // (resetModalToActionView s'en charge si appelé, sinon faire manuellement)
-        // Au lieu de le mettre ici, il vaut mieux que resetModalToActionView soit appelé à la fin du try ou catch si pas en mode cropper.
-        // Et que cancelCropping l'appelle si on était en mode cropper.
-        // Le hideLoading() va déjà réactiver les boutons principaux de la page (Save, etc.)
-        // Il faut s'assurer que les boutons de la modale (Crop, Remove Watermark, Mockup) sont aussi réactivés.
-        // resetModalToActionView le fait bien.
-        if (modalCropBtn) modalCropBtn.disabled = false;
-        if (modalRemoveWatermarkBtn) modalRemoveWatermarkBtn.disabled = false;
-        if (modalMockupBtn) modalMockupBtn.disabled = false;
-
-        // Si on était en mode recadrage et qu'une erreur s'est produite avant l'appel à cancelCropping.
-        // Ou si l'opération a réussi mais on veut quitter le mode cropper pour voir l'image màj.
-        // => Déjà géré dans le bloc try/catch avec l'appel à cancelCropping() en cas de succès.
+    if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
+        updateStatus("Données de l'image invalides ou aucune image sélectionnée pour retirer le watermark.", "error");
+        console.error("handleRemoveWatermark: imageToProcess invalide ou manquante.", imageToProcess);
+        return;
     }
+
+    console.log(`Préparation pour retrait du watermark (ID: ${imageToProcess.id}). Affichage confirmation...`);
+
+    // Stocker le contexte de l'action
+    currentEditActionContext = {
+        type: 'removeWatermark', // Identifie le type d'opération
+        imageData: imageToProcess, // L'objet image sur lequel on travaille
+        payloadData: {} // Pas de données supplémentaires spécifiques pour cette action pour l'instant
+                        // (l'URL et l'ID de l'image sont déjà dans imageData)
+    };
+
+    // Afficher la sous-modale de confirmation.
+    showEditActionConfirmation();
+    // L'ancien code qui faisait le fetch vers N8N_REMOVE_WATERMARK_WEBHOOK_URL
+    // sera déplacé dans la nouvelle fonction executeConfirmedAction().
 }
 
 // Réinitialise la modal à son état initial (vue Swiper, boutons actions standards)
