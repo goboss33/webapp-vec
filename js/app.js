@@ -790,6 +790,107 @@ async function validateCropping() { // Ajout de async ici
     }
 }
 
+// --- NOUVELLE FONCTION pour gérer le retrait du watermark ---
+async function handleRemoveWatermark() {
+    if (!currentCroppingImage && !(currentModalIndex >= 0 && currentModalIndex < modalImageList.length)) {
+        updateStatus("Aucune image sélectionnée pour retirer le watermark.", "warn");
+        return;
+    }
+
+    // currentCroppingImage est défini si on vient de Cropper, sinon on prend l'image de la modale
+    const imageToProcess = currentCroppingImage || modalImageList[currentModalIndex];
+
+    if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
+        updateStatus("Données de l'image invalides pour retirer le watermark.", "error");
+        return;
+    }
+
+    console.log(`Demande de retrait du watermark pour l'image ID: ${imageToProcess.id}`);
+    showLoading(`Retrait du watermark pour l'image ${imageToProcess.id}...`);
+    updateStatus(`Retrait du watermark pour l'image ${imageToProcess.id} en cours...`, 'info');
+
+    // Désactiver les boutons de la modale pendant le traitement
+    if (modalCropBtn) modalCropBtn.disabled = true;
+    if (modalRemoveWatermarkBtn) modalRemoveWatermarkBtn.disabled = true;
+    if (modalMockupBtn) modalMockupBtn.disabled = true;
+
+    const payload = {
+        productId: currentProductId,
+        imageId: imageToProcess.id,
+        imageUrl: imageToProcess.url.split('?')[0] // Envoyer l'URL de base sans cache-buster de session
+    };
+
+    try {
+        const response = await fetch(N8N_REMOVE_WATERMARK_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            let errorMsg = `Erreur serveur n8n (watermark): ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.message || JSON.stringify(errorData);
+            } catch (e) { console.warn("Impossible de parser l'erreur JSON n8n (watermark)."); }
+            throw new Error(errorMsg);
+        }
+
+        const result = await response.json();
+        console.log("Réponse du workflow de retrait de watermark:", result);
+
+        if (result && result.status === 'success' && result.newImageUrl) {
+            // Mettre à jour toutes les instances de l'image dans l'UI
+            // La fonction updateImageAfterCrop est réutilisable ici !
+            updateImageAfterCrop(imageToProcess.id.toString(), result.newImageUrl);
+            updateStatus(result.message || "Watermark retiré avec succès et image mise à jour !", 'success');
+
+            // Si l'opération a réussi et qu'on était en mode Cropper, annuler le mode Cropper
+            // pour revenir à la vue Swiper et voir l'image mise à jour.
+            if (cropperInstance) {
+                cancelCropping(); // Cela va aussi appeler resetModalToActionView
+            } else {
+                // Si on n'était pas en mode Cropper, s'assurer que la vue modale est correcte
+                resetModalToActionView(); // Assure que les boutons sont réactivés etc.
+            }
+
+        } else {
+            throw new Error(result.message || "La réponse du workflow de retrait de watermark est invalide.");
+        }
+
+    } catch (error) {
+        console.error("Échec du processus de retrait de watermark:", error);
+        updateStatus(`Erreur retrait watermark: ${error.message}`, 'error');
+        // En cas d'erreur, s'assurer que les boutons sont réactivés si on n'est pas en mode cropper
+        // Si on est en mode cropper, cancelCropping s'en chargera (appelé dans le finally)
+        if (!cropperInstance) {
+             resetModalToActionView(); // Pour réactiver les boutons si pas en mode cropper
+        }
+    } finally {
+        // Si on était en mode Cropper et qu'il y a eu une erreur avant cancelCropping,
+        // ou si le try s'est bien passé mais sans appeler cancelCropping (ce qui ne devrait pas arriver ici)
+        // S'assurer que le mode cropper est quitté si une erreur survient pendant son activité.
+        // Cependant, si le succès appelle cancelCropping, ce finally pourrait être redondant pour cet aspect.
+        // Le plus simple est que showLoading/hideLoading s'occupent de l'état global des boutons.
+        hideLoading(); // Cache l'indicateur et réactive les boutons globaux
+
+        // S'assurer que les boutons d'action de la modale sont réactivés
+        // (resetModalToActionView s'en charge si appelé, sinon faire manuellement)
+        // Au lieu de le mettre ici, il vaut mieux que resetModalToActionView soit appelé à la fin du try ou catch si pas en mode cropper.
+        // Et que cancelCropping l'appelle si on était en mode cropper.
+        // Le hideLoading() va déjà réactiver les boutons principaux de la page (Save, etc.)
+        // Il faut s'assurer que les boutons de la modale (Crop, Remove Watermark, Mockup) sont aussi réactivés.
+        // resetModalToActionView le fait bien.
+        if (modalCropBtn) modalCropBtn.disabled = false;
+        if (modalRemoveWatermarkBtn) modalRemoveWatermarkBtn.disabled = false;
+        if (modalMockupBtn) modalMockupBtn.disabled = false;
+
+        // Si on était en mode recadrage et qu'une erreur s'est produite avant l'appel à cancelCropping.
+        // Ou si l'opération a réussi mais on veut quitter le mode cropper pour voir l'image màj.
+        // => Déjà géré dans le bloc try/catch avec l'appel à cancelCropping() en cas de succès.
+    }
+}
+
 // Réinitialise la modal à son état initial (vue Swiper, boutons actions standards)
 function resetModalToActionView() {
      if (modalCropperContainer) modalCropperContainer.style.display = 'none';
@@ -998,6 +1099,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+    }
+
+    if (modalRemoveWatermarkBtn) {
+        modalRemoveWatermarkBtn.addEventListener('click', handleRemoveWatermark);
     }
     // Bouton Mockup (Action principale)
     // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration);
