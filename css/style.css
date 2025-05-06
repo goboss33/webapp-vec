@@ -636,3 +636,9 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
 #loading-overlay p {
     font-size: 1em;
 }
+
+.aspect-btn.active-ratio {
+    background-color: var(--tg-theme-button-color, #007bff);
+    color: var(--tg-theme-button-text-color, #fff);
+    border-color: var(--tg-theme-button-color, #007bff);
+}
