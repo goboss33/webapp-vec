@@ -267,100 +267,93 @@ function initializeSortable() {
                 group: 'shared', // Fait partie du même groupe
                 pull: true,      // Important: Permet de glisser HORS de cette zone (vers une autre zone ou pour supprimer->retour carousel)
                 animation: 150,
-                onAdd: function (evt) { // Quand un élément est AJOUTÉ (déposé)
-                    const itemEl = evt.item; // L'élément déposé (soit du carousel, soit d'une autre zone)
+                onAdd: function (evt) {
+                    const itemEl = evt.item; // L'élément qui a été déposé (peut venir du carrousel ou d'une autre zone)
                     const droppedImageId = itemEl.dataset.imageId;
-                    const droppedImageUrl = itemEl.dataset.imageUrl || allImageData.find(img => img.id.toString() === droppedImageId)?.url; // Récupère l'URL si besoin
-                    const targetContainer = evt.to; // Le conteneur où on a déposé (.thumbnail-container)
-
-                    console.log(`onAdd Event: Image ID ${droppedImageId} déposée dans la zone ${role}`);
-
-                    // Règle 1: Doublons dans la zone cible?
-                    // Il faut vérifier les autres éléments déjà présents *avant* cet ajout
-                    let duplicate = false;
-                    Array.from(targetContainer.children).forEach(child => {
-                         if (child !== itemEl && child.dataset.imageId === droppedImageId) {
-                             duplicate = true;
-                         }
-                     });
-                    if (duplicate) {
-                        console.log("Doublon détecté, annulation.");
-                        itemEl.remove(); // Supprime l'élément qui vient d'être ajouté
-                        updateStatus(`Image ${droppedImageId} déjà dans la zone ${role}.`, 'info');
-                        // Remettre l'original dans le carousel si besoin? Non, SortableJS devrait gérer le retour à la source si on annule ici.
-                        return;
-                    }
-
-                    // Règle 2: Zone Principale - une seule image
-                    if (role === 'main' && targetContainer.children.length > 1) {
-                        console.log("Zone Principale limitée à 1. Retrait de l'ancienne image.");
-                        let itemToKeep = evt.item; // L'élément qui vient d'être déposé
+                    const targetContainer = evt.to; // Le conteneur .thumbnail-container de la zone 'main'
+                    const role = 'main'; // On sait qu'on est dans la zone 'main'
                 
-                        Array.from(targetContainer.children).forEach(child => {
-                            if (child !== itemToKeep) { // Ne pas supprimer celui qu'on vient d'ajouter
-                                console.log(` -> Retrait de l'élément enfant:`, child);
-                                // Remettre l'ancienne image principale dans le carousel
-                                const oldImageId = child.dataset.imageId;
-                                const oldImageData = allImageData.find(img => img.id.toString() === oldImageId);
-                                if (oldImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${oldImageId}"]`)) {
-                                    console.log(`   -> Retour au carousel pour ID: ${oldImageId}`);
-                                    imageCarousel.appendChild(createCarouselItem(oldImageData));
-                                } else {
-                                     console.log(`   -> L'image ${oldImageId} n'a pas besoin d'être retournée au carousel (déjà là ou données manquantes).`);
-                                }
-                                child.remove(); // Supprime l'ancien élément du DOM de la dropzone
-                             }
-                         });
-                         updateStatus(`Ancienne image principale retournée au carousel. ${droppedImageId} est la nouvelle.`, 'info');
-                    }
-
-                    // Règle 3: Zone Custom - limite max
-                    if (role === 'custom' && targetContainer.children.length > maxImages) {
-                        console.log(`Limite (${maxImages}) atteinte pour Custom. Annulation.`);
-                        itemEl.remove();
-                        updateStatus(`Limite de ${maxImages} images atteinte pour galerie custom.`, 'warn');
-                        // Remettre l'original dans le carousel si besoin?
-                        const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
-                         if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
-                             imageCarousel.appendChild(createCarouselItem(originalImageData));
-                         }
-                        return;
-                    }
-
-                    // Transformation en Vignette (si l'élément vient du carousel)
-                    if (itemEl.classList.contains('carousel-image-container')) {
-                        console.log("Transformation de l'item du carousel en vignette.");
-                    
-                        // **** MODIFICATION CLÉ : Trouver les données complètes de l'image ****
-                        const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
-                    
-                        if (!originalImageData) {
-                            console.error(`[onAdd] Données originales non trouvées pour l'image ID ${droppedImageId}. Création vignette basique.`);
-                            // Fallback: créer une vignette sans les 'uses' si on ne trouve pas les données (ne devrait pas arriver)
-                            const thumbnailWrapper = createThumbnail({ id: droppedImageId, url: droppedImageUrl }, role);
-                            targetContainer.replaceChild(thumbnailWrapper, itemEl);
+                    console.log(`[onAdd Main] Image ID ${droppedImageId} déposée.`);
+                    console.log(` -> Nombre d'enfants AVANT traitement: ${targetContainer.children.length}`); // Devrait être 1 ou 2 ici
+                
+                    // 1. Identifier l'élément à garder (celui qui vient d'être déposé)
+                    // Note: evt.item est l'élément original déplacé, pas forcément celui actuellement dans targetContainer si remplacement rapide
+                    // Il est plus sûr de travailler avec l'ID
+                    let newlyAddedElement = null; // On va l'identifier plus tard
+                
+                    // 2. Vider la zone de TOUS les éléments *sauf* potentiellement celui qu'on vient d'ajouter
+                    //    et remettre les anciens au carrousel.
+                    Array.from(targetContainer.children).forEach(child => {
+                        const childImageId = child.dataset.imageId;
+                        if (childImageId === droppedImageId) {
+                            // C'est (probablement) l'élément qu'on vient d'ajouter. On le garde pour l'instant.
+                             newlyAddedElement = child;
+                             console.log(` -> Trouvé l'élément ajouté (ID: ${droppedImageId}), on le garde temporairement.`);
                         } else {
-                            console.log(` -> Données trouvées :`, originalImageData);
-                            // **** Utiliser les données complètes (incluant 'uses') pour créer la vignette ****
-                            const thumbnailWrapper = createThumbnail(originalImageData, role);
-                            targetContainer.replaceChild(thumbnailWrapper, itemEl); // Remplace l'élément glissé par la nouvelle vignette
+                            // C'est une ancienne image qui doit être retirée
+                            console.log(` -> Retrait de l'ancienne image (ID: ${childImageId})`);
+                            const oldImageData = allImageData.find(img => img.id.toString() === childImageId);
+                            if (oldImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${childImageId}"]`)) {
+                                console.log(`   -> Retour au carousel pour ID: ${childImageId}`);
+                                imageCarousel.appendChild(createCarouselItem(oldImageData));
+                            }
+                            child.remove(); // Supprimer l'ancien
                         }
-                        // **** FIN DES MODIFICATIONS ****
-                    
-                        updateStatus(`Image ${droppedImageId} ajoutée à la zone ${role}.`, 'success');
-                    
-                    } else {
-                        // L'élément vient d'une autre zone, il est déjà une vignette. Juste confirmer.
-                         updateStatus(`Image ${droppedImageId} déplacée vers la zone ${role}.`, 'success');
-                         // Mettre à jour son title ?
-                         const thumbImg = itemEl.querySelector('.img-thumbnail');
-                         if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${role}`;
-                         const removeBtn = itemEl.querySelector('.remove-thumbnail-btn');
+                    });
+                
+                    console.log(` -> Nombre d'enfants APRES vidage (avant ajout vignette): ${targetContainer.children.length}`); // Devrait être 0 ou 1
+                
+                    // 3. S'assurer que l'élément ajouté est bien une vignette et unique.
+                    // Si l'élément vient du carrousel (il n'est PAS une vignette), on le remplace par une vignette.
+                    // Si l'élément vient d'une autre zone (il EST déjà une vignette), on le garde tel quel.
+                    if (newlyAddedElement && newlyAddedElement.classList.contains('carousel-image-container')) {
+                        console.log(" -> L'élément ajouté vient du carrousel. Création de la vignette.");
+                        const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
+                        if (originalImageData) {
+                            const thumbnailWrapper = createThumbnail(originalImageData, role);
+                            // Remplacer l'élément ajouté par la vignette (ou l'ajouter si le conteneur était vide)
+                            if (targetContainer.contains(newlyAddedElement)) {
+                                 targetContainer.replaceChild(thumbnailWrapper, newlyAddedElement);
+                            } else {
+                                // Cas où le vidage a aussi retiré l'élément ajouté (peu probable mais sécurité)
+                                targetContainer.appendChild(thumbnailWrapper);
+                            }
+                            updateStatus(`Image ${droppedImageId} définie comme principale.`, 'success');
+                        } else {
+                             console.error(`[onAdd Main] Données originales non trouvées pour ID ${droppedImageId}.`);
+                             if (newlyAddedElement) newlyAddedElement.remove(); // Retirer l'élément incomplet
+                             updateStatus(`Erreur lors de l'ajout de l'image ${droppedImageId}.`, 'error');
+                        }
+                    } else if (newlyAddedElement && newlyAddedElement.classList.contains('thumbnail-wrapper')) {
+                         console.log(" -> L'élément ajouté vient d'une autre zone (déjà une vignette). On le garde.");
+                         // Mettre à jour son titre pour refléter le rôle 'main'
+                          const thumbImg = newlyAddedElement.querySelector('.img-thumbnail');
+                          if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${role}`;
+                          const removeBtn = newlyAddedElement.querySelector('.remove-thumbnail-btn');
                           if(removeBtn) removeBtn.title = `Retirer de ${role}`;
+                          updateStatus(`Image ${droppedImageId} définie comme principale.`, 'success');
+                    } else if (!newlyAddedElement && targetContainer.children.length === 0) {
+                        // Cas où on a déposé le premier élément et il venait du carrousel (vidage n'a rien fait)
+                        // Il faut retrouver l'élément original 'itemEl' qui a déclenché l'event
+                        if (itemEl.classList.contains('carousel-image-container')) {
+                             console.log(" -> Premier élément déposé depuis le carrousel.");
+                             const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
+                             if (originalImageData) {
+                                 const thumbnailWrapper = createThumbnail(originalImageData, role);
+                                 // Remplacer itemEl (l'élément fantôme/original) par la vignette dans le conteneur
+                                 // C'est délicat car itemEl n'est peut-être plus dans le DOM au même endroit.
+                                 // Il est plus sûr de juste ajouter la vignette au conteneur vide.
+                                 targetContainer.innerHTML = ''; // Assurer qu'il est vide
+                                 targetContainer.appendChild(thumbnailWrapper);
+                                 updateStatus(`Image ${droppedImageId} définie comme principale.`, 'success');
+                             } else {
+                                  console.error(`[onAdd Main] Données originales non trouvées pour ID ${droppedImageId} (premier dépôt).`);
+                                  updateStatus(`Erreur lors de l'ajout de l'image ${droppedImageId}.`, 'error');
+                             }
+                        }
                     }
-
-                    // !!! TODO: Mettre à jour l'état interne JS !!!
-                },
+                     console.log(` -> Nombre d'enfants FINAL: ${targetContainer.children.length}`); // Devrait être 1
+                }, // Fin onAdd pour 'main'
                 onRemove: function(evt) { // Quand un élément est SORTI (par drag vers une autre zone OU supprimé par clic->remove)
                     // Note: Cet event se déclenche AUSSI quand on clique sur 'x', car on fait wrapper.remove()
                     const itemEl = evt.item;
