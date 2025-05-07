@@ -293,16 +293,22 @@ function initializeSortable() {
 
                     // Règle 2: Zone Principale - une seule image
                     if (role === 'main' && targetContainer.children.length > 1) {
-                        console.log("Zone Principale limitée à 1. Retrait des anciennes.");
-                         Array.from(targetContainer.children).forEach(child => {
-                             if (child !== itemEl) { // Ne pas supprimer celui qu'on vient d'ajouter
-                                // !!! Avant de supprimer, il faut remettre l'ancienne image principale dans le carousel !!!
+                        console.log("Zone Principale limitée à 1. Retrait de l'ancienne image.");
+                        let itemToKeep = evt.item; // L'élément qui vient d'être déposé
+                
+                        Array.from(targetContainer.children).forEach(child => {
+                            if (child !== itemToKeep) { // Ne pas supprimer celui qu'on vient d'ajouter
+                                console.log(` -> Retrait de l'élément enfant:`, child);
+                                // Remettre l'ancienne image principale dans le carousel
                                 const oldImageId = child.dataset.imageId;
                                 const oldImageData = allImageData.find(img => img.id.toString() === oldImageId);
                                 if (oldImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${oldImageId}"]`)) {
+                                    console.log(`   -> Retour au carousel pour ID: ${oldImageId}`);
                                     imageCarousel.appendChild(createCarouselItem(oldImageData));
+                                } else {
+                                     console.log(`   -> L'image ${oldImageId} n'a pas besoin d'être retournée au carousel (déjà là ou données manquantes).`);
                                 }
-                                child.remove();
+                                child.remove(); // Supprime l'ancien élément du DOM de la dropzone
                              }
                          });
                          updateStatus(`Ancienne image principale retournée au carousel. ${droppedImageId} est la nouvelle.`, 'info');
