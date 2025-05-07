@@ -322,12 +322,27 @@ function initializeSortable() {
                     }
 
                     // Transformation en Vignette (si l'élément vient du carousel)
-                    // Si l'élément vient d'une autre zone, il est déjà une vignette (.thumbnail-wrapper)
                     if (itemEl.classList.contains('carousel-image-container')) {
-                         console.log("Transformation du clone de carousel en vignette.");
-                        const thumbnailWrapper = createThumbnail({ id: droppedImageId, url: droppedImageUrl }, role);
-                        targetContainer.replaceChild(thumbnailWrapper, itemEl); // Remplace le clone par la vignette
+                        console.log("Transformation de l'item du carousel en vignette.");
+                    
+                        // **** MODIFICATION CLÉ : Trouver les données complètes de l'image ****
+                        const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
+                    
+                        if (!originalImageData) {
+                            console.error(`[onAdd] Données originales non trouvées pour l'image ID ${droppedImageId}. Création vignette basique.`);
+                            // Fallback: créer une vignette sans les 'uses' si on ne trouve pas les données (ne devrait pas arriver)
+                            const thumbnailWrapper = createThumbnail({ id: droppedImageId, url: droppedImageUrl }, role);
+                            targetContainer.replaceChild(thumbnailWrapper, itemEl);
+                        } else {
+                            console.log(` -> Données trouvées :`, originalImageData);
+                            // **** Utiliser les données complètes (incluant 'uses') pour créer la vignette ****
+                            const thumbnailWrapper = createThumbnail(originalImageData, role);
+                            targetContainer.replaceChild(thumbnailWrapper, itemEl); // Remplace l'élément glissé par la nouvelle vignette
+                        }
+                        // **** FIN DES MODIFICATIONS ****
+                    
                         updateStatus(`Image ${droppedImageId} ajoutée à la zone ${role}.`, 'success');
+                    
                     } else {
                         // L'élément vient d'une autre zone, il est déjà une vignette. Juste confirmer.
                          updateStatus(`Image ${droppedImageId} déplacée vers la zone ${role}.`, 'success');
