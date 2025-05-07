@@ -309,36 +309,59 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
 .thumbnail-wrapper .settings-btn:hover {
      background-color: rgba(0, 120, 255, 0.9);
 }
-/* Cache le bouton réglage sur le carousel (temporaire si on veut que les actions soient que sur les vignettes) */
-/* Ou ajuste le style pour qu'il soit moins proéminent */
-/* .carousel-image-container .settings-btn { display: none; } */
-/* --- Style pour l'icône Guide des Tailles --- */
-.eih-item-icon {
-    position: absolute;
-    top: -7px; /* Ajuster si nécessaire pour le positionnement */
-    left: -7px; /* Positionné en haut à gauche */
-    width: 18px;
-    height: 18px;
-    font-size: 12px; /* Taille de l'icône 📏 */
-    line-height: 18px; /* Centrer l'icône verticalement */
-    text-align: center;
-    border-radius: 3px; /* Légèrement arrondi */
-    color: white;
-    z-index: 10; /* Au-dessus de l'image */
-    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
-    display: none; /* Caché par défaut */
-}
-
-/* Style spécifique pour l'icône Guide des Tailles */
+/* --- Style pour l'icône Guide des Tailles (Centrée) --- */
 .eih-item-icon.size-guide-icon {
+    /* --- Positionnement au centre --- */
+    position: absolute; /* Requis pour le positionnement absolu */
+    top: 50%;           /* Centre verticalement par rapport au haut */
+    left: 50%;          /* Centre horizontalement par rapport à la gauche */
+    transform: translate(-50%, -50%); /* Décale l'icône de moitié de sa propre taille pour un centrage parfait */
+
+    /* --- Apparence --- */
+    display: none; /* Caché par défaut, affiché par la classe parente */
+    width: 24px;   /* Taille du carré violet (ajustez si besoin) */
+    height: 24px;  /* Taille du carré violet */
     background-color: #8A2BE2; /* Violet */
-    /* Vous pouvez utiliser une icône différente si vous préférez, ex: content: '📏'; */
+    border-radius: 4px; /* Coins légèrement arrondis */
+    color: white;       /* Couleur de l'icône 📏 */
+    font-size: 16px;    /* Taille de l'icône 📏 (ajustez si besoin) */
+    line-height: 24px;  /* Aligner l'icône verticalement dans le carré (même valeur que height) */
+    text-align: center; /* Aligner l'icône horizontalement */
+    z-index: 10;        /* Pour être au-dessus de l'image miniature */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* Ombre légère */
+    cursor: default; /* Pour indiquer que ce n'est pas cliquable */
+
+    /* Empêcher la sélection de l'icône elle-même si l'utilisateur essaie de draguer la miniature */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 /* Classe pour afficher l'icône */
-.has-size-guide-icon .size-guide-icon {
-    display: block; /* Afficher l'icône si la classe parente est présente */
+/* Assurez-vous que le conteneur parent (thumbnail-wrapper ou carousel-image-container)
+   a une position relative pour que l'absolu fonctionne correctement par rapport à lui */
+.thumbnail-wrapper,
+.carousel-image-container {
+    position: relative; /* ESSENTIEL pour le positionnement absolu de l'icône enfant */
 }
+
+.has-size-guide-icon .size-guide-icon {
+    display: block; /* Afficher l'icône lorsque la classe parente est présente */
+}
+
+/* Optionnel : Ajuster légèrement la position des autres boutons (X et Settings) s'ils se superposent */
+/* Par exemple, les décaler un peu plus vers les coins */
+/*
+.thumbnail-wrapper .remove-thumbnail-btn {
+    top: -8px;
+    right: -8px;
+}
+.thumbnail-wrapper .settings-btn {
+    bottom: -8px;
+    right: -8px;
+}
+*/
 
 /* --- Style pour le bouton Réglages --- */
 .settings-btn {
