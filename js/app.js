@@ -29,6 +29,7 @@ let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cro
 let modalRemoveWatermarkBtn;
 let editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn;
 let loadingOverlay;
+let modalToggleSizeGuide; // Pour la checkbox du guide des tailles
 
 // --- Fonctions Utilitaires ---
 
@@ -70,6 +71,16 @@ function createCarouselItem(image) {
     container.appendChild(info);
     container.appendChild(settingsBtn); // Ajoute le bouton
 
+    // Vérifier et ajouter l'icône Guide des Tailles si nécessaire
+    if (image.uses && image.uses.includes('size_guide')) {
+        const icon = document.createElement('span');
+        icon.className = 'eih-item-icon size-guide-icon';
+        icon.textContent = '📏'; // Ou votre icône préférée
+        icon.title = 'Guide des tailles';
+        container.appendChild(icon); // L'ajouter au conteneur
+        container.classList.add('has-size-guide-icon'); // Assurer l'affichage initial
+    }
+    
     // Pas besoin de D&D listeners ici, SortableJS gère le container
     return container;
 }
@@ -107,7 +118,60 @@ function createThumbnail(image, targetRole) {
     container.appendChild(removeBtn);
     container.appendChild(settingsBtn); // Ajoute le bouton Réglages
 
+    // Vérifier et ajouter l'icône Guide des Tailles si nécessaire
+    if (image.uses && image.uses.includes('size_guide')) {
+        const icon = document.createElement('span');
+        icon.className = 'eih-item-icon size-guide-icon';
+        icon.textContent = '📏';
+        icon.title = 'Guide des tailles';
+        container.appendChild(icon);
+        container.classList.add('has-size-guide-icon');
+    }
+    
     return container;
+}
+
+// Met à jour l'affichage de l'icône Guide des Tailles sur une miniature ou un item de carrousel
+function updateSizeGuideIcon(imageId, isSizeGuide) {
+    // Chercher l'élément dans le carrousel principal
+    const carouselItem = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`);
+    if (carouselItem) {
+        if (isSizeGuide) {
+            // Ajouter l'icône si elle n'existe pas déjà
+            if (!carouselItem.querySelector('.size-guide-icon')) {
+                const icon = document.createElement('span');
+                icon.className = 'eih-item-icon size-guide-icon';
+                icon.textContent = '📏'; // Ou autre icône/symbole
+                icon.title = 'Guide des tailles';
+                carouselItem.appendChild(icon); // L'ajoute à la fin, le CSS avec position:absolute le place
+            }
+            carouselItem.classList.add('has-size-guide-icon'); // Active l'affichage via CSS
+        } else {
+            carouselItem.classList.remove('has-size-guide-icon'); // Cache l'icône via CSS
+            // Optionnel : supprimer l'élément icône du DOM s'il existe
+            const existingIcon = carouselItem.querySelector('.size-guide-icon');
+            if (existingIcon) existingIcon.remove();
+        }
+    }
+
+    // Chercher l'élément dans toutes les zones de dépôt
+    document.querySelectorAll(`.thumbnail-wrapper[data-image-id="${imageId}"]`).forEach(thumbnailWrapper => {
+         if (isSizeGuide) {
+            if (!thumbnailWrapper.querySelector('.size-guide-icon')) {
+                const icon = document.createElement('span');
+                icon.className = 'eih-item-icon size-guide-icon';
+                icon.textContent = '📏';
+                icon.title = 'Guide des tailles';
+                thumbnailWrapper.appendChild(icon);
+            }
+            thumbnailWrapper.classList.add('has-size-guide-icon');
+        } else {
+            thumbnailWrapper.classList.remove('has-size-guide-icon');
+            const existingIcon = thumbnailWrapper.querySelector('.size-guide-icon');
+            if (existingIcon) existingIcon.remove();
+        }
+    });
+    console.log(`Icône Guide des Tailles mise à jour pour ID ${imageId}: ${isSizeGuide}`);
 }
 
 // --- Gestion du Retrait de Miniature (Clic sur 'x') ---
@@ -306,11 +370,17 @@ const handleSaveChanges = async () => {
     const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper') : [];
     const customGalleryImageIds = Array.from(customGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
 
+    // Trouver l'ID de l'image désignée comme guide des tailles (ou null)
+    const sizeGuideEntry = allImageData.find(imgData => imgData.uses && imgData.uses.includes('size_guide'));
+    const sizeGuideImageId = sizeGuideEntry ? sizeGuideEntry.id : null;
+    console.log(`Image Guide des Tailles sélectionnée pour sauvegarde: ID ${sizeGuideImageId}`);
+    
     const payload = {
         productId: currentProductId,
         mainImageId: mainImageId,
         galleryImageIds: galleryImageIds,
-        customGalleryImageIds: customGalleryImageIds
+        customGalleryImageIds: customGalleryImageIds,
+        sizeGuideImageId: sizeGuideImageId // **** AJOUTER CETTE LIGNE ****
     };
     console.log("Données envoyées à n8n:", payload);
 
@@ -373,7 +443,15 @@ function openImageModal(imageId) {
     }
     currentModalIndex = initialIndex;
     console.log(`Index initial: ${initialIndex}`);
-
+    
+    // Initialiser l'état de la checkbox Guide des Tailles
+    if (modalToggleSizeGuide) {
+        const imageData = modalImageList[initialIndex];
+        modalToggleSizeGuide.checked = imageData.uses && imageData.uses.includes('size_guide');
+        // Stocker l'ID de l'image actuelle sur la checkbox pour l'event listener
+        modalToggleSizeGuide.dataset.currentImageId = imageData.id;
+    }
+    
     // 3. Peupler le wrapper Swiper dynamiquement
     if (modalSwiperWrapper) {
         modalSwiperWrapper.innerHTML = ''; // Vider les anciens slides
@@ -426,6 +504,14 @@ function openImageModal(imageId) {
                  slideChange: function () {
                      console.log(`Slide changé vers index: ${this.activeIndex}`);
                      updateModalInfo(this.activeIndex); // Met à jour les infos (ID, Rôles)
+
+                     // Mettre à jour aussi l'état de la checkbox pour le nouveau slide
+                    if (modalToggleSizeGuide) {
+                        const newImageData = modalImageList[this.activeIndex];
+                        modalToggleSizeGuide.checked = newImageData.uses && newImageData.uses.includes('size_guide');
+                        // Mettre à jour l'ID de l'image associée à la checkbox
+                        modalToggleSizeGuide.dataset.currentImageId = newImageData.id;
+                    }
                  },
                   init: function() {
                       // Met à jour les infos pour le slide initial juste après l'init
@@ -470,6 +556,66 @@ function handleSettingsClick(event) {
     const imageId = button.dataset.imageId; // Récupère l'ID depuis le bouton
     console.log(`Clic sur Réglages pour Image ID: ${imageId}`);
     openImageModal(imageId); // Ouvre la modal pour cette image
+}
+
+// Gère le cochage/décochage de la case "Guide des tailles" dans la modale
+function handleSizeGuideToggle(event) {
+    const checkbox = event.currentTarget;
+    const isChecked = checkbox.checked;
+    const imageId = checkbox.dataset.currentImageId; // Récupère l'ID de l'image affichée
+
+    if (!imageId) {
+        console.error("Impossible de trouver l'ID de l'image associée à la checkbox.");
+        return;
+    }
+
+    const imageIdNum = parseInt(imageId, 10);
+
+    console.log(`Toggle Guide des Tailles pour ID ${imageIdNum}. Nouveau statut coché: ${isChecked}`);
+
+    // Mettre à jour allImageData (logique pour UN SEUL guide des tailles)
+    let previousSizeGuideId = null;
+    allImageData.forEach(imgData => {
+        const uses = imgData.uses || [];
+        const isCurrentlySizeGuide = uses.includes('size_guide');
+        const idMatches = imgData.id === imageIdNum;
+
+        if (isChecked) { // Si on vient de cocher la case pour imageIdNum
+            if (idMatches) {
+                // Ajouter 'size_guide' si pas déjà présent
+                if (!isCurrentlySizeGuide) {
+                    imgData.uses = [...uses, 'size_guide'];
+                    console.log(` -> Ajouté 'size_guide' aux uses de ${imageIdNum}`);
+                }
+            } else if (isCurrentlySizeGuide) {
+                // Si c'est une AUTRE image qui était le guide, retirer 'size_guide'
+                previousSizeGuideId = imgData.id;
+                imgData.uses = uses.filter(use => use !== 'size_guide');
+                console.log(` -> Retiré 'size_guide' des uses de ${imgData.id} (précédent guide)`);
+            }
+        } else { // Si on vient de décocher la case pour imageIdNum
+            if (idMatches && isCurrentlySizeGuide) {
+                // Retirer 'size_guide'
+                imgData.uses = uses.filter(use => use !== 'size_guide');
+                console.log(` -> Retiré 'size_guide' des uses de ${imageIdNum}`);
+            }
+        }
+    });
+
+    // Mettre à jour les icônes visuelles
+    updateSizeGuideIcon(imageIdNum, isChecked); // Pour l'image actuelle
+    if (previousSizeGuideId !== null) {
+        updateSizeGuideIcon(previousSizeGuideId, false); // Pour l'ancienne image guide
+    }
+
+    // Mettre à jour l'affichage des rôles dans la modale pour l'image actuelle
+    const currentImageInData = allImageData.find(img => img.id === imageIdNum);
+    if (modalImageRoles && currentImageInData) {
+         modalImageRoles.textContent = currentImageInData.uses.join(', ') || 'Aucun';
+    }
+
+    // Pas besoin de sauvegarder immédiatement, cela se fera via "Enregistrer Modifications"
+    updateStatus("Statut 'Guide des tailles' mis à jour localement.", "info");
 }
 
 // --- Indicateur de Chargement ---
@@ -1193,6 +1339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cropDataHeight = document.getElementById('crop-data-height');
     cropperAspectRatioButtonsContainer = document.getElementById('cropper-aspect-ratio-buttons');        
     loadingOverlay = document.getElementById('loading-overlay');
+    modalToggleSizeGuide = document.getElementById('modal-toggle-size-guide');
     modalRemoveWatermarkBtn = document.getElementById('modal-remove-watermark-btn');
     editActionConfirmationOverlay = document.getElementById('edit-action-confirmation');
     confirmActionReplaceBtn = document.getElementById('confirm-action-replace');
@@ -1255,6 +1402,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (modalRemoveWatermarkBtn) {
         modalRemoveWatermarkBtn.addEventListener('click', handleRemoveWatermark);
+    }
+    // Écouteur pour la case à cocher Guide des Tailles
+    if (modalToggleSizeGuide) {
+        modalToggleSizeGuide.addEventListener('change', handleSizeGuideToggle);
     }
     // Bouton Mockup (Action principale)
     // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration);
