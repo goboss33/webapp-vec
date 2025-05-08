@@ -51,6 +51,10 @@ function createCarouselItem(image) {
     container.dataset.imageUrl = image.url;
     container.dataset.initialUses = image.uses.join(',');
 
+    if (image.markedForDeletion) {
+        container.classList.add('marked-for-deletion');
+    }
+    
     const img = document.createElement('img');
     img.src = image.url;
     img.alt = `Image ID ${image.id}`;
