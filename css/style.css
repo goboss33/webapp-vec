@@ -775,9 +775,3 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
  .carousel-image-container.marked-for-deletion .del-btn:hover {
     background-color: #e0a800;
  }
-
-/* S'assurer que le positionnement absolu fonctionne pour les boutons dans le carrousel */
-/* (Déjà ajouté précédemment, mais double vérification) */
-.carousel-image-container {
-    position: relative;
-}
