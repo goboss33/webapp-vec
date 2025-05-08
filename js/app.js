@@ -1166,6 +1166,35 @@ async function handleRemoveWatermark() {
     // sera déplacé dans la nouvelle fonction executeConfirmedAction().
 }
 
+// Gère le clic sur le bouton "Générer Mockup"
+async function handleGenerateMockup() {
+    const imageToProcess = cropperInstance ? currentCroppingImage : modalImageList[currentModalIndex];
+
+    if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
+        updateStatus("Données de l'image invalides ou aucune image sélectionnée pour générer le mockup.", "error");
+        console.error("handleGenerateMockup: imageToProcess invalide ou manquante.", imageToProcess);
+        return;
+    }
+
+    console.log(`Préparation pour la génération du mockup (ID Image Produit: ${imageToProcess.id}).`);
+
+    // Pour la génération de mockup, editMode est toujours 'new'
+    // et nous n'avons pas besoin de la sous-modale de confirmation (Remplacer/Nouveau).
+    // Nous appelons directement une version adaptée de executeConfirmedAction ou une nouvelle fonction dédiée.
+
+    // Nous allons réutiliser la structure de currentEditActionContext
+    // et appeler directement executeConfirmedAction avec editMode = 'new'.
+    currentEditActionContext = {
+        type: 'generateMockup', // Nouveau type d'action
+        imageData: imageToProcess,
+        payloadData: {} // Pas de données de payload spécifiques autres que celles de base pour l'instant
+    };
+
+    // Appel direct à executeConfirmedAction avec 'new'
+    // car un mockup est toujours une nouvelle image.
+    await executeConfirmedAction('new');
+}
+
 function showEditActionConfirmation() {
     if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'flex';
     // Optionnel: cacher les boutons d'action principaux de la modale pendant ce choix
@@ -1234,8 +1263,9 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
         webhookUrl = N8N_CROP_IMAGE_WEBHOOK_URL;
     } else if (type === 'removeWatermark') {
         webhookUrl = N8N_REMOVE_WATERMARK_WEBHOOK_URL;
+    } else if (type === 'generateMockup') { // <-- NOUVELLE CONDITION
+        webhookUrl = N8N_GENERATE_MOCKUP_WEBHOOK_URL; // <-- NOUVELLE URL UTILISÉE
     }
-    // Bientôt: else if (type === 'mockup') { webhookUrl = N8N_MOCKUP_WEBHOOK_URL; }
     else {
         console.error(`Type d'action inconnu lors de l'exécution: ${type}`);
         hideLoading();
@@ -1388,11 +1418,9 @@ function resetModalToActionView() {
         modalRemoveWatermarkBtn.style.display = 'inline-block';
         modalRemoveWatermarkBtn.disabled = false;
     }
-    if (modalMockupBtn) { // Si vous avez un bouton mockup
-        modalMockupBtn.style.display = 'inline-block';
-        // Laissez son état 'disabled' tel quel s'il est géré ailleurs (par exemple, s'il est toujours désactivé)
-        // Sinon, si son activation dépend de l'état de la modale :
-        // modalMockupBtn.disabled = false;
+    if (modalGenerateMockupBtn) { // <-- NOUVEAU BLOC POUR NOTRE BOUTON
+        modalGenerateMockupBtn.style.display = 'inline-block';
+        modalGenerateMockupBtn.disabled = false; // Activer par défaut
     }
 }
 
@@ -1539,6 +1567,7 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmActionReplaceBtn = document.getElementById('confirm-action-replace');
     confirmActionNewBtn = document.getElementById('confirm-action-new');
     confirmActionCancelBtn = document.getElementById('confirm-action-cancel');
+    modalGenerateMockupBtn = document.getElementById('modal-generate-mockup-btn'); // <-- NOUVELLE LIGNE
     
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
@@ -1607,6 +1636,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirmActionReplaceBtn) confirmActionReplaceBtn.addEventListener('click', () => executeConfirmedAction('replace'));
     if (confirmActionNewBtn) confirmActionNewBtn.addEventListener('click', () => executeConfirmedAction('new'));
     if (confirmActionCancelBtn) confirmActionCancelBtn.addEventListener('click', hideEditActionConfirmation);
+    if (modalGenerateMockupBtn) modalGenerateMockupBtn.addEventListener('click', handleGenerateMockup); // <-- NOUVELLE LIGNE
     
     // Récupérer les données initiales
     fetchProductData();
