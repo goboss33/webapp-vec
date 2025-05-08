@@ -43,49 +43,72 @@ const updateStatus = (message, type = 'info') => {
     }
 };
 
-// Crée un élément pour le carousel (pour SortableJS)
+// Dans la fonction createCarouselItem(image)
 function createCarouselItem(image) {
     const container = document.createElement('div');
     container.className = 'carousel-image-container';
     container.dataset.imageId = image.id;
-    container.dataset.imageUrl = image.url;
-    container.dataset.initialUses = image.uses.join(',');
+    container.dataset.imageUrl = image.url; // Assurez-vous que l'URL ici est celle à utiliser
+    container.dataset.initialUses = image.uses ? image.uses.join(',') : ''; // Stocker uses initiaux
 
+    // **** AJOUT : Appliquer la classe si marqué pour suppression au chargement ****
+    // (Peu probable avec ce workflow, mais bonne pratique)
     if (image.markedForDeletion) {
         container.classList.add('marked-for-deletion');
     }
-    
+    // **** FIN AJOUT ****
+
     const img = document.createElement('img');
-    img.src = image.url;
+    img.src = image.url; // Utiliser l'URL de l'image (peut avoir un cache-buster de session)
     img.alt = `Image ID ${image.id}`;
+    img.loading = 'lazy'; // Ajout lazy loading
 
     const info = document.createElement('p');
     info.textContent = `ID: ${image.id}`;
 
-    // --- Ajout du bouton Réglages ---
+    // Bouton Réglages (⚙️) - existant
     const settingsBtn = document.createElement('button');
-    settingsBtn.innerHTML = '&#9881;'; // Icône engrenage ⚙️
+    settingsBtn.innerHTML = '&#9881;'; // ⚙️
     settingsBtn.className = 'settings-btn';
     settingsBtn.title = 'Réglages pour cette image';
-    settingsBtn.dataset.imageId = image.id; // Stocke l'ID pour le retrouver facilement
-    settingsBtn.onclick = handleSettingsClick; // On ajoute le handler
-    // --- Fin Ajout ---
+    settingsBtn.dataset.imageId = image.id;
+    settingsBtn.onclick = handleSettingsClick;
 
+    // **** AJOUT : Bouton Supprimer (DEL) ****
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'DEL';
+    deleteBtn.className = 'del-btn';
+    deleteBtn.title = 'Marquer pour suppression définitive';
+    deleteBtn.dataset.imageId = image.id;
+    deleteBtn.onclick = handleMarkForDeletionClick; // Nouveau handler
+    // **** FIN AJOUT ****
+
+    // Icône Guide des Tailles (existante)
+    let sizeGuideIcon = null;
+    if (image.uses && image.uses.includes('size_guide')) {
+        sizeGuideIcon = document.createElement('span');
+        sizeGuideIcon.className = 'eih-item-icon size-guide-icon';
+        sizeGuideIcon.textContent = '📏';
+        sizeGuideIcon.title = 'Guide des tailles';
+        container.classList.add('has-size-guide-icon');
+    }
+
+    // Ajout des éléments au conteneur
     container.appendChild(img);
     container.appendChild(info);
-    container.appendChild(settingsBtn); // Ajoute le bouton
+    // Mettre les boutons côte à côte ou selon le CSS
+    const buttonWrapper = document.createElement('div'); // Optionnel: wrapper pour les boutons
+    buttonWrapper.style.marginTop = '5px'; // Espace
+    // Ajouter DEL avant Settings ? Ou après ?
+    buttonWrapper.appendChild(deleteBtn); // AJOUTER LE BOUTON DEL
+    buttonWrapper.appendChild(settingsBtn);
+    container.appendChild(buttonWrapper);
 
-    // Vérifier et ajouter l'icône Guide des Tailles si nécessaire
-    if (image.uses && image.uses.includes('size_guide')) {
-        const icon = document.createElement('span');
-        icon.className = 'eih-item-icon size-guide-icon';
-        icon.textContent = '📏'; // Ou votre icône préférée
-        icon.title = 'Guide des tailles';
-        container.appendChild(icon); // L'ajouter au conteneur
-        container.classList.add('has-size-guide-icon'); // Assurer l'affichage initial
+    if (sizeGuideIcon) {
+        container.appendChild(sizeGuideIcon); // Ajouter l'icône guide des tailles (sera positionnée par CSS)
     }
-    
-    // Pas besoin de D&D listeners ici, SortableJS gère le container
+
+
     return container;
 }
 
