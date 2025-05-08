@@ -6,6 +6,7 @@ const N8N_UPDATE_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/u
 
 const N8N_CROP_IMAGE_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/crop-n-replace-img';
 const N8N_REMOVE_WATERMARK_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/remove-watermark';
+const N8N_GENERATE_MOCKUP_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/create-mockup';
 
 // --- Variables Globales ---
 let currentProductId = null;
@@ -24,9 +25,9 @@ let productIdElement, productNameElement, saveChangesButton, statusElement;
 let dropzoneMain, dropzoneGallery, dropzoneCustom;
 let imageCarouselContainer, imageCarousel;
 let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
-let modalCropperContainer, imageToCropElement, modalCropBtn, modalMockupBtn, modalCropValidateBtn, modalCropCancelBtn;
-let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer; 
-let modalRemoveWatermarkBtn;
+let modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn; // modalMockupBtn commenté/supprimé car vous l'avez retiré de l'HTML
+let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer;
+let modalRemoveWatermarkBtn, modalGenerateMockupBtn; // <-- AJOUT DE modalGenerateMockupBtn ICI
 let editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn;
 let loadingOverlay;
 let modalToggleSizeGuide; // Pour la checkbox du guide des tailles
