@@ -295,112 +295,147 @@ function initializeSortable() {
                 pull: true,      // Important: Permet de glisser HORS de cette zone (vers une autre zone ou pour supprimer->retour carousel)
                 animation: 150,
                 onAdd: function (evt) {
-                    const itemEl = evt.item;
+                    const itemEl = evt.item; // L'élément qui a été glissé (depuis carrousel ou autre zone)
                     const droppedImageId = itemEl.dataset.imageId;
-                    const targetContainer = evt.to; // Le .thumbnail-container où l'élément est ajouté
-                    const currentRole = role; // Utiliser la variable 'role' de la portée externe (forEach)
-                    const currentMaxImages = maxImages; // Utiliser la variable 'maxImages'
+                    const targetContainer = evt.to; // Le .thumbnail-container où l'élément est déposé
+                    const currentRole = role; // Le rôle de CETTE zone ('main', 'gallery', 'custom')
+                    const currentMaxImages = maxImages; // La limite pour CETTE zone
 
-                    console.log(`[onAdd ${currentRole}] Image ID ${droppedImageId} déposée.`);
-                    console.log(` -> Enfants avant traitement: ${targetContainer.children.length}`);
+                    console.log(`[onAdd ${currentRole}] ID ${droppedImageId} déposé. Enfants actuels: ${targetContainer.children.length}`);
 
-                    // --- Logique commune : Vérifier si doublon ---
-                    let isDuplicate = false;
+                    // Étape 1 : Trouver l'élément qui vient juste d'être ajouté par SortableJS
+                    // C'est généralement le dernier enfant, ou celui avec le bon ID.
+                    let addedElementInDom = null;
+                    // On essaie de le trouver par ID pour être sûr
+                    addedElementInDom = Array.from(targetContainer.children).find(child => child.dataset.imageId === droppedImageId && child.contains(itemEl));
+                    // Fallback si contains ne marche pas (si itemEl est déjà retiré/remplacé par Sortable)
+                    if (!addedElementInDom) {
+                        addedElementInDom = Array.from(targetContainer.children).find(child => child.dataset.imageId === droppedImageId);
+                    }
+                     if (!addedElementInDom) {
+                        console.error(`[onAdd ${currentRole}] CRITICAL: Impossible de retrouver l'élément DOM ajouté (ID: ${droppedImageId})`);
+                        // Que faire ? Tenter de nettoyer ? Revenir ? Pour l'instant, on arrête.
+                        return;
+                    }
+                    console.log(` -> Élément ajouté identifié:`, addedElementInDom);
+
+
+                    // Étape 2 : Vérifier les doublons (si on a ajouté un élément qui y était déjà via une autre source)
+                    let duplicateCount = 0;
                     Array.from(targetContainer.children).forEach(child => {
-                        if (child !== itemEl && child.dataset.imageId === droppedImageId) {
-                            isDuplicate = true;
+                        if (child.dataset.imageId === droppedImageId) {
+                            duplicateCount++;
                         }
                     });
 
-                    if (isDuplicate) {
-                        console.log(" -> Doublon détecté, annulation du dépôt.");
-                        itemEl.remove(); // Supprime l'élément qui vient d'être ajouté par SortableJS
+                    if (duplicateCount > 1) {
+                        console.log(" -> Doublon détecté après ajout, retrait de l'élément ajouté.");
+                        addedElementInDom.remove(); // Enlever celui qui vient d'être ajouté
                         updateStatus(`Image ${droppedImageId} déjà présente dans la zone ${currentRole}.`, 'warn');
-                        // Remettre l'original dans le carrousel si besoin? (Normalement géré par Sortable si remove est immédiat)
-                        // Si vient d'une autre zone, Sortable le remet. Si vient du carrousel et qu'on le supprime, il faut le remettre.
+                        // Remettre l'original au carrousel s'il venait de là
                         if (itemEl.classList.contains('carousel-image-container')) {
                              const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
                              if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
                                  imageCarousel.appendChild(createCarouselItem(originalImageData));
                              }
                         }
-                        return; // Arrêter le traitement pour cette image
+                        return; // Stop
                     }
 
-                    // --- Logique SPÉCIFIQUE au rôle ---
 
-                    // CAS 1: Zone Principale (main) - Remplacement obligatoire
+                    // --- Étape 3 : Logique Spécifique au Rôle ---
+
+                    // CAS 1: Zone Principale (main) - Doit avoir 1 seul élément maximum
                     if (currentRole === 'main') {
-                        console.log(" -> Traitement spécifique pour zone 'main'.");
-                        let newlyAddedElement = null;
-                        // Vider la zone des anciens éléments, en gardant une référence au nouveau
-                        Array.from(targetContainer.children).forEach(child => {
-                            if (child.dataset.imageId === droppedImageId) {
-                                newlyAddedElement = child;
-                            } else {
-                                console.log(`    -> Retrait ancienne image principale (ID: ${child.dataset.imageId})`);
-                                const oldImageData = allImageData.find(img => img.id.toString() === child.dataset.imageId);
-                                if (oldImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${child.dataset.imageId}"]`)) {
-                                     imageCarousel.appendChild(createCarouselItem(oldImageData));
+                        console.log(" -> Logique pour 'main'.");
+                        // Vérifier s'il y a plus d'un enfant MAINTENANT
+                        if (targetContainer.children.length > 1) {
+                            console.log("  -> Plus d'une image, retrait de l'ancienne.");
+                            // Identifier et supprimer l'ancien enfant (celui qui N'EST PAS addedElementInDom)
+                            Array.from(targetContainer.children).forEach(child => {
+                                if (child !== addedElementInDom) {
+                                    console.log(`    -> Retrait de l'ID ${child.dataset.imageId}`);
+                                    // Remettre l'ancienne image au carrousel
+                                    const oldImageData = allImageData.find(img => img.id.toString() === child.dataset.imageId);
+                                    if (oldImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${child.dataset.imageId}"]`)) {
+                                        imageCarousel.appendChild(createCarouselItem(oldImageData));
+                                    }
+                                    child.remove();
                                 }
-                                child.remove();
-                            }
-                        });
-                        // S'assurer que le nouvel élément est une vignette
-                        if (newlyAddedElement && newlyAddedElement.classList.contains('carousel-image-container')) {
-                            const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
-                            if (originalImageData) {
-                                const thumbnailWrapper = createThumbnail(originalImageData, currentRole);
-                                targetContainer.replaceChild(thumbnailWrapper, newlyAddedElement);
-                                updateStatus(`Image ${droppedImageId} définie comme principale.`, 'success');
-                            } else { /* gestion erreur */ if (newlyAddedElement) newlyAddedElement.remove(); }
-                        } else if (newlyAddedElement) { // Vient d'une autre zone
-                             // Mettre à jour le title etc. (comme dans la version précédente)
-                              const thumbImg = newlyAddedElement.querySelector('.img-thumbnail');
-                              if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${currentRole}`;
-                              const removeBtn = newlyAddedElement.querySelector('.remove-thumbnail-btn');
-                              if(removeBtn) removeBtn.title = `Retirer de ${currentRole}`;
-                              updateStatus(`Image ${droppedImageId} définie comme principale.`, 'success');
-                        } else {
-                            // Devrait pas arriver si on dépose un élément, mais sécurité
-                            console.warn("[onAdd Main] Aucun nouvel élément trouvé après nettoyage?");
+                            });
                         }
-
-                    // CAS 2: Zone Custom - Vérifier limite max
-                    } else if (currentRole === 'custom' && targetContainer.children.length > currentMaxImages) {
-                         console.log(` -> Limite (${currentMaxImages}) atteinte pour Custom. Annulation.`);
-                         itemEl.remove(); // Retirer l'élément ajouté en trop
-                         updateStatus(`Limite de ${currentMaxImages} images atteinte pour galerie custom.`, 'warn');
-                         // Remettre l'original dans le carrousel si besoin
-                         if (itemEl.classList.contains('carousel-image-container')) {
-                              const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
-                              if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
-                                  imageCarousel.appendChild(createCarouselItem(originalImageData));
-                              }
-                         }
-                         return; // Arrêter
-
-                    // CAS 3: Zone Galerie ou Custom (si limite non atteinte) - Ajout simple
-                    } else { // Concerne 'gallery' ou 'custom' (si la limite n'est pas dépassée)
-                        console.log(` -> Traitement standard pour zone '${currentRole}'.`);
-                        // Vérifier si l'élément vient du carrousel pour le transformer en vignette
-                        if (itemEl.classList.contains('carousel-image-container')) {
+                        // À ce stade, seul 'addedElementInDom' doit rester.
+                        // S'assurer qu'il est formaté en vignette s'il vient du carrousel.
+                        if (addedElementInDom.classList.contains('carousel-image-container')) {
                              const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
                              if (originalImageData) {
                                  const thumbnailWrapper = createThumbnail(originalImageData, currentRole);
-                                 targetContainer.replaceChild(thumbnailWrapper, itemEl); // Remplacer l'élément glissé par la vignette
-                                 updateStatus(`Image ${droppedImageId} ajoutée à la zone ${currentRole}.`, 'success');
-                             } else { /* gestion erreur */ itemEl.remove(); }
-                        } else { // Vient d'une autre zone (déjà une vignette)
-                             // Mettre à jour son title/bouton
-                             const thumbImg = itemEl.querySelector('.img-thumbnail');
+                                 targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
+                             } else { /* Erreur */ if(addedElementInDom) addedElementInDom.remove(); }
+                        } else {
+                            // Mettre à jour le title si vient d'une autre zone
+                             const thumbImg = addedElementInDom.querySelector('.img-thumbnail');
                              if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${currentRole}`;
-                             const removeBtn = itemEl.querySelector('.remove-thumbnail-btn');
+                             const removeBtn = addedElementInDom.querySelector('.remove-thumbnail-btn');
                              if(removeBtn) removeBtn.title = `Retirer de ${currentRole}`;
-                             updateStatus(`Image ${droppedImageId} déplacée vers la zone ${currentRole}.`, 'success');
                         }
+                         updateStatus(`Image ${droppedImageId} définie comme principale.`, 'success');
+
+                    // CAS 2: Zone Custom - Vérifier limite max
+                    } else if (currentRole === 'custom') {
+                        console.log(" -> Logique pour 'custom'.");
+                         if (targetContainer.children.length > currentMaxImages) {
+                             console.log(` -> Limite (${currentMaxImages}) atteinte. Annulation.`);
+                             addedElementInDom.remove(); // Enlever l'élément ajouté en trop
+                             updateStatus(`Limite de ${currentMaxImages} images atteinte pour galerie custom.`, 'warn');
+                             // Remettre l'original dans le carrousel si besoin
+                             if (itemEl.classList.contains('carousel-image-container')) {
+                                  const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
+                                  if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
+                                      imageCarousel.appendChild(createCarouselItem(originalImageData));
+                                  }
+                             }
+                             return; // Stop
+                         } else {
+                              // Limite non atteinte, traiter comme 'gallery' (transformation si nécessaire)
+                              if (addedElementInDom.classList.contains('carousel-image-container')) {
+                                  const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
+                                  if (originalImageData) {
+                                      const thumbnailWrapper = createThumbnail(originalImageData, currentRole);
+                                      targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
+                                  } else { /* Erreur */ if(addedElementInDom) addedElementInDom.remove(); }
+                              } else {
+                                 // Mettre à jour le title si vient d'une autre zone
+                                 const thumbImg = addedElementInDom.querySelector('.img-thumbnail');
+                                 if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${currentRole}`;
+                                 const removeBtn = addedElementInDom.querySelector('.remove-thumbnail-btn');
+                                 if(removeBtn) removeBtn.title = `Retirer de ${currentRole}`;
+                              }
+                              updateStatus(`Image ${droppedImageId} ajoutée à la zone ${currentRole}.`, 'success');
+                         }
+
+                    // CAS 3: Zone Galerie ('gallery') - Ajout simple
+                    } else { // currentRole === 'gallery'
+                        console.log(" -> Logique pour 'gallery'.");
+                        // S'assurer qu'il est formaté en vignette s'il vient du carrousel.
+                        if (addedElementInDom.classList.contains('carousel-image-container')) {
+                             const originalImageData = allImageData.find(img => img.id.toString() === droppedImageId);
+                             if (originalImageData) {
+                                 const thumbnailWrapper = createThumbnail(originalImageData, currentRole);
+                                 targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
+                             } else { /* Erreur */ if(addedElementInDom) addedElementInDom.remove(); }
+                         } else {
+                            // Mettre à jour le title si vient d'une autre zone
+                             const thumbImg = addedElementInDom.querySelector('.img-thumbnail');
+                             if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${currentRole}`;
+                             const removeBtn = addedElementInDom.querySelector('.remove-thumbnail-btn');
+                             if(removeBtn) removeBtn.title = `Retirer de ${currentRole}`;
+                         }
+                         updateStatus(`Image ${droppedImageId} ajoutée à la zone ${currentRole}.`, 'success');
                     }
+
                     console.log(` -> Enfants final dans ${currentRole}: ${targetContainer.children.length}`);
+
                 }, // --- Fin de la logique onAdd ---
                 onRemove: function(evt) { // Quand un élément est SORTI (par drag vers une autre zone OU supprimé par clic->remove)
                     // Note: Cet event se déclenche AUSSI quand on clique sur 'x', car on fait wrapper.remove()
