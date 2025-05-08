@@ -267,18 +267,19 @@ function initializeSortable() {
         },
         sort: false, // Pas de réorganisation du carousel par l'utilisateur
         animation: 150,
-        // filter: '.image-in-zone', // Pourrait être utilisé si on ne veut pas pouvoir drag des images déjà assignées? Non, on gère au drop.
+        filter: '.marked-for-deletion',
         onStart: function(evt) {
+             // Optionnel : Vérification supplémentaire si le filtre ne suffit pas (normalement il suffit)
+            if (evt.item.classList.contains('marked-for-deletion')) {
+                 console.log("Tentative de drag d'un élément marqué pour suppression - Annulé");
+                 // Normalement, le filtre empêche même onStart de se déclencher pour ces éléments.
+                 return false; // Sécurité supplémentaire pour annuler le drag
+            }
             console.log(`Drag démarré depuis le carousel: Item ID ${evt.item.dataset.imageId}`);
-             // Optionnel : ajouter une classe au body pour changer le curseur partout?
-             // document.body.classList.add('grabbing');
         },
-        onEnd: function(evt) { // Se déclenche après onAdd ou si le drag est annulé
+        onEnd: function(evt) {
             console.log(`Drag terminé depuis carousel: Item ID ${evt.item.dataset.imageId}, déposé dans une zone? ${evt.to !== evt.from}`);
-             // document.body.classList.remove('grabbing');
-             // Si l'item n'a pas été déposé dans une zone valide (evt.to === evt.from), SortableJS le remet automatiquement.
         }
-
     });
 
     // Config des Zones de Dépôt: Reçoivent des items, et on peut en sortir des items.
@@ -414,13 +415,21 @@ const handleSaveChanges = async () => {
     const sizeGuideEntry = allImageData.find(imgData => imgData.uses && imgData.uses.includes('size_guide'));
     const sizeGuideImageId = sizeGuideEntry ? sizeGuideEntry.id : null;
     console.log(`Image Guide des Tailles sélectionnée pour sauvegarde: ID ${sizeGuideImageId}`);
+
+    // **** AJOUT : Collecter les IDs des images marquées pour suppression ****
+    const imageIdsToDelete = allImageData
+        .filter(imgData => imgData.markedForDeletion === true)
+        .map(imgData => imgData.id);
+    console.log(`Images marquées pour suppression (IDs): ${imageIdsToDelete.join(', ') || 'Aucune'}`);
+    // **** FIN AJOUT ****
     
     const payload = {
         productId: currentProductId,
         mainImageId: mainImageId,
         galleryImageIds: galleryImageIds,
         customGalleryImageIds: customGalleryImageIds,
-        sizeGuideImageId: sizeGuideImageId // **** AJOUTER CETTE LIGNE ****
+        sizeGuideImageId: sizeGuideImageId, // **** AJOUTER CETTE LIGNE ****
+        imageIdsToDelete: imageIdsToDelete // **** AJOUTER CE CHAMP AU PAYLOAD ****
     };
     console.log("Données envoyées à n8n:", payload);
 
@@ -441,6 +450,30 @@ const handleSaveChanges = async () => {
         const result = await response.json();
         console.log("Réponse de n8n (Mise à jour):", result);
         updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
+
+        // ** NOUVEAU : Retirer les images supprimées de l'UI **
+        if (imageIdsToDelete.length > 0) {
+            // Retirer de allImageData
+            allImageData = allImageData.filter(imgData => !imageIdsToDelete.includes(imgData.id));
+            // Retirer du carrousel DOM
+            imageIdsToDelete.forEach(deletedId => {
+                const itemToRemove = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${deletedId}"]`);
+                if (itemToRemove) {
+                    itemToRemove.remove();
+                }
+                // Note: Inutile de les retirer des dropzones car elles ne devraient pas y être si elles sont dans le carrousel
+            });
+             // Mettre à jour la modale si ouverte et contient une image supprimée ?
+             if (modalSwiperInstance) {
+                  // Il faudrait reconstruire modalImageList ou la filtrer et update Swiper
+                  // Pour l'instant, on peut simplement fermer la modale si l'image active a été supprimée
+                  const currentModalImageId = modalImageList[currentModalIndex]?.id;
+                  if (currentModalImageId && imageIdsToDelete.includes(currentModalImageId)) {
+                      closeModal();
+                      updateStatus("Modifications enregistrées. L'image affichée a été supprimée.", 'info');
+                  }
+             }
+        }
     } catch (error) {
         console.error("Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
