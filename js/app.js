@@ -99,15 +99,14 @@ function createCarouselItem(image) {
     // Mettre les boutons côte à côte ou selon le CSS
     const buttonWrapper = document.createElement('div'); // Optionnel: wrapper pour les boutons
     buttonWrapper.style.marginTop = '5px'; // Espace
+    buttonWrapper.appendChild(settingsBtn);
     // Ajouter DEL avant Settings ? Ou après ?
     buttonWrapper.appendChild(deleteBtn); // AJOUTER LE BOUTON DEL
-    buttonWrapper.appendChild(settingsBtn);
     container.appendChild(buttonWrapper);
 
     if (sizeGuideIcon) {
         container.appendChild(sizeGuideIcon); // Ajouter l'icône guide des tailles (sera positionnée par CSS)
     }
-
 
     return container;
 }
@@ -657,6 +656,46 @@ function handleSizeGuideToggle(event) {
 
     // Pas besoin de sauvegarder immédiatement, cela se fera via "Enregistrer Modifications"
     updateStatus("Statut 'Guide des tailles' mis à jour localement.", "info");
+}
+
+// Gère le clic sur le bouton "DEL" dans le carrousel
+function handleMarkForDeletionClick(event) {
+    const button = event.currentTarget;
+    const imageId = button.dataset.imageId;
+    const container = button.closest('.carousel-image-container');
+
+    if (!imageId || !container) {
+        console.error("Impossible de trouver l'ID ou le conteneur pour marquer pour suppression.");
+        return;
+    }
+
+    const imageIdNum = parseInt(imageId, 10);
+    const imageIndex = allImageData.findIndex(img => img.id === imageIdNum);
+
+    if (imageIndex === -1) {
+        console.error(`Image ID ${imageIdNum} non trouvée dans allImageData.`);
+        return;
+    }
+
+    // Basculer le statut 'markedForDeletion'
+    allImageData[imageIndex].markedForDeletion = !allImageData[imageIndex].markedForDeletion;
+    const isMarked = allImageData[imageIndex].markedForDeletion;
+
+    console.log(`Image ID ${imageIdNum} marquée pour suppression: ${isMarked}`);
+
+    // Mettre à jour l'apparence visuelle
+    if (isMarked) {
+        container.classList.add('marked-for-deletion');
+        button.title = 'Annuler le marquage pour suppression'; // Changer le title du bouton
+        // Optionnel: changer le texte du bouton ? button.textContent = 'UNDO';
+    } else {
+        container.classList.remove('marked-for-deletion');
+        button.title = 'Marquer pour suppression définitive';
+        // Optionnel: remettre le texte initial ? button.textContent = 'DEL';
+    }
+
+    // Mettre à jour le statut global
+    updateStatus(`Image ${imageIdNum} ${isMarked ? 'marquée pour suppression' : 'ne sera plus supprimée'}. Enregistrez pour appliquer.`, 'info');
 }
 
 // --- Indicateur de Chargement ---
