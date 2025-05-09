@@ -24,7 +24,7 @@ let currentEditActionContext = null;
 let productIdElement, productNameElement, saveChangesButton, statusElement;
 let dropzoneMain, dropzoneGallery, dropzoneCustom;
 let imageCarouselContainer, imageCarousel;
-let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
+let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, /* modalImageRoles, */ modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // MODIFIÉ ICI
 let modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn; // modalMockupBtn commenté/supprimé car vous l'avez retiré de l'HTML
 let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer;
 let modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn; // <-- AJOUT DE modalGenerateMockupBtn ICI
@@ -1681,7 +1681,9 @@ document.addEventListener('DOMContentLoaded', () => {
     modalSwiperContainer = document.querySelector('.modal-swiper'); // Le conteneur de Swiper
     modalSwiperWrapper = document.getElementById('modal-swiper-wrapper');
     modalImageId = document.getElementById('modal-image-id');
-    modalImageRoles = document.getElementById('modal-image-roles');
+    //modalImageRoles = document.getElementById('modal-image-roles');
+    modalImageDimensions = document.getElementById('modal-image-dimensions'); // NOUVELLE LIGNE
+    modalPrevBtn = document.getElementById('modal-prev-btn');
     modalPrevBtn = document.getElementById('modal-prev-btn');
     modalNextBtn = document.getElementById('modal-next-btn');
     modalActions = document.getElementById('modal-actions');
