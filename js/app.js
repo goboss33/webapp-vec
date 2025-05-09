@@ -24,7 +24,7 @@ let currentEditActionContext = null;
 let productIdElement, productNameElement, saveChangesButton, statusElement;
 let dropzoneMain, dropzoneGallery, dropzoneCustom;
 let imageCarouselContainer, imageCarousel;
-let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
+let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
 let modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn; // modalMockupBtn commenté/supprimé car vous l'avez retiré de l'HTML
 let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer;
 let modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn; // <-- AJOUT DE modalGenerateMockupBtn ICI
