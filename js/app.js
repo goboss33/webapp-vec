@@ -941,6 +941,16 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
         }
     }
 
+    // Mettre aussi à jour l'apparence du slide Swiper si l'image est actuellement affichée
+    const currentSlideElementInModal = modalSwiperInstance?.slides[currentModalIndex];
+    if (currentSlideElementInModal && modalImageList[currentModalIndex]?.id === imageIdNum) {
+        if (isMarked) {
+            currentSlideElementInModal.classList.add('marked-for-deletion-slide');
+        } else {
+            currentSlideElementInModal.classList.remove('marked-for-deletion-slide');
+        }
+    }
+
     updateStatus(`Image ${imageIdNum} ${isMarked ? 'marquée pour suppression' : 'ne sera plus supprimée'}. Enregistrez pour appliquer.`, 'info');
 }
 
