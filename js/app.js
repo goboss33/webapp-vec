@@ -586,8 +586,68 @@ function openImageModal(imageId) {
     // 1. Déterminer la liste d'images à afficher
     // Pour l'instant, on affiche TOUTES les images du produit
     // TODO: Plus tard, on pourrait affiner pour n'afficher que celles de la zone cliquée + carousel ?
-    modalImageList = [...allImageData]; // Copie de toutes les images
+    //modalImageList = [...allImageData]; // Copie de toutes les images
+    // Construire modalImageList dans l'ordre souhaité
+    const orderedImages = [];
+    const encounteredIds = new Set(); // Pour éviter les doublons dans Swiper si une image avait plusieurs rôles (peu probable mais sécurisant)
 
+    // Fonction utilitaire pour ajouter une image si pas déjà rencontrée
+    const addImageToOrderedList = (img) => {
+        if (img && !encounteredIds.has(img.id)) {
+            orderedImages.push(img);
+            encounteredIds.add(img.id);
+        }
+    };
+
+    // 1.1 Image Principale
+    const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
+    if (mainImageThumb) {
+        const mainImgId = mainImageThumb.dataset.imageId;
+        const mainImgData = allImageData.find(img => img.id.toString() === mainImgId);
+        addImageToOrderedList(mainImgData);
+    }
+
+    // 1.2. Images Custom
+    const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper') : [];
+    Array.from(customGalleryThumbs).forEach(thumb => {
+        const customImgId = thumb.dataset.imageId;
+        const customImgData = allImageData.find(img => img.id.toString() === customImgId);
+        addImageToOrderedList(customImgData);
+    });
+
+    // 1.3. Images Galerie Standard
+    const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
+    Array.from(galleryImageThumbs).forEach(thumb => {
+        const galleryImgId = thumb.dataset.imageId;
+        const galleryImgData = allImageData.find(img => img.id.toString() === galleryImgId);
+        addImageToOrderedList(galleryImgData);
+    });
+
+    // 1.4. Images Disponibles (celles dans le carrousel #image-carousel)
+    // Celles-ci sont dans allImageData mais PAS dans encounteredIds
+    allImageData.forEach(img => {
+        if (!encounteredIds.has(img.id) && !img.markedForDeletion) { // On ajoute celles non marquées pour suppression
+            addImageToOrderedList(img);
+        }
+    });
+    
+    // Si aucune image n'a été spécifiquement assignée et qu'il n'y a que des images dans allImageData (carrousel)
+    // et que orderedImages est vide, alors on remplit avec allImageData.
+    // Cela peut arriver si on ouvre la modale depuis une image du carrousel avant toute assignation.
+    if (orderedImages.length === 0 && allImageData.length > 0) {
+        allImageData.forEach(img => {
+            if (!img.markedForDeletion) { // On ajoute celles non marquées pour suppression
+                 addImageToOrderedList(img);
+            }
+        });
+    }
+
+
+    modalImageList = orderedImages;
+    console.log('Modal Image List (ordered):', modalImageList.map(img => img.id));
+    
+    // La suite de la fonction openImageModal (trouver initialIndex, peupler Swiper, etc.) reste la même.
+    
     // 2. Trouver l'index de départ
     const initialIndex = modalImageList.findIndex(img => img.id.toString() === imageId);
     if (initialIndex === -1) {
