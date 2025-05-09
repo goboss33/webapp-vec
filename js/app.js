@@ -933,10 +933,10 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
     // Mettre à jour l'apparence du bouton dans la modale si elle est ouverte et concerne cette image
     if (modalOverlay.style.display === 'flex' && modalMarkForDeletionBtn && modalImageList[currentModalIndex]?.id === imageIdNum) {
         if (isMarked) {
-            modalMarkForDeletionBtn.textContent = 'Annuler Suppression';
+            modalMarkForDeletionBtn.textContent = 'UNDO';
             modalMarkForDeletionBtn.classList.add('marked');
         } else {
-            modalMarkForDeletionBtn.textContent = 'Supprimer Définitivement';
+            modalMarkForDeletionBtn.textContent = 'DEL';
             modalMarkForDeletionBtn.classList.remove('marked');
         }
     }
