@@ -575,8 +575,63 @@ function updateModalInfo(index) {
         currentModalIndex = index; // Met à jour l'index courant
         console.log(`Modal info mise à jour pour slide ${index}, ID: ${imageData.id}`);
 
-        // TODO: Mettre à jour l'état des boutons d'action si besoin
-        // (par ex, désactiver "Générer Mockup" si déjà fait)
+        // Gérer la visibilité et l'état du bouton "Supprimer Définitivement" dans la modale
+        if (modalMarkForDeletionBtn) {
+            const imageInAllData = allImageData.find(img => img.id === imageData.id); // Retrouver l'état actuel (markedForDeletion)
+
+            // Vérifier si l'image est "disponible" (pas dans main, gallery, ou custom)
+            const isMain = dropzoneMain?.querySelector(`.thumbnail-wrapper[data-image-id="${imageData.id}"]`);
+            const isGallery = dropzoneGallery?.querySelector(`.thumbnail-wrapper[data-image-id="${imageData.id}"]`);
+            const isCustom = dropzoneCustom?.querySelector(`.thumbnail-wrapper[data-image-id="${imageData.id}"]`);
+
+            const isAssigned = isMain || isGallery || isCustom;
+
+            if (!isAssigned && imageInAllData) { // Afficher seulement si non assignée ET existe dans allImageData
+                modalMarkForDeletionBtn.style.display = 'inline-block';
+                modalMarkForDeletionBtn.onclick = () => {
+                    // Simuler un clic sur le bouton DEL du carrousel pour cette image
+                    // (ou appeler directement une version adaptée de handleMarkForDeletionClick)
+                    const carouselItemContainer = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageData.id}"]`);
+                    if (carouselItemContainer) {
+                        const delButtonInCarousel = carouselItemContainer.querySelector('.del-btn');
+                        if (delButtonInCarousel) {
+                            delButtonInCarousel.click(); // Déclenche handleMarkForDeletionClick
+
+                            // Mettre à jour l'apparence du bouton dans la modale immédiatement après le clic simulé
+                            const updatedImageInAllData = allImageData.find(img => img.id === imageData.id);
+                            if (updatedImageInAllData?.markedForDeletion) {
+                                modalMarkForDeletionBtn.textContent = 'Annuler Suppression';
+                                modalMarkForDeletionBtn.classList.add('marked');
+                            } else {
+                                modalMarkForDeletionBtn.textContent = 'Supprimer Définitivement';
+                                modalMarkForDeletionBtn.classList.remove('marked');
+                            }
+                        } else {
+                             console.warn(`Bouton DEL non trouvé dans le carrousel pour image ID ${imageData.id} pour simulation de clic.`);
+                             // Fallback: appeler une version modifiée de handleMarkForDeletionClick si besoin
+                        }
+                    } else {
+                        // Si l'image n'est pas dans le carrousel (ce qui serait étrange si elle n'est pas assignée)
+                        // On peut quand même essayer de marquer/démarquer l'image directement dans allImageData
+                        // et mettre à jour le bouton.
+                         handleMarkForDeletionClick({ currentTarget: modalMarkForDeletionBtn }, imageData.id.toString());
+                    }
+                };
+
+                // Mettre à jour le texte et le style du bouton en fonction de l'état 'markedForDeletion'
+                if (imageInAllData.markedForDeletion) {
+                    modalMarkForDeletionBtn.textContent = 'Annuler Suppression';
+                    modalMarkForDeletionBtn.classList.add('marked');
+                } else {
+                    modalMarkForDeletionBtn.textContent = 'Supprimer Définitivement';
+                    modalMarkForDeletionBtn.classList.remove('marked');
+                }
+
+            } else {
+                modalMarkForDeletionBtn.style.display = 'none';
+                modalMarkForDeletionBtn.onclick = null; // Retirer l'ancien listener
+            }
+        }
     }
 }
 
@@ -832,14 +887,24 @@ function handleSizeGuideToggle(event) {
     updateStatus("Statut 'Guide des tailles' mis à jour localement.", "info");
 }
 
-// Gère le clic sur le bouton "DEL" dans le carrousel
-function handleMarkForDeletionClick(event) {
-    const button = event.currentTarget;
-    const imageId = button.dataset.imageId;
-    const container = button.closest('.carousel-image-container');
+// Gère le clic sur le bouton "DEL" dans le carrousel OU l'appel direct depuis la modale
+function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
+    let imageId;
+    let container; // Conteneur de l'image dans le carrousel
 
-    if (!imageId || !container) {
-        console.error("Impossible de trouver l'ID ou le conteneur pour marquer pour suppression.");
+    if (directImageId) {
+        imageId = directImageId;
+        // Essayer de trouver le conteneur dans le carrousel pour la synchro visuelle si possible
+        container = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`);
+    } else { // Vient d'un événement de clic
+        const button = eventOrButton.currentTarget;
+        imageId = button.dataset.imageId;
+        container = button.closest('.carousel-image-container');
+    }
+
+
+    if (!imageId) { // || (!container && !directImageId) enlevé car container peut être null si appelé directement pour une image non dans le carousel
+        console.error("Impossible de trouver l'ID pour marquer pour suppression.");
         return;
     }
 
@@ -851,24 +916,37 @@ function handleMarkForDeletionClick(event) {
         return;
     }
 
-    // Basculer le statut 'markedForDeletion'
     allImageData[imageIndex].markedForDeletion = !allImageData[imageIndex].markedForDeletion;
     const isMarked = allImageData[imageIndex].markedForDeletion;
 
     console.log(`Image ID ${imageIdNum} marquée pour suppression: ${isMarked}`);
 
-    // Mettre à jour l'apparence visuelle
-    if (isMarked) {
-        container.classList.add('marked-for-deletion');
-        button.title = 'Annuler le marquage pour suppression'; // Changer le title du bouton
-        // Optionnel: changer le texte du bouton ? button.textContent = 'UNDO';
-    } else {
-        container.classList.remove('marked-for-deletion');
-        button.title = 'Marquer pour suppression définitive';
-        // Optionnel: remettre le texte initial ? button.textContent = 'DEL';
+    // Mettre à jour l'apparence visuelle du carrousel SI l'élément y est
+    if (container) {
+        const delButtonInCarousel = container.querySelector('.del-btn'); // Le bouton DEL du carrousel
+        if (isMarked) {
+            container.classList.add('marked-for-deletion');
+            if (delButtonInCarousel) delButtonInCarousel.title = 'Annuler le marquage pour suppression';
+        } else {
+            container.classList.remove('marked-for-deletion');
+            if (delButtonInCarousel) delButtonInCarousel.title = 'Marquer pour suppression définitive';
+        }
+    } else if (directImageId) {
+        console.log(`Image ${directImageId} (appel direct) marquée/démarquée. Pas de conteneur carrousel trouvé pour màj visuelle immédiate (normal si elle n'y est plus).`);
     }
 
-    // Mettre à jour le statut global
+
+    // Mettre à jour l'apparence du bouton dans la modale si elle est ouverte et concerne cette image
+    if (modalOverlay.style.display === 'flex' && modalMarkForDeletionBtn && modalImageList[currentModalIndex]?.id === imageIdNum) {
+        if (isMarked) {
+            modalMarkForDeletionBtn.textContent = 'Annuler Suppression';
+            modalMarkForDeletionBtn.classList.add('marked');
+        } else {
+            modalMarkForDeletionBtn.textContent = 'Supprimer Définitivement';
+            modalMarkForDeletionBtn.classList.remove('marked');
+        }
+    }
+
     updateStatus(`Image ${imageIdNum} ${isMarked ? 'marquée pour suppression' : 'ne sera plus supprimée'}. Enregistrez pour appliquer.`, 'info');
 }
 
@@ -1628,6 +1706,7 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmActionNewBtn = document.getElementById('confirm-action-new');
     confirmActionCancelBtn = document.getElementById('confirm-action-cancel');
     modalGenerateMockupBtn = document.getElementById('modal-generate-mockup-btn'); // <-- NOUVELLE LIGNE
+    modalMarkForDeletionBtn = document.getElementById('modal-mark-for-deletion-btn'); // <-- NOUVELLE LIGNE
     
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
