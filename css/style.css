@@ -792,3 +792,13 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
 .danger-btn.marked:hover:not(:disabled) {
     background-color: rgba(255, 193, 7, 0.2);
 }
+
+.swiper-slide.marked-for-deletion-slide img {
+    opacity: 0.5;
+    border: 2px dashed #dc3545 !important; /* Pointillés rouges */
+    box-sizing: border-box; /* Pour que la bordure ne décale pas trop */
+}
+
+.swiper-slide.marked-for-deletion-slide {
+    background-color: rgba(255, 0, 0, 0.05);
+}
