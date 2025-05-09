@@ -27,7 +27,7 @@ let imageCarouselContainer, imageCarousel;
 let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperWrapper, modalImageId, modalImageRoles, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // Ajout swiper wrapper & actions
 let modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn; // modalMockupBtn commenté/supprimé car vous l'avez retiré de l'HTML
 let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer;
-let modalRemoveWatermarkBtn, modalGenerateMockupBtn; // <-- AJOUT DE modalGenerateMockupBtn ICI
+let modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn; // <-- AJOUT DE modalGenerateMockupBtn ICI
 let editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn;
 let loadingOverlay;
 let modalToggleSizeGuide; // Pour la checkbox du guide des tailles
