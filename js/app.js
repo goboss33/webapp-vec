@@ -709,9 +709,9 @@ function openImageModal(imageId) {
                 enabled: true,
               },
              // lazy: true, // Chargement lazy des images géré par Swiper
-             // loop: modalImageList.length > 1, // Boucle si plus d'une image?
-             // observer: true, // Met à jour Swiper si le DOM change (utile?)
-             // observeParents: true,
+             loop: modalImageList.length > 1, // Boucle si plus d'une image?
+             observer: true, // Met à jour Swiper si le DOM change (utile?)
+             observeParents: true,
 
              // Événement quand le slide change
              on: {
