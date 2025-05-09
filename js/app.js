@@ -582,6 +582,7 @@ function updateModalInfo(index) {
             img.onload = function() {
                 // Vérifier si on est toujours sur la même image (au cas où l'utilisateur swipe rapidement)
                 if (modalImageList[currentModalIndex]?.id === imageData.id) {
+                    modalImageDimensions.textContent = `<span class="math-inline">{this.naturalWidth}x</span>{this.naturalHeight}`;
                     modalImageDimensions.textContent = `<span class="math-inline">\{this\.naturalWidth\}x</span>{this.naturalHeight}`;
                 }
             };
