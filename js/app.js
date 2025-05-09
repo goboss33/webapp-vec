@@ -852,7 +852,7 @@ function startCropping() {
     if (modalImageInfo) modalImageInfo.style.display = 'none';
     if (modalCropBtn) modalCropBtn.style.display = 'none';
     if (modalRemoveWatermarkBtn) modalRemoveWatermarkBtn.style.display = 'none';
-    if (modalMockupBtn) modalMockupBtn.style.display = 'none';
+    if (modalGenerateMockupBtn) modalGenerateMockupBtn.style.display = 'none';
     if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'none';
     if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'none';
 
