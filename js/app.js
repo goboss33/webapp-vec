@@ -571,65 +571,59 @@ function updateModalInfo(index) {
     if (index >= 0 && index < modalImageList.length) {
         const imageData = modalImageList[index];
         if (modalImageId) modalImageId.textContent = imageData.id;
-        if (modalImageRoles) modalImageRoles.textContent = imageData.uses.join(', ') || 'Aucun';
-        currentModalIndex = index; // Met à jour l'index courant
+        // if (modalImageRoles) modalImageRoles.textContent = imageData.uses.join(', ') || 'Aucun'; // ANCIENNE LIGNE
+        currentModalIndex = index;
         console.log(`Modal info mise à jour pour slide ${index}, ID: ${imageData.id}`);
 
-        // Gérer la visibilité et l'état du bouton "Supprimer Définitivement" dans la modale
-        if (modalMarkForDeletionBtn) {
-            const imageInAllData = allImageData.find(img => img.id === imageData.id); // Retrouver l'état actuel (markedForDeletion)
+        // Afficher les dimensions de l'image
+        if (modalImageDimensions) {
+            modalImageDimensions.textContent = 'Chargement...'; // Message temporaire
+            const img = new Image();
+            img.onload = function() {
+                // Vérifier si on est toujours sur la même image (au cas où l'utilisateur swipe rapidement)
+                if (modalImageList[currentModalIndex]?.id === imageData.id) {
+                    modalImageDimensions.textContent = `<span class="math-inline">\{this\.naturalWidth\}x</span>{this.naturalHeight}`;
+                }
+            };
+            img.onerror = function() {
+                if (modalImageList[currentModalIndex]?.id === imageData.id) {
+                    modalImageDimensions.textContent = 'N/A';
+                }
+            };
+            img.src = imageData.url; // L'URL de l'image actuelle
+        }
 
-            // Vérifier si l'image est "disponible" (pas dans main, gallery, ou custom)
+        // Gérer la visibilité et l'état du bouton "DEL" dans la modale (logique existante)
+        if (modalMarkForDeletionBtn) {
+            const imageInAllData = allImageData.find(imgData => imgData.id === imageData.id);
             const isMain = dropzoneMain?.querySelector(`.thumbnail-wrapper[data-image-id="${imageData.id}"]`);
             const isGallery = dropzoneGallery?.querySelector(`.thumbnail-wrapper[data-image-id="${imageData.id}"]`);
             const isCustom = dropzoneCustom?.querySelector(`.thumbnail-wrapper[data-image-id="${imageData.id}"]`);
-
             const isAssigned = isMain || isGallery || isCustom;
+            const currentSlideElement = modalSwiperInstance?.slides[currentModalIndex];
 
-            if (!isAssigned && imageInAllData) { // Afficher seulement si non assignée ET existe dans allImageData
+
+            if (!isAssigned && imageInAllData) {
                 modalMarkForDeletionBtn.style.display = 'inline-block';
                 modalMarkForDeletionBtn.onclick = () => {
-                    // Simuler un clic sur le bouton DEL du carrousel pour cette image
-                    // (ou appeler directement une version adaptée de handleMarkForDeletionClick)
-                    const carouselItemContainer = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageData.id}"]`);
-                    if (carouselItemContainer) {
-                        const delButtonInCarousel = carouselItemContainer.querySelector('.del-btn');
-                        if (delButtonInCarousel) {
-                            delButtonInCarousel.click(); // Déclenche handleMarkForDeletionClick
-
-                            // Mettre à jour l'apparence du bouton dans la modale immédiatement après le clic simulé
-                            const updatedImageInAllData = allImageData.find(img => img.id === imageData.id);
-                            if (updatedImageInAllData?.markedForDeletion) {
-                                modalMarkForDeletionBtn.textContent = 'UNDO';
-                                modalMarkForDeletionBtn.classList.add('marked');
-                            } else {
-                                modalMarkForDeletionBtn.textContent = 'DEL';
-                                modalMarkForDeletionBtn.classList.remove('marked');
-                            }
-                        } else {
-                             console.warn(`Bouton DEL non trouvé dans le carrousel pour image ID ${imageData.id} pour simulation de clic.`);
-                             // Fallback: appeler une version modifiée de handleMarkForDeletionClick si besoin
-                        }
-                    } else {
-                        // Si l'image n'est pas dans le carrousel (ce qui serait étrange si elle n'est pas assignée)
-                        // On peut quand même essayer de marquer/démarquer l'image directement dans allImageData
-                        // et mettre à jour le bouton.
-                         handleMarkForDeletionClick({ currentTarget: modalMarkForDeletionBtn }, imageData.id.toString());
-                    }
+                    handleMarkForDeletionClick({ currentTarget: modalMarkForDeletionBtn }, imageData.id.toString());
+                    // Le reste de la logique de mise à jour du bouton DEL est maintenant dans handleMarkForDeletionClick
                 };
 
-                // Mettre à jour le texte et le style du bouton en fonction de l'état 'markedForDeletion'
                 if (imageInAllData.markedForDeletion) {
                     modalMarkForDeletionBtn.textContent = 'UNDO';
                     modalMarkForDeletionBtn.classList.add('marked');
+                    if (currentSlideElement) currentSlideElement.classList.add('marked-for-deletion-slide');
                 } else {
                     modalMarkForDeletionBtn.textContent = 'DEL';
                     modalMarkForDeletionBtn.classList.remove('marked');
+                    if (currentSlideElement) currentSlideElement.classList.remove('marked-for-deletion-slide');
                 }
-
             } else {
                 modalMarkForDeletionBtn.style.display = 'none';
-                modalMarkForDeletionBtn.onclick = null; // Retirer l'ancien listener
+                modalMarkForDeletionBtn.onclick = null;
+                // S'assurer de retirer le style de suppression du slide si l'image est assignée
+                if (currentSlideElement) currentSlideElement.classList.remove('marked-for-deletion-slide');
             }
         }
     }
