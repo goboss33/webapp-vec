@@ -543,6 +543,8 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     max-height: 60vh; /* Limite la hauteur de l'image elle-même */
     height: auto; /* Garde les proportions */
     object-fit: contain;
+    border: 5px solid black; /* NOUVELLE BORDURE */
+    box-sizing: border-box;  /* NOUVEAU pour inclure la bordure dans la taille */
 }
 
 /* Style pour les boutons de navigation personnalisés */
