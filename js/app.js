@@ -620,10 +620,10 @@ function updateModalInfo(index) {
 
                 // Mettre à jour le texte et le style du bouton en fonction de l'état 'markedForDeletion'
                 if (imageInAllData.markedForDeletion) {
-                    modalMarkForDeletionBtn.textContent = 'Annuler Suppression';
+                    modalMarkForDeletionBtn.textContent = 'UNDO';
                     modalMarkForDeletionBtn.classList.add('marked');
                 } else {
-                    modalMarkForDeletionBtn.textContent = 'Supprimer Définitivement';
+                    modalMarkForDeletionBtn.textContent = 'DEL';
                     modalMarkForDeletionBtn.classList.remove('marked');
                 }
 
