@@ -1726,7 +1726,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Attacher les écouteurs d'événements ---
     // Modal Fermer (Peuvent rester directs, moins sujets aux problèmes)
     if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
-    if (modalOverlay) modalOverlay.addEventListener('click', (event) => { if (event.target === modalOverlay) closeModal(); });
+    if (modalOverlay) modalOverlay.addEventListener('click', (event) => {
+        // Condition pour fermer la modale :
+        // 1. Le clic doit être directement sur l'overlay (le fond).
+        // 2. L'instance de Cropper ne doit PAS être active (c'est-à-dire, cropperInstance doit être null).
+        if (event.target === modalOverlay && cropperInstance === null) {
+            closeModal();
+        } else if (event.target === modalOverlay && cropperInstance !== null) {
+            console.log("Clic extérieur détecté pendant le recadrage, fermeture de la modale empêchée.");
+            // Optionnel: donner un feedback visuel à l'utilisateur, comme un léger "shake" de la modale
+            // ou un message bref, mais pour l'instant on empêche juste la fermeture.
+        }
+    });
 
     // Bouton Sauver (rôles) (Peut rester direct)
     if (saveChangesButton) saveChangesButton.addEventListener('click', handleSaveChanges);
