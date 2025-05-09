@@ -775,3 +775,20 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
  .carousel-image-container.marked-for-deletion .del-btn:hover {
     background-color: #e0a800;
  }
+
+.danger-btn {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+.danger-btn:hover:not(:disabled) {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545; /* S'assurer que la couleur du texte reste au survol */
+}
+.danger-btn.marked { /* Pour quand l'image est déjà marquée */
+    border-color: #ffc107;
+    color: #212529; /* Ou une autre couleur de texte pour le jaune */
+    background-color: rgba(255, 193, 7, 0.1);
+}
+.danger-btn.marked:hover:not(:disabled) {
+    background-color: rgba(255, 193, 7, 0.2);
+}
