@@ -74,12 +74,7 @@
                 <p>ID: <span id="modal-image-id"></span></p>
                 <p>Taille: <span id="modal-image-dimensions">Chargement...</span></p> 
             </div> 
-            <div class="modal-toggle-option" style="margin-bottom: 15px; padding-top: 10px; border-top: 1px solid #eee;">
-                <label for="modal-toggle-size-guide" style="display: flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" id="modal-toggle-size-guide" style="margin-right: 8px;">
-                    Utiliser comme Guide des Tailles principal
-                </label>
-            </div>
+            
             <div id="modal-cropper-container" style="display: none; margin-bottom: 15px; max-height: 50vh; overflow: hidden;">
                 <img id="image-to-crop" src="" alt="Image à recadrer" style="max-width: 100%;">
             </div>
@@ -112,6 +107,7 @@
                 <button id="modal-remove-watermark-btn" class="action-btn">Retirer Watermark</button>
                 <button id="modal-generate-mockup-btn" class="action-btn">Générer Mockup</button>
                 <button id="modal-mark-for-deletion-btn" class="action-btn danger-btn" style="display: none;">DEL</button>
+                <button id="modal-toggle-size-guide-btn" class="action-btn icon-btn" title="Utiliser comme Guide des Tailles principal">📏</button> <button id="modal-crop-validate-btn" class="action-btn success-btn" style="display: none;">Valider Recadrage</button>
                 
                 <button id="modal-crop-validate-btn" class="action-btn success-btn" style="display: none;">Valider Recadrage</button>
                 <button id="modal-crop-cancel-btn" class="action-btn cancel-btn" style="display: none;">Annuler</button>
