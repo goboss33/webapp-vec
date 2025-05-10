@@ -800,3 +800,31 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     border: 2px dashed #dc3545 !important; /* Pointillés rouges */
     box-sizing: border-box; /* Pour que la bordure ne décale pas trop */
 }
+
+.action-btn.icon-btn {
+    font-size: 1.2em; /* Ajuster la taille de l'icône si besoin */
+    padding: 6px 10px; /* Ajuster le padding pour un bouton plus carré */
+    min-width: 40px; /* Largeur minimale */
+    line-height: 1.2;
+    border: 2px solid var(--tg-theme-hint-color, #ccc); /* Bordure par défaut (inactif) */
+    background-color: transparent;
+    color: var(--tg-theme-text-color, #333);
+}
+
+.action-btn.icon-btn.active-size-guide {
+    background-color: #8A2BE2; /* Fond violet quand actif */
+    border-color: #8A2BE2; /* Bordure violette quand actif */
+    color: white; /* Couleur de l'icône quand actif */
+}
+
+.action-btn.icon-btn:not(.active-size-guide) {
+    border-color: #8A2BE2; /* Bordure violette quand inactif */
+    color: #8A2BE2; /* Couleur de l'icône quand inactif */
+}
+
+.action-btn.icon-btn:hover:not(:disabled):not(.active-size-guide) {
+    background-color: rgba(138, 43, 226, 0.1); /* Léger fond violet au survol si inactif */
+}
+.action-btn.icon-btn:hover:not(:disabled).active-size-guide {
+    background-color: #7A1CC0; /* Violet un peu plus foncé au survol si actif */
+}
