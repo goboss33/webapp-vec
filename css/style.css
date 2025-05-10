@@ -499,10 +499,33 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
 
 #modal-actions {
     border-top: 1px solid #eee;
-    padding-top: 15px;
+    padding: 10px; /* Un peu moins de padding vertical */
     text-align: center;
-    /* Prendra la place restante si besoin et scrollera */
-    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Espacement légèrement réduit */
+    justify-content: center;
+
+    /* --- Styles pour le sticky --- */
+    position: sticky;
+    bottom: 0;
+    background-color: var(--tg-theme-bg-color, #fff); /* Important pour ne pas voir à travers */
+    z-index: 10; /* Pour être au-dessus du contenu qui scrolle mais sous la modale elle-même */
+    /* Optionnel: une petite ombre pour délimiter */
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    /* Assurer que le padding ne cause pas de double scrollbar avec le viewport */
+    margin-left: -20px; /* Compense le padding de .modal-content */
+    margin-right: -20px;
+    margin-bottom: -20px; /* Compense le padding de .modal-content */
+    padding-left: 20px; /* Rétablir le padding interne */
+    padding-right: 20px;
+    padding-bottom: 10px; /* Rétablir le padding interne */
+}
+
+/* Ajustement pour .modal-content pour permettre le scroll sans que les actions soient coupées au départ */
+.modal-content {
+    /* ... autres styles ... */
+    padding-bottom: 70px; /* Espace pour les boutons sticky (ajuster selon hauteur réelle des boutons) */
 }
 
 /* --- Styles pour Swiper dans la Modale --- */
