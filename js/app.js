@@ -30,7 +30,8 @@ let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cro
 let modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn; // <-- AJOUT DE modalGenerateMockupBtn ICI
 let editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn;
 let loadingOverlay;
-let modalToggleSizeGuide; // Pour la checkbox du guide des tailles
+//let modalToggleSizeGuide; // Pour la checkbox du guide des tailles
+let modalToggleSizeGuideBtn; // NOUVELLE LIGNE (bouton)
 
 // --- Fonctions Utilitaires ---
 
@@ -1708,7 +1709,8 @@ document.addEventListener('DOMContentLoaded', () => {
     cropDataHeight = document.getElementById('crop-data-height');
     cropperAspectRatioButtonsContainer = document.getElementById('cropper-aspect-ratio-buttons');        
     loadingOverlay = document.getElementById('loading-overlay');
-    modalToggleSizeGuide = document.getElementById('modal-toggle-size-guide');
+    //modalToggleSizeGuide = document.getElementById('modal-toggle-size-guide');
+    modalToggleSizeGuideBtn = document.getElementById('modal-toggle-size-guide-btn'); // NOUVELLE LIGNE
     modalRemoveWatermarkBtn = document.getElementById('modal-remove-watermark-btn');
     editActionConfirmationOverlay = document.getElementById('edit-action-confirmation');
     confirmActionReplaceBtn = document.getElementById('confirm-action-replace');
