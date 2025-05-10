@@ -596,6 +596,17 @@ function updateModalInfo(index) {
             img.src = imageData.url; // L'URL de l'image actuelle
         }
 
+        if (modalToggleSizeGuideBtn) {
+            const imageInAllData = allImageData.find(imgData => imgData.id === imageData.id);
+            if (imageInAllData && imageInAllData.uses && imageInAllData.uses.includes('size_guide')) {
+                modalToggleSizeGuideBtn.classList.add('active-size-guide');
+            } else {
+                modalToggleSizeGuideBtn.classList.remove('active-size-guide');
+            }
+            // Stocker l'ID de l'image actuelle sur le bouton pour l'event listener
+            modalToggleSizeGuideBtn.dataset.currentImageId = imageData.id;
+        }
+        
         // Gérer la visibilité et l'état du bouton "DEL" dans la modale (logique existante)
         if (modalMarkForDeletionBtn) {
             const imageInAllData = allImageData.find(imgData => imgData.id === imageData.id);
@@ -824,20 +835,22 @@ function handleSettingsClick(event) {
     openImageModal(imageId); // Ouvre la modal pour cette image
 }
 
-// Gère le cochage/décochage de la case "Guide des tailles" dans la modale
-function handleSizeGuideToggle(event) {
-    const checkbox = event.currentTarget;
-    const isChecked = checkbox.checked;
-    const imageId = checkbox.dataset.currentImageId; // Récupère l'ID de l'image affichée
+// Gère le clic sur le bouton "Guide des tailles" dans la modale
+function handleSizeGuideToggle(event) { // L'événement vient maintenant du bouton
+    const button = event.currentTarget;
+    const imageId = button.dataset.currentImageId;
 
     if (!imageId) {
-        console.error("Impossible de trouver l'ID de l'image associée à la checkbox.");
+        console.error("Impossible de trouver l'ID de l'image associée au bouton Guide des tailles.");
         return;
     }
-
     const imageIdNum = parseInt(imageId, 10);
 
-    console.log(`Toggle Guide des Tailles pour ID ${imageIdNum}. Nouveau statut coché: ${isChecked}`);
+    // Déterminer si on active ou désactive (basé sur la présence de la classe 'active-size-guide')
+    const wasActive = button.classList.contains('active-size-guide');
+    const newActiveState = !wasActive;
+
+    console.log(`Toggle Guide des Tailles pour ID ${imageIdNum}. Nouveau statut actif: ${newActiveState}`);
 
     // Mettre à jour allImageData (logique pour UN SEUL guide des tailles)
     let previousSizeGuideId = null;
@@ -846,44 +859,43 @@ function handleSizeGuideToggle(event) {
         const isCurrentlySizeGuide = uses.includes('size_guide');
         const idMatches = imgData.id === imageIdNum;
 
-        if (isChecked) { // Si on vient de cocher la case pour imageIdNum
+        if (newActiveState) { // Si on vient d'activer pour imageIdNum
             if (idMatches) {
-                // Ajouter 'size_guide' si pas déjà présent
                 if (!isCurrentlySizeGuide) {
                     imgData.uses = [...uses, 'size_guide'];
-                    console.log(` -> Ajouté 'size_guide' aux uses de ${imageIdNum}`);
                 }
             } else if (isCurrentlySizeGuide) {
-                // Si c'est une AUTRE image qui était le guide, retirer 'size_guide'
                 previousSizeGuideId = imgData.id;
                 imgData.uses = uses.filter(use => use !== 'size_guide');
-                console.log(` -> Retiré 'size_guide' des uses de ${imgData.id} (précédent guide)`);
             }
-        } else { // Si on vient de décocher la case pour imageIdNum
+        } else { // Si on vient de désactiver pour imageIdNum
             if (idMatches && isCurrentlySizeGuide) {
-                // Retirer 'size_guide'
                 imgData.uses = uses.filter(use => use !== 'size_guide');
-                console.log(` -> Retiré 'size_guide' des uses de ${imageIdNum}`);
             }
         }
     });
 
-    // Mettre à jour les icônes visuelles
-    updateSizeGuideIcon(imageIdNum, isChecked); // Pour l'image actuelle
+    // Mettre à jour l'apparence du bouton cliqué
+    if (newActiveState) {
+        button.classList.add('active-size-guide');
+    } else {
+        button.classList.remove('active-size-guide');
+    }
+
+    // Mettre à jour les icônes visuelles sur les miniatures/carousel
+    updateSizeGuideIcon(imageIdNum, newActiveState);
     if (previousSizeGuideId !== null) {
-        updateSizeGuideIcon(previousSizeGuideId, false); // Pour l'ancienne image guide
+        updateSizeGuideIcon(previousSizeGuideId, false);
     }
 
-    // Mettre à jour l'affichage des rôles dans la modale pour l'image actuelle
-    const currentImageInData = allImageData.find(img => img.id === imageIdNum);
-    if (modalImageRoles && currentImageInData) {
-         modalImageRoles.textContent = currentImageInData.uses.join(', ') || 'Aucun';
-    }
+    // Mettre à jour l'affichage des infos dans la modale (si on y affichait les rôles, plus le cas)
+    // const currentImageInData = allImageData.find(img => img.id === imageIdNum);
+    // if (modalImageRoles && currentImageInData) { // modalImageRoles n'existe plus
+    //      modalImageRoles.textContent = currentImageInData.uses.join(', ') || 'Aucun';
+    // }
 
-    // Pas besoin de sauvegarder immédiatement, cela se fera via "Enregistrer Modifications"
     updateStatus("Statut 'Guide des tailles' mis à jour localement.", "info");
 }
-
 // Gère le clic sur le bouton "DEL" dans le carrousel OU l'appel direct depuis la modale
 function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
     let imageId;
