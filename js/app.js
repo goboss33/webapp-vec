@@ -999,6 +999,7 @@ function startCropping() {
     if (modalRemoveWatermarkBtn) modalRemoveWatermarkBtn.style.display = 'none';
     if (modalGenerateMockupBtn) modalGenerateMockupBtn.style.display = 'none';
     if (modalMarkForDeletionBtn) modalMarkForDeletionBtn.style.display = 'none';
+    if (modalToggleSizeGuideBtn) modalToggleSizeGuideBtn.style.display = 'none'; // <-- NOUVELLE LIGNE
     if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'none';
     if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'none';
 
