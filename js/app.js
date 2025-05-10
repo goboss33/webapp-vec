@@ -1792,9 +1792,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modalRemoveWatermarkBtn.addEventListener('click', handleRemoveWatermark);
     }
     // Écouteur pour la case à cocher Guide des Tailles
-    if (modalToggleSizeGuide) {
-        modalToggleSizeGuide.addEventListener('change', handleSizeGuideToggle);
-    }
+    // if (modalToggleSizeGuide) modalToggleSizeGuide.addEventListener('change', handleSizeGuideToggle); 
+    if (modalToggleSizeGuideBtn) modalToggleSizeGuideBtn.addEventListener('click', handleSizeGuideToggle); // NOUVELLE LIGNE
     // Bouton Mockup (Action principale)
     // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration);
 
