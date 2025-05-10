@@ -721,14 +721,6 @@ function openImageModal(imageId) {
     currentModalIndex = initialIndex;
     console.log(`Index initial: ${initialIndex}`);
     
-    // Initialiser l'état de la checkbox Guide des Tailles
-    if (modalToggleSizeGuide) {
-        const imageData = modalImageList[initialIndex];
-        modalToggleSizeGuide.checked = imageData.uses && imageData.uses.includes('size_guide');
-        // Stocker l'ID de l'image actuelle sur la checkbox pour l'event listener
-        modalToggleSizeGuide.dataset.currentImageId = imageData.id;
-    }
-    
     // 3. Peupler le wrapper Swiper dynamiquement
     if (modalSwiperWrapper) {
         modalSwiperWrapper.innerHTML = ''; // Vider les anciens slides
