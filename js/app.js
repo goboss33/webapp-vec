@@ -772,19 +772,15 @@ function openImageModal(imageId) {
              on: {
                  slideChange: function () {
                      console.log(`Slide changé vers index: ${this.activeIndex}`);
-                     updateModalInfo(this.activeIndex); // Met à jour les infos (ID, Rôles)
-
-                     // Mettre à jour aussi l'état de la checkbox pour le nouveau slide
-                    if (modalToggleSizeGuide) {
-                        const newImageData = modalImageList[this.activeIndex];
-                        modalToggleSizeGuide.checked = newImageData.uses && newImageData.uses.includes('size_guide');
-                        // Mettre à jour l'ID de l'image associée à la checkbox
-                        modalToggleSizeGuide.dataset.currentImageId = newImageData.id;
-                    }
+                     updateModalInfo(this.activeIndex); // Met à jour les infos (ID, Dimensions, et l'état du bouton Guide des Tailles)
+                     
+                     // La logique de mise à jour du bouton modalToggleSizeGuideBtn
+                     // est maintenant gérée DANS updateModalInfo().
+                     // Donc, plus besoin de la dupliquer ici.
                  },
                   init: function() {
                       // Met à jour les infos pour le slide initial juste après l'init
-                      updateModalInfo(this.activeIndex);
+                      updateModalInfo(this.activeIndex); // Ceci va aussi régler l'état initial du bouton Guide des tailles
                        console.log("Swiper initialisé.");
                   }
              },
