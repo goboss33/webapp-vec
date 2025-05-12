@@ -5,8 +5,10 @@ import {
     N8N_REMOVE_WATERMARK_WEBHOOK_URL,
     N8N_GENERATE_MOCKUP_WEBHOOK_URL
 } from './config.js';
-
 console.log('app.js main script loaded, N8N URLs imported.');
+
+import { initDomElements, productIdElement, productNameElement, saveChangesButton, statusElement, dropzoneMain, dropzoneGallery, dropzoneCustom, imageCarouselContainer, imageCarousel, modalOverlay, modalCloseBtn, /* modalImageContainer, */ modalSwiperContainer, modalSwiperWrapper, modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo, modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn, cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer, modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn, editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn } from './dom.js';
+console.log('app.js: DOM element variables and init function imported.');
 
 // --- Variables Globales ---
 let currentProductId = null;
