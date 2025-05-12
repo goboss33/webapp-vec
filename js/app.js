@@ -22,19 +22,6 @@ let cropperInstance = null; // Instance Cropper.js active
 let currentCroppingImage = null; // Données de l'image en cours de recadrage
 let currentEditActionContext = null;
 
-// --- Références aux Éléments DOM ---
-let productIdElement, productNameElement, saveChangesButton, statusElement;
-let dropzoneMain, dropzoneGallery, dropzoneCustom;
-let imageCarouselContainer, imageCarousel;
-let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperContainer, modalSwiperWrapper, modalImageId, /* modalImageRoles, */ modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo; // MODIFIÉ ICI
-let modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn; // modalMockupBtn commenté/supprimé car vous l'avez retiré de l'HTML
-let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer;
-let modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn; // <-- AJOUT DE modalGenerateMockupBtn ICI
-let editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn;
-let loadingOverlay;
-//let modalToggleSizeGuide; // Pour la checkbox du guide des tailles
-let modalToggleSizeGuideBtn; // NOUVELLE LIGNE (bouton)
-
 // --- Fonctions Utilitaires ---
 
 // Met à jour le message de statut
