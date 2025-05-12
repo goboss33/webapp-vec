@@ -1351,109 +1351,101 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
     }
 
     const { type, imageData, payloadData } = currentEditActionContext;
-    let webhookUrl = '';
+    let webhookUrl = ''; // <<< CETTE PARTIE RESTE INCHANGÉE
     const basePayload = {
         productId: currentProductId,
-        imageId: imageData.id, // L'ID de l'image originale (pour remplacement ou comme référence)
-        imageUrl: imageData.url.split('?')[0], // Envoyer l'URL de base
-        editMode: editMode // 'replace' ou 'new' -> sera utilisé par n8n
+        imageId: imageData.id, 
+        imageUrl: imageData.url.split('?')[0], 
+        editMode: editMode 
     };
 
-    // Si editMode est 'new', nous devons envoyer l'état actuel de la galerie standard
-    // pour que n8n puisse y ajouter la nouvelle image sans écraser les modifs locales.
     if (editMode === 'new') {
         const currentGalleryThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
         const currentGalleryImageIds = Array.from(currentGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
-        basePayload.currentGalleryImageIds = currentGalleryImageIds; // Ajoute les IDs actuels de la galerie au payload
+        basePayload.currentGalleryImageIds = currentGalleryImageIds; 
     }
 
-    // Fusionner payloadData (spécifique à l'action, ex: données de crop) avec basePayload
     const finalPayload = { ...basePayload, ...payloadData };
 
-    console.log(`Exécution de l'action: ${type}, Mode: ${editMode}, Payload:`, finalPayload);
-    showLoading(`Traitement de l'image (${type}, Mode: ${editMode})...`);
-    updateStatus(`Traitement (${type}, Mode: ${editMode}) en cours...`, 'info');
-    hideEditActionConfirmation(); // Cacher la sous-modale de confirmation maintenant que l'action est lancée
-
+    // --- La détermination de webhookUrl RESTE ICI dans app.js ---
     if (type === 'crop') {
         webhookUrl = N8N_CROP_IMAGE_WEBHOOK_URL;
     } else if (type === 'removeWatermark') {
         webhookUrl = N8N_REMOVE_WATERMARK_WEBHOOK_URL;
-    } else if (type === 'generateMockup') { // <-- NOUVELLE CONDITION
-        webhookUrl = N8N_GENERATE_MOCKUP_WEBHOOK_URL; // <-- NOUVELLE URL UTILISÉE
-    }
-    else {
+    } else if (type === 'generateMockup') { 
+        webhookUrl = N8N_GENERATE_MOCKUP_WEBHOOK_URL; 
+    } else {
         console.error(`Type d'action inconnu lors de l'exécution: ${type}`);
         hideLoading();
         updateStatus(`Erreur: Type d'action inconnu '${type}'.`, 'error');
         if (cropperInstance) cancelCropping(); else resetModalToActionView();
         return;
     }
+    // --- Fin de la détermination de webhookUrl ---
 
+    // Ces lignes restent également ici
+    console.log(`Exécution de l'action: ${type}, Mode: ${editMode}, Webhook: ${webhookUrl}, Payload:`, finalPayload);
+    showLoading(`Traitement de l'image (${type}, Mode: ${editMode})...`);
+    updateStatus(`Traitement (${type}, Mode: ${editMode}) en cours...`, 'info');
+    hideEditActionConfirmation(); 
+
+    // --- C'est le bloc try...catch...finally suivant que nous allons modifier ---
     try {
-        const response = await fetch(webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(finalPayload)
-        });
+        // ANCIEN CODE (celui que vous avez actuellement) :
+        // const response = await fetch(webhookUrl, {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify(finalPayload)
+        // });
+        // 
+        // // Gestion complète de l'erreur HTTP
+        // if (!response.ok) {
+        //     let errorMsg = `Erreur serveur n8n (${type}, ${editMode}): ${response.status} ${response.statusText}`;
+        //     try {
+        //         const errorData = await response.json();
+        //         errorMsg = errorData.message || (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
+        //     } catch (e) {
+        //         console.warn(`Impossible de parser la réponse d'erreur JSON de n8n pour ${type} (${response.status}). Corps de la réponse:`, await response.text().catch(() => '[corps illisible]'));
+        //     }
+        //     throw new Error(errorMsg); 
+        // }
+        // const result = await response.json();
 
-        // Gestion complète de l'erreur HTTP
-        if (!response.ok) {
-            let errorMsg = `Erreur serveur n8n (${type}, ${editMode}): ${response.status} ${response.statusText}`;
-            try {
-                const errorData = await response.json();
-                // Si errorData.message existe, l'utiliser, sinon une sérialisation de l'erreur.
-                errorMsg = errorData.message || (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
-            } catch (e) {
-                // Si le corps de la réponse d'erreur n'est pas du JSON valide ou est vide
-                console.warn(`Impossible de parser la réponse d'erreur JSON de n8n pour ${type} (${response.status}). Corps de la réponse:`, await response.text().catch(() => '[corps illisible]'));
-                // errorMsg reste tel que défini au-dessus (status + statusText)
-            }
-            throw new Error(errorMsg); // Lance une erreur qui sera attrapée par le bloc catch plus bas
-        }
+        // NOUVEAU CODE à mettre à la place du bloc fetch ci-dessus :
+        const result = await executeImageActionAPI(webhookUrl, finalPayload);
+        // Le reste de la fonction (après la récupération de 'result') est identique
 
-        const result = await response.json();
         console.log(`Réponse du workflow n8n (${type}, ${editMode}):`, result);
 
-        // Vérifier si la réponse contient bien ce qu'on attend
         if (!result || result.status !== 'success' || !result.newImageUrl) {
             throw new Error(result.message || `Réponse invalide du workflow n8n pour '${type}' en mode '${editMode}'. 'newImageUrl' manquant ou statut incorrect.`);
         }
 
-        // Le traitement de la réponse est différent si c'est une nouvelle image ou un remplacement
         if (editMode === 'replace') {
             updateImageAfterCrop(imageData.id.toString(), result.newImageUrl);
             updateStatus(`Image (ID: ${imageData.id}) remplacée avec succès via '${type}' !`, 'success');
         } else { // editMode === 'new'
             if (!result.newImageId) {
-                 throw new Error("L'ID de la nouvelle image ('newImageId') est manquant dans la réponse n8n pour le mode 'new'.");
+                throw new Error("L'ID de la nouvelle image ('newImageId') est manquant dans la réponse n8n pour le mode 'new'.");
             }
-            // n8n a ajouté la nouvelle image à la galerie (basée sur currentGalleryImageIds + la nouvelle)
-            // et a mis à jour le produit dans WordPress.
-            // Enhanced_Product_Image_History a été mis à jour par les endpoints WP.
-            // La Web App doit maintenant refléter l'ajout de cette nouvelle image.
-
             const newImageObject = {
                 id: result.newImageId,
                 url: result.newImageUrl,
                 status: 'current',
-                uses: ['gallery'] // Par défaut, car on l'ajoute à la galerie
+                uses: ['gallery'] 
             };
             allImageData.push(newImageObject);
 
-            // Ajouter visuellement la nouvelle image à la *zone de galerie* dans l'UI
             if (dropzoneGallery) {
                 const galleryContainer = dropzoneGallery.querySelector('.thumbnail-container');
                 if (galleryContainer) {
-                    // Vérifier si l'image n'y est pas déjà par une autre manip (peu probable ici)
                     if (!galleryContainer.querySelector(`.thumbnail-wrapper[data-image-id="${newImageObject.id}"]`)) {
-                        const thumbnail = createThumbnail(newImageObject, 'gallery'); // 'gallery' est le rôle
+                        const thumbnail = createThumbnail(newImageObject, 'gallery'); 
                         galleryContainer.appendChild(thumbnail);
                     }
                 }
             }
 
-            // Mettre à jour aussi la modale Swiper si elle est ouverte
             if (modalSwiperInstance && modalSwiperWrapper) {
                 modalImageList.push(newImageObject);
                 const slide = document.createElement('div');
@@ -1469,27 +1461,22 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
             updateStatus(`Nouvelle image (ID: ${newImageObject.id}) ajoutée à la galerie via '${type}' !`, 'success');
         }
 
-        // Quitter proprement le mode recadrage si l'action était 'crop'
         if (type === 'crop' && cropperInstance) {
-            cancelCropping(); // cancelCropping appelle resetModalToActionView
-        } else if (type === 'removeWatermark' || (type === 'mockup' && !cropperInstance) ) { // Si ce n'était pas une action de crop ou si le crop était déjà fermé
-            resetModalToActionView(); // Assurer que la modale est dans un état propre et les boutons réactivés
+            cancelCropping(); 
+        } else if (type === 'removeWatermark' || (type === 'generateMockup' && !cropperInstance) ) { 
+            resetModalToActionView(); 
         }
 
     } catch (error) {
         console.error(`Échec de l'action '${type}' en mode '${editMode}':`, error);
         updateStatus(`Erreur (${type}, ${editMode}): ${error.message}`, 'error');
-        // En cas d'erreur, s'assurer de restaurer l'état correct des boutons de la modale principale
-        if (cropperInstance) { // Si l'erreur s'est produite alors qu'on était en mode recadrage
+        if (cropperInstance) { 
             cancelCropping();
-        } else { // Sinon, réinitialiser la vue modale standard
+        } else { 
             resetModalToActionView();
         }
     } finally {
-        hideLoading(); // Toujours cacher l'indicateur de chargement à la fin
-        // La réactivation des boutons d'action de la modale (Recadrer, Retirer Watermark, etc.)
-        // est gérée par cancelCropping() ou resetModalToActionView() qui sont appelés dans le try/catch.
-        // Il n'est normalement pas nécessaire de les réactiver manuellement ici en plus.
+        hideLoading(); 
         console.log(`Fin du traitement pour action '${type}', mode '${editMode}'.`);
     }
 }
