@@ -10,6 +10,9 @@ console.log('app.js main script loaded, N8N URLs imported.');
 import { initDomElements, productIdElement, productNameElement, saveChangesButton, statusElement, dropzoneMain, dropzoneGallery, dropzoneCustom, imageCarouselContainer, imageCarousel, modalOverlay, modalCloseBtn, /* modalImageContainer, */ modalSwiperContainer, modalSwiperWrapper, modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo, modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn, cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer, modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn, editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn } from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
 
+import { updateStatus, showLoading, hideLoading, resetModalToActionView } from './uiUtils.js';
+console.log('app.js: UI utility functions imported.');
+
 // --- Variables Globales ---
 let currentProductId = null;
 let allImageData = [];
@@ -23,16 +26,6 @@ let currentCroppingImage = null; // Données de l'image en cours de recadrage
 let currentEditActionContext = null;
 
 // --- Fonctions Utilitaires ---
-
-// Met à jour le message de statut
-const updateStatus = (message, type = 'info') => {
-    if (statusElement) {
-        statusElement.textContent = message;
-        statusElement.className = `status-message status-${type}`;
-    } else {
-        console.error("statusElement non trouvé.");
-    }
-};
 
 // Dans la fonction createCarouselItem(image)
 function createCarouselItem(image) {
@@ -946,28 +939,6 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
     updateStatus(`Image ${imageIdNum} ${isMarked ? 'marquée pour suppression' : 'ne sera plus supprimée'}. Enregistrez pour appliquer.`, 'info');
 }
 
-// --- Indicateur de Chargement ---
-function showLoading(message = "Traitement en cours...") {
-    if (loadingOverlay) {
-        const p = loadingOverlay.querySelector('p');
-        if (p) p.textContent = message;
-        loadingOverlay.style.display = 'flex';
-    }
-    // Désactiver les boutons principaux pour éviter double-clic
-    if(saveChangesButton) saveChangesButton.disabled = true;
-    if(modalCropValidateBtn) modalCropValidateBtn.disabled = true; // Désactiver si visible
-    if(modalCropCancelBtn) modalCropCancelBtn.disabled = true; // Désactiver si visible
-    console.log("Affichage indicateur chargement.");
-}
-function hideLoading() {
-    if (loadingOverlay) loadingOverlay.style.display = 'none';
-    // Réactiver les boutons
-    if(saveChangesButton) saveChangesButton.disabled = false;
-     if(modalCropValidateBtn) modalCropValidateBtn.disabled = false;
-     if(modalCropCancelBtn) modalCropCancelBtn.disabled = false;
-     console.log("Masquage indicateur chargement.");
-}
-
 // --- NOUVELLE Logique de Recadrage (Cropper.js) ---
 
 // Initialise l'interface de recadrage
@@ -1511,52 +1482,6 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
         // est gérée par cancelCropping() ou resetModalToActionView() qui sont appelés dans le try/catch.
         // Il n'est normalement pas nécessaire de les réactiver manuellement ici en plus.
         console.log(`Fin du traitement pour action '${type}', mode '${editMode}'.`);
-    }
-}
-
-// Réinitialise la modal à son état initial (vue Swiper, boutons actions standards)
-// et s'assure que les overlays/confirmations spécifiques sont cachés.
-function resetModalToActionView() {
-    console.log("Réinitialisation de la vue de la modale aux actions standard.");
-
-    // 1. Cacher tous les éléments spécifiques au mode recadrage
-    if (modalCropperContainer) modalCropperContainer.style.display = 'none';
-    if (modalCropValidateBtn) {
-        modalCropValidateBtn.style.display = 'none';
-        modalCropValidateBtn.disabled = true; // Désactiver par sécurité
-    }
-    if (modalCropCancelBtn) {
-        modalCropCancelBtn.style.display = 'none';
-        modalCropCancelBtn.disabled = true; // Désactiver par sécurité
-    }
-    if (cropperDataDisplay) cropperDataDisplay.style.display = 'none';
-    if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'none';
-    // if (finalCanvasSettings) finalCanvasSettings.style.display = 'none'; // Si vous aviez ajouté cela
-
-    // 2. Cacher l'overlay de confirmation d'action (au cas où)
-    if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'none';
-    // currentEditActionContext est typiquement remis à null par hideEditActionConfirmation ou après exécution
-
-    // 3. Afficher les éléments de la vue "normale" de la modale (Swiper et actions principales)
-    if (modalSwiperContainer) modalSwiperContainer.style.display = 'block';
-    if (modalPrevBtn) modalPrevBtn.style.display = 'block'; // Leur état activé/désactivé est géré par Swiper
-    if (modalNextBtn) modalNextBtn.style.display = 'block';
-    if (modalImageInfo) modalImageInfo.style.display = 'block'; // Infos de l'image (ID, Rôles)
-
-    // 4. Afficher le conteneur des boutons d'action principaux et réactiver les boutons
-    if (modalActions) modalActions.style.display = 'flex'; // Ou 'block', selon votre CSS pour l'alignement de ces boutons
-
-    if (modalCropBtn) {
-        modalCropBtn.style.display = 'inline-block';
-        modalCropBtn.disabled = false;
-    }
-    if (modalRemoveWatermarkBtn) {
-        modalRemoveWatermarkBtn.style.display = 'inline-block';
-        modalRemoveWatermarkBtn.disabled = false;
-    }
-    if (modalGenerateMockupBtn) { // <-- NOUVEAU BLOC POUR NOTRE BOUTON
-        modalGenerateMockupBtn.style.display = 'inline-block';
-        modalGenerateMockupBtn.disabled = false; // Activer par défaut
     }
 }
 
