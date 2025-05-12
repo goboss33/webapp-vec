@@ -1,0 +1,72 @@
+// js/dom.js
+console.log('dom.js module loaded');
+
+// Déclarations des variables pour les éléments DOM
+// Elles seront exportées et initialisées par initDomElements
+export let productIdElement, productNameElement, saveChangesButton, statusElement;
+export let dropzoneMain, dropzoneGallery, dropzoneCustom;
+export let imageCarouselContainer, imageCarousel;
+export let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperContainer, modalSwiperWrapper, modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo;
+export let modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn;
+export let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer;
+export let modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn;
+export let editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn;
+export let loadingOverlay;
+export let modalToggleSizeGuideBtn;
+
+// Fonction pour initialiser toutes les références DOM
+export function initDomElements() {
+    console.log('dom.js: Initializing DOM elements...');
+
+    productIdElement = document.getElementById('productId');
+    productNameElement = document.getElementById('productName');
+    saveChangesButton = document.getElementById('saveChangesButton');
+    statusElement = document.getElementById('status');
+
+    dropzoneMain = document.getElementById('dropzone-main');
+    dropzoneGallery = document.getElementById('dropzone-gallery');
+    dropzoneCustom = document.getElementById('dropzone-custom');
+
+    imageCarouselContainer = document.getElementById('image-carousel-container');
+    imageCarousel = document.getElementById('image-carousel');
+
+    modalOverlay = document.getElementById('image-modal');
+    modalCloseBtn = document.getElementById('modal-close-btn');
+    modalImageContainer = document.getElementById('modal-image-container'); // Vous l'aviez, je le remets au cas où. Sinon, supprimez si non utilisé.
+    modalSwiperContainer = document.querySelector('.modal-swiper');
+    modalSwiperWrapper = document.getElementById('modal-swiper-wrapper');
+    modalImageId = document.getElementById('modal-image-id');
+    modalImageDimensions = document.getElementById('modal-image-dimensions');
+    modalPrevBtn = document.getElementById('modal-prev-btn');
+    modalNextBtn = document.getElementById('modal-next-btn');
+    modalActions = document.getElementById('modal-actions');
+    modalImageInfo = document.getElementById('modal-image-info');
+
+    modalCropperContainer = document.getElementById('modal-cropper-container');
+    imageToCropElement = document.getElementById('image-to-crop');
+    modalCropBtn = document.getElementById('modal-crop-btn');
+    // modalMockupBtn = document.getElementById('modal-mockup-btn'); // Ce bouton est assigné plus bas, commenté ici pour éviter double assignation si l'ID a changé.
+    modalCropValidateBtn = document.getElementById('modal-crop-validate-btn');
+    modalCropCancelBtn = document.getElementById('modal-crop-cancel-btn');
+
+    cropperDataDisplay = document.getElementById('cropper-data-display');
+    cropDataX = document.getElementById('crop-data-x');
+    cropDataY = document.getElementById('crop-data-y');
+    cropDataWidth = document.getElementById('crop-data-width');
+    cropDataHeight = document.getElementById('crop-data-height');
+    cropperAspectRatioButtonsContainer = document.getElementById('cropper-aspect-ratio-buttons');
+
+    loadingOverlay = document.getElementById('loading-overlay');
+    modalToggleSizeGuideBtn = document.getElementById('modal-toggle-size-guide-btn');
+    modalRemoveWatermarkBtn = document.getElementById('modal-remove-watermark-btn');
+    modalGenerateMockupBtn = document.getElementById('modal-generate-mockup-btn');
+    modalMarkForDeletionBtn = document.getElementById('modal-mark-for-deletion-btn');
+
+
+    editActionConfirmationOverlay = document.getElementById('edit-action-confirmation');
+    confirmActionReplaceBtn = document.getElementById('confirm-action-replace');
+    confirmActionNewBtn = document.getElementById('confirm-action-new');
+    confirmActionCancelBtn = document.getElementById('confirm-action-cancel');
+
+    console.log('dom.js: DOM elements initialized.');
+}
