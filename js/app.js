@@ -13,6 +13,11 @@ console.log('app.js: DOM element variables and init function imported.');
 import { updateStatus, showLoading, hideLoading, resetModalToActionView } from './uiUtils.js';
 console.log('app.js: UI utility functions imported.');
 
+import { fetchProductDataAPI, saveChangesAPI, executeImageActionAPI } from './apiService.js';
+// Importer également les URLs spécifiques si executeImageActionAPI ne les reçoit pas en argument mais les utilise directement (ce n'est pas le cas ici)
+import { N8N_CROP_IMAGE_WEBHOOK_URL, N8N_REMOVE_WATERMARK_WEBHOOK_URL, N8N_GENERATE_MOCKUP_WEBHOOK_URL } from './config.js';
+console.log('app.js: API service functions imported.');
+
 // --- Variables Globales ---
 let currentProductId = null;
 let allImageData = [];
@@ -498,20 +503,24 @@ const handleSaveChanges = async () => {
     console.log("Données envoyées à n8n:", payload);
 
     try {
-        const response = await fetch(N8N_UPDATE_DATA_WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        if (!response.ok) {
-            let errorMsg = `Erreur serveur n8n: ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMsg = errorData.message || JSON.stringify(errorData);
-            } catch (e) { console.warn("Impossible de parser la réponse d'erreur JSON de n8n."); }
-            throw new Error(errorMsg);
-        }
-        const result = await response.json();
+        //const response = await fetch(N8N_UPDATE_DATA_WEBHOOK_URL, {
+        //    method: 'POST',
+        //    headers: { 'Content-Type': 'application/json' },
+        //    body: JSON.stringify(payload)
+        //});
+        //if (!response.ok) {
+        //    let errorMsg = `Erreur serveur n8n: ${response.status}`;
+        //    try {
+        //        const errorData = await response.json();
+        //        errorMsg = errorData.message || JSON.stringify(errorData);
+        //    } catch (e) { console.warn("Impossible de parser la réponse d'erreur JSON de n8n."); }
+        //   throw new Error(errorMsg);
+        //}
+        //const result = await response.json();
+
+        // NOUVELLE LIGNE : Appel à la fonction API
+        const result = await saveChangesAPI(payload);
+        
         console.log("Réponse de n8n (Mise à jour):", result);
         updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
 
@@ -1500,10 +1509,14 @@ const fetchProductData = async () => {
 
 
     try {
-        const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${currentProductId}`;
-        const response = await fetch(urlToFetch);
-        if (!response.ok) throw new Error(`Erreur serveur n8n: ${response.status}`);
-        const data = await response.json();
+        //const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${currentProductId}`;
+        //const response = await fetch(urlToFetch);
+        //if (!response.ok) throw new Error(`Erreur serveur n8n: ${response.status}`);
+        //const data = await response.json();
+
+        // NOUVELLE LIGNE : Appel à la fonction API
+        const data = await fetchProductDataAPI(currentProductId); 
+        
         console.log('Parsed JSON data:', data);
         updateStatus("Données reçues. Affichage...", 'info');
 
