@@ -15,11 +15,18 @@ console.log('apiService.js module loaded');
  * @returns {Promise<Object>} La promesse résolue avec les données du produit ou rejetée avec une erreur.
  */
 export async function fetchProductDataAPI(productId) {
+    // Logs de débogage pour vérifier les valeurs
+    console.log('apiService.js: N8N_GET_DATA_WEBHOOK_URL value:', N8N_GET_DATA_WEBHOOK_URL);
+    console.log('apiService.js: productId value:', productId);
+
+    // Assurez-vous que cette ligne est exactement comme ci-dessous,
+    // utilisant les vraies variables N8N_GET_DATA_WEBHOOK_URL et productId
     const urlToFetch = `<span class="math-inline">\{N8N\_GET\_DATA\_WEBHOOK\_URL\}?productId\=</span>{productId}`;
-    console.log(`apiService.js: Fetching product data from ${urlToFetch}`);
+
+    console.log(`apiService.js: Attempting to fetch from constructed urlToFetch: ${urlToFetch}`); // Ce log va nous montrer l'URL réellement construite
+
     const response = await fetch(urlToFetch);
     if (!response.ok) {
-        // Essayer de lire le message d'erreur du corps de la réponse si possible
         let errorMsg = `Erreur serveur N8N (fetchProductDataAPI): ${response.status}`;
         try {
             const errorData = await response.json();
@@ -29,7 +36,7 @@ export async function fetchProductDataAPI(productId) {
         }
         throw new Error(errorMsg);
     }
-    return response.json(); // Renvoie la promesse qui se résoudra avec les données JSON
+    return response.json();
 }
 
 /**
