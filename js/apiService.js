@@ -21,7 +21,7 @@ export async function fetchProductDataAPI(productId) {
 
     // Assurez-vous que cette ligne est exactement comme ci-dessous,
     // utilisant les vraies variables N8N_GET_DATA_WEBHOOK_URL et productId
-    const urlToFetch = `<span class="math-inline">\{N8N\_GET\_DATA\_WEBHOOK\_URL\}?productId\=</span>{productId}`;
+    const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${productId}`;
 
     console.log(`apiService.js: Attempting to fetch from constructed urlToFetch: ${urlToFetch}`); // Ce log va nous montrer l'URL réellement construite
 
