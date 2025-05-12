@@ -1663,51 +1663,9 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn("SDK Telegram WebApp non détecté. Fonctionnement hors Telegram?");
     }
 
-    // Récupérer TOUS les éléments DOM
-    productIdElement = document.getElementById('productId');
-    productNameElement = document.getElementById('productName');
-    saveChangesButton = document.getElementById('saveChangesButton');
-    statusElement = document.getElementById('status');
-    dropzoneMain = document.getElementById('dropzone-main');
-    dropzoneGallery = document.getElementById('dropzone-gallery');
-    dropzoneCustom = document.getElementById('dropzone-custom');
-    imageCarouselContainer = document.getElementById('image-carousel-container');
-    imageCarousel = document.getElementById('image-carousel');
-    modalOverlay = document.getElementById('image-modal');
-    modalCloseBtn = document.getElementById('modal-close-btn');
-    modalSwiperContainer = document.querySelector('.modal-swiper'); // Le conteneur de Swiper
-    modalSwiperWrapper = document.getElementById('modal-swiper-wrapper');
-    modalImageId = document.getElementById('modal-image-id');
-    //modalImageRoles = document.getElementById('modal-image-roles');
-    modalImageDimensions = document.getElementById('modal-image-dimensions'); // NOUVELLE LIGNE
-    modalPrevBtn = document.getElementById('modal-prev-btn');
-    modalPrevBtn = document.getElementById('modal-prev-btn');
-    modalNextBtn = document.getElementById('modal-next-btn');
-    modalActions = document.getElementById('modal-actions');
-    modalImageInfo = document.getElementById('modal-image-info');
-    // Éléments pour Cropper
-    modalCropperContainer = document.getElementById('modal-cropper-container');
-    imageToCropElement = document.getElementById('image-to-crop');
-    modalCropBtn = document.getElementById('modal-crop-btn');
-    // modalMockupBtn = document.getElementById('modal-mockup-btn');
-    modalCropValidateBtn = document.getElementById('modal-crop-validate-btn');
-    modalCropCancelBtn = document.getElementById('modal-crop-cancel-btn');
-    cropperDataDisplay = document.getElementById('cropper-data-display');
-    cropDataX = document.getElementById('crop-data-x');
-    cropDataY = document.getElementById('crop-data-y');
-    cropDataWidth = document.getElementById('crop-data-width');
-    cropDataHeight = document.getElementById('crop-data-height');
-    cropperAspectRatioButtonsContainer = document.getElementById('cropper-aspect-ratio-buttons');        
-    loadingOverlay = document.getElementById('loading-overlay');
-    //modalToggleSizeGuide = document.getElementById('modal-toggle-size-guide');
-    modalToggleSizeGuideBtn = document.getElementById('modal-toggle-size-guide-btn'); // NOUVELLE LIGNE
-    modalRemoveWatermarkBtn = document.getElementById('modal-remove-watermark-btn');
-    editActionConfirmationOverlay = document.getElementById('edit-action-confirmation');
-    confirmActionReplaceBtn = document.getElementById('confirm-action-replace');
-    confirmActionNewBtn = document.getElementById('confirm-action-new');
-    confirmActionCancelBtn = document.getElementById('confirm-action-cancel');
-    modalGenerateMockupBtn = document.getElementById('modal-generate-mockup-btn'); // <-- NOUVELLE LIGNE
-    modalMarkForDeletionBtn = document.getElementById('modal-mark-for-deletion-btn'); // <-- NOUVELLE LIGNE
+    //Initialiser les éléments DOM via le module dom.js
+    initDomElements();
+    console.log('app.js: initDomElements() called.');
     
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
