@@ -14,8 +14,6 @@ import { updateStatus, showLoading, hideLoading, resetModalToActionView } from '
 console.log('app.js: UI utility functions imported.');
 
 import { fetchProductDataAPI, saveChangesAPI, executeImageActionAPI } from './apiService.js';
-// Importer également les URLs spécifiques si executeImageActionAPI ne les reçoit pas en argument mais les utilise directement (ce n'est pas le cas ici)
-import { N8N_CROP_IMAGE_WEBHOOK_URL, N8N_REMOVE_WATERMARK_WEBHOOK_URL, N8N_GENERATE_MOCKUP_WEBHOOK_URL } from './config.js';
 console.log('app.js: API service functions imported.');
 
 // --- Variables Globales ---
