@@ -226,3 +226,27 @@ export function getCurrentModalImage() {
     }
     return null;
 }
+
+export function addImageToModalSwiper(newImageObject) {
+    if (!moduleModalSwiperInstance || !modalSwiperWrapper) {
+        console.warn("modalManager.js: Instance Swiper ou wrapper non disponible pour ajouter une image.");
+        return;
+    }
+
+    // Ajoute à la liste interne
+    moduleModalImageList.push(newImageObject);
+
+    // Crée et ajoute le slide
+    const slide = document.createElement('div');
+    slide.className = 'swiper-slide';
+    const img = document.createElement('img');
+    img.src = newImageObject.url;
+    img.alt = `Image ID ${newImageObject.id}`;
+    img.loading = 'lazy';
+    slide.appendChild(img);
+    modalSwiperWrapper.appendChild(slide);
+
+    // Met à jour Swiper pour qu'il reconnaisse le nouveau slide
+    moduleModalSwiperInstance.update();
+    console.log(`modalManager.js: Image ID ${newImageObject.id} ajoutée à Swiper. Total slides: ${moduleModalSwiperInstance.slides.length}`);
+}
