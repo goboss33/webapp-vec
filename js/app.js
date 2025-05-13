@@ -19,7 +19,7 @@ console.log('app.js: API service functions imported.');
 import { initializeSortableManager, addGalleryImageToDOM } from './sortableManager.js';
 console.log('app.js: Sortable manager function imported.');
 
-import { openModal as openImageModalFromManager, closeModal as closeModalFromManager, updateModalInfo as updateModalInfoFromManager, getCurrentModalImage } from './modalManager.js';
+import { openModal as openImageModalFromManager, closeModal as closeModalFromManager, updateModalInfo as updateModalInfoFromManager, getCurrentModalImage, addImageToModalSwiper } from './modalManager.js';
 console.log('app.js: Modal manager functions imported.');
 
 import { startCropper, cancelCropper as cancelCropperFromManager, validateCropData as validateCropDataFromManager, setCropperAspectRatio, isCropperActive } from './cropperManager.js';
