@@ -409,37 +409,33 @@ function cancelCropping() { // Cette fonction reste dans app.js pour orchestrer
     // La fonction onCancellationCallback (qui contient resetModalToActionView) sera appelée par le manager
 }
 
-// Met à jour l'URL d'une image partout dans l'UI et dans les données
-function updateImageAfterCrop(imageId, newImageUrl) {
-    console.log(`Mise à jour URL pour Image ID ${imageId} vers ${newImageUrl}`);
-    
-    // 1. Mettre à jour dans notre tableau de données global
-    const imageIndexInData = allImageData.findIndex(img => img.id.toString() === imageId);
+// Dans app.js (vérifiez cette fonction, elle devrait déjà être comme ça ou similaire)
+function updateImageAfterCrop(imageIdStr, newImageUrl) { // Notez imageIdStr
+    console.log(`app.js: Mise à jour URL pour Image ID ${imageIdStr} vers ${newImageUrl}`);
+
+    const imageIndexInData = allImageData.findIndex(img => img.id.toString() === imageIdStr);
     if (imageIndexInData !== -1) {
         allImageData[imageIndexInData].url = newImageUrl;
-        // Si l'image avait aussi une URL de thumbnail différente (peu probable ici), on la mettrait aussi à jour
+        allImageData[imageIndexInData].src = newImageUrl; // Assurez-vous que 'src' est aussi mis à jour si utilisé
     }
 
-    // 2. Mettre à jour dans le carousel principal
-    const carouselItemContainer = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`);
+    const carouselItemContainer = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageIdStr}"]`);
     if (carouselItemContainer) {
         const imgInCarousel = carouselItemContainer.querySelector('img');
         if (imgInCarousel) imgInCarousel.src = newImageUrl;
-        carouselItemContainer.dataset.imageUrl = newImageUrl; // Met à jour l'URL stockée aussi
+        carouselItemContainer.dataset.imageUrl = newImageUrl;
     }
 
-    // 3. Mettre à jour dans les zones de dépôt (toutes)
-    document.querySelectorAll(`.thumbnail-wrapper[data-image-id="${imageId}"]`).forEach(wrapper => {
+    document.querySelectorAll(`.thumbnail-wrapper[data-image-id="${imageIdStr}"]`).forEach(wrapper => {
         const imgInZone = wrapper.querySelector('.img-thumbnail');
         if (imgInZone) imgInZone.src = newImageUrl;
-        wrapper.dataset.imageUrl = newImageUrl; // Met à jour l'URL stockée aussi
+        wrapper.dataset.imageUrl = newImageUrl;
     });
 
-    // 4. Mettre à jour dans la modale Swiper (si elle est ouverte ou rouverte)
-    if (modalOverlay && modalOverlay.style.display === 'flex') { // Met à jour seulement si la modale est visible
-        updateImageInSwiper(imageIdStr, newImageUrl);
+    if (modalOverlay && modalOverlay.style.display === 'flex') {
+        updateImageInSwiper(imageIdStr, newImageUrl); // Assurez-vous que updateImageInSwiper prend un ID string
     }
-    console.log(`Toutes les instances de l'image ${imageId} mises à jour avec la nouvelle URL.`);
+    console.log(`app.js: Toutes les instances de l'image ${imageIdStr} mises à jour avec la nouvelle URL.`);
 }
 
 // Valide le recadrage : stocke le contexte, puis affiche la confirmation.
@@ -486,32 +482,27 @@ async function handleRemoveWatermark() {
 
 // Gère le clic sur le bouton "Générer Mockup"
 async function handleGenerateMockup() {
-    // const imageToProcess = cropperInstance ? currentCroppingImage : modalImageList[currentModalIndex]; // ANCIENNE LIGNE
-    const imageToProcess = cropperInstance ? currentCroppingImage : getCurrentModalImage(); // NOUVELLE LIGNE
+    const imageToProcess = isCropperActive() ? null : getCurrentModalImage(); // Simplifié: si crop actif, pas d'image de base pour mockup simple
+                                                                          // currentCroppingImage n'est plus global.
+                                                                          // On pourrait passer l'image du cropper si c'est un cas d'usage.
+                                                                          // Pour l'instant, mockup depuis image non recadrée.
 
     if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
-        updateStatus("Données de l'image invalides ou aucune image sélectionnée pour générer le mockup.", "error");
+        updateStatus("Aucune image sélectionnée pour générer le mockup (ou recadrage en cours).", "error");
         console.error("handleGenerateMockup: imageToProcess invalide ou manquante.", imageToProcess);
         return;
     }
 
     console.log(`Préparation pour la génération du mockup (ID Image Produit: ${imageToProcess.id}).`);
 
-    // Pour la génération de mockup, editMode est toujours 'new'
-    // et nous n'avons pas besoin de la sous-modale de confirmation (Remplacer/Nouveau).
-    // Nous appelons directement une version adaptée de executeConfirmedAction ou une nouvelle fonction dédiée.
-
-    // Nous allons réutiliser la structure de currentEditActionContext
-    // et appeler directement executeConfirmedAction avec editMode = 'new'.
-    currentEditActionContext = {
-        type: 'generateMockup', // Nouveau type d'action
+    currentEditActionContext = { // currentEditActionContext est toujours dans app.js
+        type: 'generateMockup',
         imageData: imageToProcess,
-        payloadData: {} // Pas de données de payload spécifiques autres que celles de base pour l'instant
+        payloadData: {}
     };
 
-    // Appel direct à executeConfirmedAction avec 'new'
-    // car un mockup est toujours une nouvelle image.
-    await executeConfirmedAction('new');
+    // Appel direct à la version orchestrée avec gestion UI
+    await callExecuteConfirmedActionWithUiManagement('new');
 }
 
 function showEditActionConfirmation() {
@@ -673,6 +664,71 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
 }
 */
 
+/**
+ * Appelle actionsManager.executeConfirmedAction et gère l'UI (loading, status, reset view).
+ * @param {string} editMode - 'replace' ou 'new'
+ */
+async function callExecuteConfirmedActionWithUiManagement(editMode) {
+    if (!currentEditActionContext) {
+        console.error("app.js: currentEditActionContext est null avant d'appeler actionsManager.");
+        updateStatus("Erreur : Contexte d'action manquant.", "error");
+        hideEditActionConfirmation();
+        if (isCropperActive()) {
+            cancelCropperFromManager();
+        } else {
+            resetModalToActionView();
+        }
+        return;
+    }
+
+    // Cacher la confirmation AVANT l'appel asynchrone
+    hideEditActionConfirmation();
+
+    try {
+        await actionsManager.executeConfirmedAction(
+            editMode,
+            currentEditActionContext, // global app.js
+            currentProductId,       // global app.js
+            allImageData,           // global app.js (passé par référence)
+            updateImageAfterCrop    // fonction de app.js
+        );
+        // Le message de succès est déjà géré dans actionsManager ou par updateImageAfterCrop
+    } catch (error) {
+        console.error(`app.js: Erreur retournée par actionsManager.executeConfirmedAction pour le mode '${editMode}':`, error);
+        updateStatus(`Erreur (action ${currentEditActionContext?.type || 'inconnue'}, mode ${editMode}): ${error.message}`, 'error');
+        // Assurer la réinitialisation de la vue même en cas d'erreur
+        if (isCropperActive()) {
+            cancelCropperFromManager();
+        } else {
+            resetModalToActionView();
+        }
+    } finally {
+        hideLoading();
+        // La vue (cropper ou normale) devrait déjà être restaurée par cancelCropperFromManager/resetModalToActionView
+        // soit dans le try (si l'action était un crop/removeWatermark) soit dans le catch.
+        // Si un type d'action spécifique (ex: generateMockup) ne fait pas de reset dans actionsManager,
+        // il faudrait le faire ici.
+        // Pour l'instant, on suppose que les callbacks/fonctions appelées s'en chargent ou que le catch le fait.
+        // Réévaluons : la fonction dans actionsManager ne fait PLUS le reset. C'est ici qu'il faut le faire.
+
+        const typeAction = currentEditActionContext?.type; // Sauvegarder avant de nullifier
+
+        if (typeAction === 'crop' && isCropperActive()) {
+            cancelCropperFromManager(); // Nettoie Cropper et restaure la vue actions
+        } else if ((typeAction === 'removeWatermark' || typeAction === 'generateMockup') && !isCropperActive()) {
+            // Si ce n'était pas un crop, on s'assure de revenir à la vue d'action normale
+            resetModalToActionView();
+        }
+        // else: si c'était un crop qui a réussi, cancelCropperFromManager a déjà été appelé par
+        // le callback de validation dans startCropping -> validateCropping -> onValidationCallback
+        // qui lui-même a appelé showEditActionConfirmation, puis cette fonction.
+        // Donc, si l'action était 'crop', cancelCropperFromManager est appelé de toute façon.
+
+        currentEditActionContext = null; // Nettoyer le contexte global après l'opération
+        console.log(`app.js: Fin du traitement UI pour action, mode '${editMode}'.`);
+    }
+}
+
 // --- Récupération Initiale des Données ---
 // --- Récupération Initiale des Données ---
 const fetchProductData = async () => {
@@ -821,8 +877,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bouton Mockup (Action principale)
     // if (modalMockupBtn) modalMockupBtn.addEventListener('click', startMockupGeneration);
 
-    if (confirmActionReplaceBtn) confirmActionReplaceBtn.addEventListener('click', () => executeConfirmedAction('replace'));
-    if (confirmActionNewBtn) confirmActionNewBtn.addEventListener('click', () => executeConfirmedAction('new'));
+    //if (confirmActionReplaceBtn) confirmActionReplaceBtn.addEventListener('click', () => executeConfirmedAction('replace'));
+    //if (confirmActionNewBtn) confirmActionNewBtn.addEventListener('click', () => executeConfirmedAction('new'));
+    if (confirmActionReplaceBtn) {
+        confirmActionReplaceBtn.addEventListener('click', () => {
+            callExecuteConfirmedActionWithUiManagement('replace');
+        });
+    }
+    if (confirmActionNewBtn) {
+        confirmActionNewBtn.addEventListener('click', () => {
+            callExecuteConfirmedActionWithUiManagement('new');
+        });
+    }
+
+    
     if (confirmActionCancelBtn) confirmActionCancelBtn.addEventListener('click', hideEditActionConfirmation);
     if (modalGenerateMockupBtn) modalGenerateMockupBtn.addEventListener('click', handleGenerateMockup); // <-- NOUVELLE LIGNE
 
