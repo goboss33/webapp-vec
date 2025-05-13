@@ -442,62 +442,6 @@ function updateImageAfterCrop(imageId, newImageUrl) {
     console.log(`Toutes les instances de l'image ${imageId} mises à jour avec la nouvelle URL.`);
 }
 
-// Fonction qui appelle le workflow n8n pour le recadrage
-async function triggerCropWorkflow(imageData, cropData) {
-    console.log(`Appel du workflow N8N pour recadrer l'image ID: ${imageData.id}`);
-    showLoading(`Recadrage image ${imageData.id}...`); // Affiche indicateur + désactive boutons
-    updateStatus(`Recadrage image ${imageData.id} en cours...`, 'info');
-
-    const payload = {
-        productId: currentProductId, // Peut être utile pour nommer/classer côté WP
-        imageId: imageData.id,
-        imageUrl: imageData.url, // URL originale
-        crop: { // Coordonnées (entières)
-            x: Math.round(cropData.x),
-            y: Math.round(cropData.y),
-            width: Math.round(cropData.width),
-            height: Math.round(cropData.height)
-        }
-        // Ajouter targetWidth/Height ici si on veut un recadrage à taille fixe (ex: 1024)
-        //targetWidth: 1024,
-        //targetHeight: 1024
-    };
-
-    // Vérifie si l'URL du webhook est définie
-    if (!N8N_CROP_IMAGE_WEBHOOK_URL || N8N_CROP_IMAGE_WEBHOOK_URL === 'YOUR_CROP_IMAGE_WEBHOOK_URL_HERE') {
-        console.error("URL du webhook de recadrage non configurée !");
-        updateStatus("Erreur: URL du webhook de recadrage manquante.", "error");
-        return { status: 'error', message: 'URL du webhook de recadrage non configurée.' };
-    }
-
-    try {
-         // --- Appel Fetch Réel
-        const response = await fetch(N8N_CROP_IMAGE_WEBHOOK_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        if (!response.ok) {
-            let errorMsg = `Erreur serveur n8n (crop): ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMsg = errorData.message || JSON.stringify(errorData);
-            } catch (e) { console.warn("Impossible de parser l'erreur JSON n8n (crop)."); }
-            throw new Error(errorMsg);
-        }
-        const result = await response.json(); // Ex: { status: 'success', newImageUrl: '...', message: '...' }
-        console.log("Réponse du workflow recadrage:", result);
-        if (!result || result.status !== 'success' || !result.newImageUrl) {
-            throw new Error(result.message || "La réponse du workflow de recadrage est invalide.");
-        }
-        return result; // Renvoyer le résultat (contenant newImageUrl)
-     } catch (error) {
-          console.error("Erreur dans fetch triggerCropWorkflow :", error);
-          // Renvoyer un objet d'erreur standardisé
-          return { status: 'error', message: error.message };
-     }
-}
-
 // Valide le recadrage : stocke le contexte, puis affiche la confirmation.
 async function validateCropping() { // Cette fonction reste dans app.js pour l'instant
     if (!isCropperActive()) { // Utilise la fonction de cropperManager
