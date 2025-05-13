@@ -879,6 +879,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirmActionNewBtn) confirmActionNewBtn.addEventListener('click', () => executeConfirmedAction('new'));
     if (confirmActionCancelBtn) confirmActionCancelBtn.addEventListener('click', hideEditActionConfirmation);
     if (modalGenerateMockupBtn) modalGenerateMockupBtn.addEventListener('click', handleGenerateMockup); // <-- NOUVELLE LIGNE
+
+    if (modalMarkForDeletionBtn) {
+        modalMarkForDeletionBtn.addEventListener('click', (event) => {
+            const imageId = event.currentTarget.dataset.imageId;
+            if (imageId) {
+                // Le premier argument est 'eventOrButton', on peut passer null ou l'event
+                // Le deuxième est 'directImageId'
+                handleMarkForDeletionClick(event, imageId); 
+            } else {
+                console.warn("app.js: Clic sur DEL modal, mais aucun data-image-id trouvé sur le bouton.");
+            }
+        });
+    }
     
     // Récupérer les données initiales
     fetchProductData();
