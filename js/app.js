@@ -16,7 +16,7 @@ console.log('app.js: UI utility functions imported.');
 import { fetchProductDataAPI, saveChangesAPI, executeImageActionAPI } from './apiService.js';
 console.log('app.js: API service functions imported.');
 
-import { initializeSortableManager } from './sortableManager.js';
+import { initializeSortableManager, addGalleryImageToDOM } from './sortableManager.js';
 console.log('app.js: Sortable manager function imported.');
 
 import { openModal as openImageModalFromManager, closeModal as closeModalFromManager, updateModalInfo as updateModalInfoFromManager, getCurrentModalImage } from './modalManager.js';
