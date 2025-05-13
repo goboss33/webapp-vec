@@ -614,9 +614,9 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
         updateStatus("Erreur : Contexte d'action manquant.", "error");
         hideEditActionConfirmation(); // S'assurer de cacher la sous-modale
         // Restaurer l'état de la modale principale
-        if (cropperInstance) { // Si on était en mode crop, annuler proprement
-            cancelCropping();
-        } else { // Sinon, réinitialiser la vue modale standard
+        if (isCropperActive()) { 
+            cancelCropperFromManager(); 
+        } else { 
             resetModalToActionView();
         }
         return;
