@@ -1094,97 +1094,81 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
 }
 
 // --- Récupération Initiale des Données ---
+// --- Récupération Initiale des Données ---
 const fetchProductData = async () => {
-    updateStatus("Récupération des données produit...", 'info');
-    if (productNameElement) productNameElement.textContent = 'Chargement...';
-    // Vider le carousel et les conteneurs de vignettes avant de re-peupler
-    if (imageCarousel) imageCarousel.innerHTML = '<p>Chargement...</p>';
-    document.querySelectorAll('.dropzone .thumbnail-container').forEach(container => container.innerHTML = '');
-     // Vider aussi les instances Sortable précédentes
-     // if (sortableCarousel) sortableCarousel.destroy();
-     // Object.values(sortableZones).forEach(instance => instance.destroy());
-     // sortableZones = {};
-     allImageData = []; // Vider les données stockées
+    updateStatus("Récupération des données produit...", 'info');
+    if (productNameElement) productNameElement.textContent = 'Chargement...';
+    
+    // Vider le carousel et les conteneurs de vignettes avant de re-peupler
+    // Cette partie peut rester ici ou être faite aussi au début de initializeSortableManager.
+    // La version dans sortableManager est plus complète car elle cible aussi les .thumbnail-container.
+    // Pour éviter double travail, nous laissons sortableManager s'en charger.
+    if (imageCarousel) imageCarousel.innerHTML = '<p>Chargement...</p>'; // Message temporaire
+    // Supprimons le nettoyage des .thumbnail-container ici car sortableManager le fait.
+    // document.querySelectorAll('.dropzone .thumbnail-container').forEach(container => container.innerHTML = ''); 
 
+    allImageData = []; // Vider les données stockées
 
-    try {
-        //const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${currentProductId}`;
-        //const response = await fetch(urlToFetch);f
-        //if (!response.ok) throw new Error(`Erreur serveur n8n: ${response.status}`);
-        //const data = await response.json();
+    try {
+        const data = await fetchProductDataAPI(currentProductId); 
+        
+        console.log('Parsed JSON data:', data);
+        updateStatus("Données reçues. Affichage...", 'info');
 
-        // NOUVELLE LIGNE : Appel à la fonction API
-        const data = await fetchProductDataAPI(currentProductId); 
-        
-        console.log('Parsed JSON data:', data);
-        updateStatus("Données reçues. Affichage...", 'info');
+        if (productNameElement) productNameElement.textContent = data.productName || 'Non trouvé';
 
-        if (productNameElement) productNameElement.textContent = data.productName || 'Non trouvé';
+        if (data.images && Array.isArray(data.images)) {
+            allImageData = data.images; // Stocker
 
-        // Utiliser 'data.images'
-        if (data.images && Array.isArray(data.images)) {
-            allImageData = data.images; // Stocker
+            // === BLOC DE PEUPLEMENT INITIAL À SUPPRIMER DE APP.JS ===
+            // if (allImageData.length > 0) {
+            //     imageCarousel.innerHTML = ''; // Vider "Chargement..."
 
-            if (allImageData.length > 0) {
-                imageCarousel.innerHTML = ''; // Vider "Chargement..."
+            //     // Priorité pour placement initial
+            //     const rolePriority = ['main', 'gallery', 'custom'];
 
-                // Priorité pour placement initial
-                const rolePriority = ['main', 'gallery', 'custom'];
+            //     allImageData.forEach(image => {
+            //         let placed = false;
+            //         for (const role of rolePriority) {
+            //             if (image.uses.includes(role)) {
+            //                 // ... (logique de placement) ...
+            //                  if (canPlace && container) {
+            //                      container.appendChild(createThumbnail(image, role)); // APPEL SUPPRIMÉ
+            //                      placed = true;
+            //                      break; 
+            //                  }
+            //             }
+            //         }
+            //         // Si non placé dans une zone, mettre dans le carousel
+            //         if (!placed) {
+            //             imageCarousel.appendChild(createCarouselItem(image)); // APPEL SUPPRIMÉ
+            //         }
+            //     });
+            // } else { // Ce else est pour if (allImageData.length > 0)
+            //     imageCarousel.innerHTML = '<p>Aucune image disponible.</p>'; // Géré par sortableManager
+            //     updateStatus("Aucune image trouvée.", 'info');
+            // }
+            // === FIN DU BLOC DE PEUPLEMENT INITIAL À SUPPRIMER ===
 
-                allImageData.forEach(image => {
-                    let placed = false;
-                    for (const role of rolePriority) {
-                        if (image.uses.includes(role)) {
-                            const targetZone = document.getElementById(`dropzone-${role}`);
-                            if (targetZone) {
-                                const container = targetZone.querySelector('.thumbnail-container');
-                                const maxImages = parseInt(targetZone.dataset.maxImages) || 999;
-                                let canPlace = true;
+            // Initialiser SortableJS seulement APRÈS avoir stocké les données et (avant) peuplé le DOM
+            initializeSortableManager(allImageData, handleSettingsClick, handleMarkForDeletionClick); // Cet appel reste
 
-                                // Vérif spéciale pour 'main' (1 seul)
-                                if (role === 'main' && container.children.length >= 1) {
-                                     console.warn(`Image ${image.id} marquée aussi 'main', mais zone déjà remplie.`);
-                                     canPlace = false;
-                                }
-                                // Vérif pour 'custom' (limite max)
-                                else if (role === 'custom' && container.children.length >= maxImages) {
-                                     console.warn(`Zone ${role} (max ${maxImages}) pleine, ne peut placer initialement ${image.id}`);
-                                     canPlace = false;
-                                }
-
-                                if (canPlace && container) {
-                                     container.appendChild(createThumbnail(image, role));
-                                     placed = true;
-                                     break; // Placé dans la zone prioritaire, on arrête
-                                }
-                            }
-                        }
-                    }
-                    // Si non placé dans une zone, mettre dans le carousel
-                    if (!placed) {
-                        imageCarousel.appendChild(createCarouselItem(image));
-                    }
-                });
-
-                // Initialiser SortableJS seulement APRÈS avoir mis les éléments dans le DOM
-                initializeSortableManager(allImageData, handleSettingsClick, handleMarkForDeletionClick);
-
-                updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
-            } else {
-                imageCarousel.innerHTML = '<p>Aucune image disponible.</p>';
-                updateStatus("Aucune image trouvée.", 'info');
-            }
-        } else {
-            console.error("Format de données invalide : 'images' manquant ou n'est pas un tableau.");
-            imageCarousel.innerHTML = '<p>Erreur format données.</p>';
-            updateStatus("Erreur format données images.", 'error');
-        }
-    } catch (error) {
-        console.error("Erreur fetchProductData:", error);
-        updateStatus(`Erreur chargement: ${error.message}`, 'error');
-        if (productNameElement) productNameElement.textContent = 'Erreur';
-        if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur chargement.</p>';
-    }
+            updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
+        } else { // Ce else est pour if (data.images && Array.isArray(data.images))
+            console.error("Format de données invalide : 'images' manquant ou n'est pas un tableau.");
+            if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur format données.</p>';
+            updateStatus("Erreur format données images.", 'error');
+            // S'assurer qu'on essaie quand même d'initialiser Sortable pour avoir une base, même vide.
+            initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick);
+        }
+    } catch (error) {
+        console.error("Erreur fetchProductData:", error);
+        updateStatus(`Erreur chargement: ${error.message}`, 'error');
+        if (productNameElement) productNameElement.textContent = 'Erreur';
+        if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur chargement.</p>';
+        // Initialiser Sortable même en cas d'erreur pour que l'UI de base soit là
+        initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick); 
+    }
 };
 
 // --- Initialisation de l'application ---
