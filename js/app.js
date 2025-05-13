@@ -590,17 +590,20 @@ function showEditActionConfirmation() {
     if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'none';
 }
 
+// Dans app.js
 function hideEditActionConfirmation() {
     if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'none';
     currentEditActionContext = null; // Réinitialiser le contexte
-    // Réafficher les bons boutons selon si on était en mode crop ou non
-    if (cropperInstance) { // Si on était en mode crop, réafficher les boutons de crop
+
+    // Remplacer la vérification de cropperInstance par isCropperActive()
+    if (isCropperActive()) { // <<< MODIFIÉ ICI
+        // Réafficher les bons boutons si on était en mode crop
         if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'inline-block';
         if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'inline-block';
         if (cropperDataDisplay) cropperDataDisplay.style.display = 'block';
         if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'flex';
     } else { // Sinon, réafficher les actions principales de la modale
-        if (modalActions) modalActions.style.display = 'flex'; // ou 'block'
+        if (modalActions) modalActions.style.display = 'flex'; 
     }
 }
 
