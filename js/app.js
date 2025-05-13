@@ -25,6 +25,8 @@ console.log('app.js: Modal manager functions imported.');
 import { startCropper, cancelCropper as cancelCropperFromManager, validateCropData as validateCropDataFromManager, setCropperAspectRatio, isCropperActive } from './cropperManager.js';
 console.log('app.js: Cropper manager functions imported.');
 
+import * as actionsManager from './actionsManager.js';
+
 // --- Variables Globales ---
 let currentProductId = null;
 let allImageData = [];
@@ -540,6 +542,7 @@ function hideEditActionConfirmation() {
 }
 
 // Nouvelle fonction pour exécuter l'action après confirmation (remplacer ou nouvelle image)
+/*
 async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 'new'
     if (!currentEditActionContext) {
         console.error("Aucun contexte d'action d'édition trouvé pour exécuter.");
@@ -668,6 +671,7 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
         console.log(`Fin du traitement pour action '${type}', mode '${editMode}'.`);
     }
 }
+*/
 
 // --- Récupération Initiale des Données ---
 // --- Récupération Initiale des Données ---
