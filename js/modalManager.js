@@ -250,3 +250,31 @@ export function addImageToModalSwiper(newImageObject) {
     moduleModalSwiperInstance.update();
     console.log(`modalManager.js: Image ID ${newImageObject.id} ajoutée à Swiper. Total slides: ${moduleModalSwiperInstance.slides.length}`);
 }
+
+export function updateImageInSwiper(imageId, newImageUrl) {
+    if (!moduleModalSwiperInstance) {
+        console.warn("modalManager.js: Instance Swiper non disponible pour mettre à jour une image.");
+        return;
+    }
+
+    const slideIndex = moduleModalImageList.findIndex(img => img.id.toString() === imageId.toString());
+    if (slideIndex !== -1) {
+        // Mettre à jour l'URL dans la liste de données de la modale
+        if (moduleModalImageList[slideIndex]) {
+            moduleModalImageList[slideIndex].url = newImageUrl;
+        }
+
+        // Mettre à jour l'image dans le slide Swiper correspondant
+        if (moduleModalSwiperInstance.slides[slideIndex]) {
+            const imgElementInSlide = moduleModalSwiperInstance.slides[slideIndex].querySelector('img');
+            if (imgElementInSlide) {
+                imgElementInSlide.src = newImageUrl;
+                console.log(`modalManager.js: URL de l'image ID ${imageId} mise à jour dans Swiper slide index ${slideIndex}`);
+            }
+        }
+        // Swiper devrait se mettre à jour visuellement. Si ce n'est pas le cas :
+        // moduleModalSwiperInstance.update(); 
+    } else {
+        console.warn(`modalManager.js: Image ID ${imageId} non trouvée dans moduleModalImageList pour mise à jour Swiper.`);
+    }
+}
