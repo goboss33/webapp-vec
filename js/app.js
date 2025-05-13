@@ -1167,7 +1167,7 @@ const fetchProductData = async () => {
                 });
 
                 // Initialiser SortableJS seulement APRÈS avoir mis les éléments dans le DOM
-                initializeSortable();
+                initializeSortableManager(allImageData, handleSettingsClick, handleMarkForDeletionClick);
 
                 updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
             } else {
