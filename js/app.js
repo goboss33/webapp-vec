@@ -19,7 +19,7 @@ console.log('app.js: API service functions imported.');
 import { initializeSortableManager, addGalleryImageToDOM } from './sortableManager.js';
 console.log('app.js: Sortable manager function imported.');
 
-import { openModal as openImageModalFromManager, closeModal as closeModalFromManager, updateModalInfo as updateModalInfoFromManager, getCurrentModalImage, addImageToModalSwiper } from './modalManager.js';
+import { openModal as openImageModalFromManager, closeModal as closeModalFromManager, updateModalInfo as updateModalInfoFromManager, getCurrentModalImage, addImageToModalSwiper, updateImageInSwiper } from './modalManager.js';
 console.log('app.js: Modal manager functions imported.');
 
 import { startCropper, cancelCropper as cancelCropperFromManager, validateCropData as validateCropDataFromManager, setCropperAspectRatio, isCropperActive } from './cropperManager.js';
@@ -436,18 +436,8 @@ function updateImageAfterCrop(imageId, newImageUrl) {
     });
 
     // 4. Mettre à jour dans la modale Swiper (si elle est ouverte ou rouverte)
-    // Il faut trouver le bon slide et changer le src de l'image dedans
-    // Swiper peut nécessiter une mise à jour pour voir le changement si on ne le détruit pas
-    if (modalSwiperInstance && modalSwiperWrapper) {
-        const slideIndex = modalImageList.findIndex(img => img.id.toString() === imageId);
-        if (slideIndex !== -1 && modalSwiperInstance.slides[slideIndex]) {
-             const imgInSlide = modalSwiperInstance.slides[slideIndex].querySelector('img');
-             if (imgInSlide) imgInSlide.src = newImageUrl;
-             console.log(`URL mise à jour dans Swiper slide index ${slideIndex}`);
-             //modalSwiperInstance.update(); // Peut être nécessaire si Swiper ne refresh pas auto
-        }
-         // Mettre aussi à jour l'image si c'est celle affichée actuellement HORS Swiper (si on changeait le DOM)
-         // Mais comme on revient à la vue Swiper, c'est géré au dessus.
+    if (modalOverlay && modalOverlay.style.display === 'flex') { // Met à jour seulement si la modale est visible
+        updateImageInSwiper(imageIdStr, newImageUrl);
     }
     console.log(`Toutes les instances de l'image ${imageId} mises à jour avec la nouvelle URL.`);
 }
