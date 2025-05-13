@@ -124,6 +124,24 @@ function createThumbnail(image, targetRole) {
     return container;
 }
 
+export function addGalleryImageToDOM(imageObject) {
+    if (!dropzoneGallery) {
+        console.error("sortableManager.js: dropzoneGallery n'est pas défini pour ajouter une image.");
+        return;
+    }
+    const galleryContainer = dropzoneGallery.querySelector('.thumbnail-container');
+    if (galleryContainer) {
+        // Vérifier si l'image n'y est pas déjà (sécurité)
+        if (!galleryContainer.querySelector(`.thumbnail-wrapper[data-image-id="${imageObject.id}"]`)) {
+            const thumbnail = createThumbnail(imageObject, 'gallery'); // Utilise le createThumbnail interne
+            galleryContainer.appendChild(thumbnail);
+            console.log(`sortableManager.js: Image ID ${imageObject.id} ajoutée à la galerie DOM.`);
+        }
+    } else {
+        console.error("sortableManager.js: Conteneur de la galerie non trouvé pour ajouter l'image.");
+    }
+}
+
 // --- Gestion du Retrait de Miniature (Interne au module) ---
 function handleThumbnailRemoveClickInternal(event) {
     const wrapper = event.currentTarget.closest('.thumbnail-wrapper');
