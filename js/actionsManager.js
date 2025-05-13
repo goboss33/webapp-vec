@@ -37,9 +37,9 @@ export async function executeConfirmedAction(
     currentEditContext,
     productId,
     currentAllImageData,
-    onUpdateImageAfterCrop // Passez updateImageAfterCrop en tant que callback
+    onUpdateImageAfterCrop
 ) {
-    console.log('actionsManager.js: executeConfirmedAction called with editMode:', editMode, 'Context:', currentEditContext);
+    console.log('actionsManager.js: executeConfirmedAction called. Mode:', editMode, 'Context REÇU:', JSON.parse(JSON.stringify(currentEditContext || {}))); // MODIFIER CETTE LIGNE
 
     if (!currentEditContext) {
         console.error("actionsManager.js: Aucun contexte d'action d'édition trouvé pour exécuter.");
