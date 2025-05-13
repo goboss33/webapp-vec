@@ -854,9 +854,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Condition pour fermer la modale :
         // 1. Le clic doit être directement sur l'overlay (le fond).
         // 2. L'instance de Cropper ne doit PAS être active (c'est-à-dire, cropperInstance doit être null).
-        if (event.target === modalOverlay && cropperInstance === null) {
+        if (event.target === modalOverlay && !isCropperActive()) {
             closeModal();
-        } else if (event.target === modalOverlay && cropperInstance !== null) {
+        } else if (event.target === modalOverlay && isCropperActive()) {
             console.log("Clic extérieur détecté pendant le recadrage, fermeture de la modale empêchée.");
             // Optionnel: donner un feedback visuel à l'utilisateur, comme un léger "shake" de la modale
             // ou un message bref, mais pour l'instant on empêche juste la fermeture.
