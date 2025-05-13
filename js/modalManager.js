@@ -72,6 +72,8 @@ export function updateModalInfo(index, currentAllImageData) {
 
             if (!isAssigned && imageInAllData) {
                 modalMarkForDeletionBtn.style.display = 'inline-block';
+                modalMarkForDeletionBtn.dataset.imageId = imageData.id;
+                
                 // L'événement onclick est toujours géré par app.js pour l'instant
                 if (imageInAllData.markedForDeletion) {
                     modalMarkForDeletionBtn.textContent = 'UNDO';
@@ -84,6 +86,7 @@ export function updateModalInfo(index, currentAllImageData) {
                 }
             } else {
                 modalMarkForDeletionBtn.style.display = 'none';
+                modalMarkForDeletionBtn.removeAttribute('data-image-id');
                 if (currentSlideElement) currentSlideElement.classList.remove('marked-for-deletion-slide');
             }
         }
