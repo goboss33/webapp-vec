@@ -22,6 +22,9 @@ console.log('app.js: Sortable manager function imported.');
 import { openModal as openImageModalFromManager, closeModal as closeModalFromManager, updateModalInfo as updateModalInfoFromManager, getCurrentModalImage } from './modalManager.js';
 console.log('app.js: Modal manager functions imported.');
 
+import { startCropper, cancelCropper as cancelCropperFromManager, validateCropData as validateCropDataFromManager, setCropperAspectRatio, isCropperActive } from './cropperManager.js';
+console.log('app.js: Cropper manager functions imported.');
+
 // --- Variables Globales ---
 let currentProductId = null;
 let allImageData = [];
@@ -30,8 +33,8 @@ let allImageData = [];
 //let modalSwiperInstance = null;
 //let modalImageList = [];
 //let currentModalIndex = 0;
-let cropperInstance = null; // Instance Cropper.js active
-let currentCroppingImage = null; // Données de l'image en cours de recadrage
+//let cropperInstance = null; // Instance Cropper.js active
+//let currentCroppingImage = null; // Données de l'image en cours de recadrage
 let currentEditActionContext = null;
 
 // --- Fonctions Utilitaires ---
@@ -352,178 +355,59 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
 
 // --- NOUVELLE Logique de Recadrage (Cropper.js) ---
 
-// Initialise l'interface de recadrage
-function startCropping() {
-    if (currentModalIndex < 0 || currentModalIndex >= modalImageList.length) {
-        console.error("Index modal invalide.");
+function startCropping() { // Cette fonction reste dans app.js pour orchestrer
+    const imageToEdit = getCurrentModalImage(); // Utilise la fonction de modalManager
+    if (!imageToEdit) {
+        updateStatus("Aucune image sélectionnée pour le recadrage.", "error");
+        console.error("app.js: startCropping - Aucune image obtenue de getCurrentModalImage.");
         return;
     }
-    currentCroppingImage = getCurrentModalImage();
-    if (!currentCroppingImage) { // Vérification ajoutée
-        console.error("app.js: startCropping - Impossible d'obtenir l'image actuelle de la modale.");
-        updateStatus("Erreur: Aucune image sélectionnée pour le recadrage.", "error");
-        return;
-    }
-    console.log(`Démarrage recadrage pour Image ID: ${currentCroppingImage.id}`);
 
-    // 1. Préparer l'interface visuelle
-    if (modalSwiperContainer) modalSwiperContainer.style.display = 'none';
-    if (modalPrevBtn) modalPrevBtn.style.display = 'none';
-    if (modalNextBtn) modalNextBtn.style.display = 'none';
-    if (modalImageInfo) modalImageInfo.style.display = 'none';
-    if (modalCropBtn) modalCropBtn.style.display = 'none';
-    if (modalRemoveWatermarkBtn) modalRemoveWatermarkBtn.style.display = 'none';
-    if (modalGenerateMockupBtn) modalGenerateMockupBtn.style.display = 'none';
-    if (modalMarkForDeletionBtn) modalMarkForDeletionBtn.style.display = 'none';
-    if (modalToggleSizeGuideBtn) modalToggleSizeGuideBtn.style.display = 'none'; // <-- NOUVELLE LIGNE
-    if (modalCropValidateBtn) modalCropValidateBtn.style.display = 'none';
-    if (modalCropCancelBtn) modalCropCancelBtn.style.display = 'none';
+    // Définir les callbacks pour le cropperManager
+    const handleValidation = (originalImageData, cropEventData) => {
+        console.log("app.js: Cropping validated. Image:", originalImageData, "Crop data:", cropEventData);
+        // Ici, on appelle la logique qui était dans l'ancien validateCropping pour montrer la confirmation
+        // L'ancien validateCropping() sera refactorisé bientôt.
+        // Pour l'instant, on va juste simuler la partie contexte :
+        currentEditActionContext = { // currentEditActionContext est toujours global dans app.js
+            type: 'crop',
+            imageData: originalImageData,
+            payloadData: { 
+                crop: {
+                    x: Math.round(cropEventData.x),
+                    y: Math.round(cropEventData.y),
+                    width: Math.round(cropEventData.width),
+                    height: Math.round(cropEventData.height)
+                }
+            }
+        };
+        showEditActionConfirmation(); // showEditActionConfirmation est toujours dans app.js
+    };
 
-    // 2. Préparer l'image et le conteneur pour Cropper
-    if (modalCropperContainer && imageToCropElement) {
-        if (cropperInstance) {
-            cropperInstance.destroy();
-            cropperInstance = null;
-            console.log("Ancienne instance Cropper détruite.");
-        }
-        imageToCropElement.src = ""; // Vider src pour assurer que onload se redéclenche
-        imageToCropElement.style.opacity = '0';
-        imageToCropElement.classList.remove('loaded');
-        modalCropperContainer.style.display = 'block'; // Afficher conteneur
+    const handleCancellation = () => {
+        console.log("app.js: Cropping cancelled by manager.");
+        resetModalToActionView(); // resetModalToActionView est dans uiUtils.js
+    };
 
-        // Définir les gestionnaires d'événements AVANT de définir le src
-        imageToCropElement.onload = () => {
-            console.log("Image chargée dans le conteneur Cropper.");
-            imageToCropElement.style.opacity = '1';
-            imageToCropElement.classList.add('loaded');
-
-            // Initialiser Cropper.js MAINTENANT
-            try {
-                 cropperInstance = new Cropper(imageToCropElement, {
-                    viewMode: 1,
-                    dragMode: 'move',
-                    //aspectRatio: 1 / 1,
-                    autoCropArea: 0.85,
-                    movable: true,
-                    rotatable: false,
-                    scalable: true,
-                    zoomable: true,
-                    zoomOnWheel: true,
-                    guides: true,
-                    background: true,
-                    responsive: true,
-                    crop(event) {
-                        if (cropDataX) cropDataX.textContent = Math.round(event.detail.x);
-                        if (cropDataY) cropDataY.textContent = Math.round(event.detail.y);
-                        if (cropDataWidth) cropDataWidth.textContent = Math.round(event.detail.width);
-                        if (cropDataHeight) cropDataHeight.textContent = Math.round(event.detail.height);
-                    },
-                    ready() {
-                        console.log("Cropper.js est prêt (ready event)!");
-                    
-                        // VOTRE CODE ORIGINAL - à conserver pour les boutons Valider/Annuler
-                        if (modalCropValidateBtn) {
-                            modalCropValidateBtn.style.display = 'inline-block';
-                            modalCropValidateBtn.disabled = false;
-                            modalCropValidateBtn.onclick = validateCropping; // Assurez-vous que validateCropping est bien défini
-                        }
-                        if (modalCropCancelBtn) {
-                            modalCropCancelBtn.style.display = 'inline-block';
-                            modalCropCancelBtn.disabled = false;
-                            modalCropCancelBtn.onclick = cancelCropping; // Assurez-vous que cancelCropping est bien défini
-                        }
-                    
-                        // AJOUTS POUR LES DIMENSIONS ET LES BOUTONS DE RATIO
-                        // Afficher le conteneur des données de recadrage (dimensions en px)
-                        if (cropperDataDisplay) {
-                            cropperDataDisplay.style.display = 'block';
-                        }
-                    
-                        // Afficher le conteneur des boutons de ratio d'aspect
-                        if (cropperAspectRatioButtonsContainer) {
-                            cropperAspectRatioButtonsContainer.style.display = 'flex'; // Ou 'block' selon votre CSS
-                        }
-                    
-                        // Mettre à jour les données de dimensions une première fois
-                        const initialCropData = cropperInstance.getData(true); // true pour arrondir
-                        if (cropDataX) cropDataX.textContent = initialCropData.x;
-                        if (cropDataY) cropDataY.textContent = initialCropData.y;
-                        if (cropDataWidth) cropDataWidth.textContent = initialCropData.width;
-                        if (cropDataHeight) cropDataHeight.textContent = initialCropData.height;
-                    
-                        // Appliquer un ratio par défaut (par exemple, Carré)
-                        // et mettre en évidence le bouton correspondant
-                        if (cropperAspectRatioButtonsContainer && cropperInstance) {
-                            const defaultRatioButton = cropperAspectRatioButtonsContainer.querySelector('.aspect-btn[data-ratio="1/1"]'); // Cible le bouton Carré
-                            if (defaultRatioButton) {
-                                defaultRatioButton.click(); // Simule un clic pour appliquer le ratio et le style actif
-                            } else {
-                                cropperInstance.setAspectRatio(NaN); // Fallback: Ratio libre si aucun bouton "Carré" n'est trouvé
-                                // Si vous avez un bouton "Libre" et que vous voulez qu'il soit le défaut s'il n'y a pas de "Carré":
-                                // const freeRatioButton = cropperAspectRatioButtonsContainer.querySelector('.aspect-btn[data-ratio="NaN"]');
-                                // if (freeRatioButton) freeRatioButton.click();
-                            }
-                        }
-                    
-                        updateStatus("Ajustez le cadre et le ratio de recadrage.", "info");
-                    }
-                 });
-                 console.log("Instance Cropper.js créée (appel new Cropper).");
-                 // // Alternative : Afficher les boutons ici au lieu de dans ready()
-                 // if (modalCropValidateBtn) { modalCropValidateBtn.style.display = 'inline-block'; modalCropValidateBtn.disabled = false; }
-                 // if (modalCropCancelBtn) { modalCropCancelBtn.style.display = 'inline-block'; modalCropCancelBtn.disabled = false; }
-                 // updateStatus("Ajustez le cadre de recadrage.", "info");
-
-             } catch(e) {
-                 console.error("Erreur initialisation Cropper.js:", e);
-                 updateStatus("Erreur initialisation Recadrage.", "error");
-                 cancelCropping(); // Annuler si Cropper échoue
-             }
-        }; // Fin de onload
-
-        imageToCropElement.onerror = () => {
-            console.error(`Erreur de chargement de l'image pour Cropper: ${currentCroppingImage.url}`);
-            updateStatus("Erreur: Impossible de charger l'image pour le recadrage.", "error");
-            cancelCropping(); // Annuler si l'image ne charge pas
-        }; // Fin de onerror
-
-        // Définir la source de l'image MAINTENANT (après avoir défini onload/onerror)
-        console.log(`Chargement de ${currentCroppingImage.url} pour Cropper...`);
-        imageToCropElement.src = currentCroppingImage.url;
-
-    } else { // Ce else est maintenant correct
-        console.error("Éléments DOM #modal-cropper-container ou #image-to-crop non trouvés.");
-        resetModalToActionView(); // Revenir à l'état normal
-    }
+    startCropper(imageToEdit, handleValidation, handleCancellation); // Appel au manager
 }
 
-
 // Annule l'opération de recadrage
-function cancelCropping() {
-    console.log("Annulation du recadrage.");
-    if (cropperInstance) {
-        cropperInstance.destroy();
-        cropperInstance = null;
-    }
-    currentCroppingImage = null; // Oublier l'image qui était en cours de recadrage
+// Dans app.js
+function cancelCropping() { // Cette fonction reste dans app.js pour orchestrer
+    console.log("app.js: Demande d'annulation du recadrage.");
+    // cropperManager.js appellera le onCancellationCallback que nous avons fourni à startCropper,
+    // qui s'occupe de resetModalToActionView.
+    // Donc, un appel direct à cancelCropperFromManager() suffit si on veut juste annuler.
+    // Si on a déjà défini un onCancellationCallback dans startCropper, il sera appelé.
+    // On pourrait aussi ne pas avoir cette fonction cancelCropping dans app.js
+    // et laisser le bouton "Annuler Recadrage" appeler directement cancelCropperFromManager
+    // SI on passe resetModalToActionView comme onCancellationCallback.
+    // Pour l'instant, gardons-la pour la clarté.
 
-    // Détacher les écouteurs spécifiques aux boutons de validation/annulation du recadrage
-    if (modalCropValidateBtn) modalCropValidateBtn.onclick = null;
-    if (modalCropCancelBtn) modalCropCancelBtn.onclick = null;
-
-    // Cacher les éléments spécifiques à l'interface de recadrage
-    if (cropperDataDisplay) cropperDataDisplay.style.display = 'none';
-    if (cropperAspectRatioButtonsContainer) cropperAspectRatioButtonsContainer.style.display = 'none';
-    // if (finalCanvasSettings) finalCanvasSettings.style.display = 'none'; // Si vous aviez ajouté cela
-
-    // Cacher aussi l'overlay de confirmation d'action s'il était visible
-    if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'none';
-    currentEditActionContext = null; // Réinitialiser le contexte au cas où
-
-    // Réinitialiser la vue de la modale à son état d'affichage Swiper / actions principales
-    resetModalToActionView();
-
-    updateStatus("Recadrage annulé.", "info");
+    // Si cropperManager a besoin d'une méthode pour être annulé "de force" :
+    cancelCropperFromManager(); // Appelle la fonction du manager
+    // La fonction onCancellationCallback (qui contient resetModalToActionView) sera appelée par le manager
 }
 
 // Met à jour l'URL d'une image partout dans l'UI et dans les données
@@ -626,39 +510,16 @@ async function triggerCropWorkflow(imageData, cropData) {
 }
 
 // Valide le recadrage : stocke le contexte, puis affiche la confirmation.
-async function validateCropping() {
-    if (!cropperInstance || !currentCroppingImage) {
-        console.error("Aucune instance Cropper ou image pour valider.");
-        updateStatus("Erreur : Aucune image ou recadrage actif.", "error");
-        return;
+async function validateCropping() { // Cette fonction reste dans app.js pour l'instant
+    if (!isCropperActive()) { // Utilise la fonction de cropperManager
+         console.error("app.js: validateCropping - Aucune instance Cropper active.");
+         updateStatus("Erreur : Aucune image ou recadrage actif pour valider.", "error");
+         return;
     }
-
-    // Récupère les données du recadrage (arrondies)
-    const cropData = cropperInstance.getData(true); // true pour arrondir les valeurs
-    console.log("Données de Recadrage prêtes pour confirmation:", cropData);
-    console.log("Image Originale concernée:", currentCroppingImage);
-
-    // Stocker le contexte de l'action pour une utilisation ultérieure
-    // après que l'utilisateur ait fait son choix (remplacer ou nouveau).
-    currentEditActionContext = {
-        type: 'crop', // Identifie le type d'opération
-        imageData: currentCroppingImage, // L'objet image sur lequel on travaille
-        payloadData: { // Données spécifiques à l'action de recadrage
-            crop: { // Les coordonnées et dimensions du recadrage
-                x: Math.round(cropData.x),
-                y: Math.round(cropData.y),
-                width: Math.round(cropData.width),
-                height: Math.round(cropData.height)
-            }
-            // Note: Si vous aviez des options de toile finale (targetCanvasWidth, etc.),
-            // vous les ajouteriez aussi ici dans payloadData.canvas par exemple.
-        }
-    };
-
-    // Afficher la sous-modale de confirmation au lieu de lancer le workflow directement.
-    showEditActionConfirmation();
-    // Le reste de l'ancien code (try/catch/finally et appel à triggerCropWorkflow)
-    // sera déplacé dans la nouvelle fonction executeConfirmedAction().
+    console.log("app.js: Bouton 'Valider Recadrage' cliqué. Appel à validateCropDataFromManager.");
+    validateCropDataFromManager(); // Demande au manager de valider et d'appeler le onValidationCallback
+    // Le onValidationCallback (défini dans startCropping d'app.js)
+    // s'occupera de currentEditActionContext et showEditActionConfirmation.
 }
 
 // Gère la demande de retrait de watermark : stocke le contexte, puis affiche la confirmation.
@@ -1016,32 +877,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const ratioButtons = cropperAspectRatioButtonsContainer.querySelectorAll('.aspect-btn');
         ratioButtons.forEach(button => {
             button.addEventListener('click', () => {
-                if (cropperInstance) {
                     const ratioString = button.dataset.ratio;
-                    let newRatio;
-
-                    if (ratioString === "NaN" || ratioString === "null" || ratioString === "") { // Gérer 'NaN' et autres pour "libre"
-                        newRatio = NaN; // Cropper.js comprend NaN pour un ratio libre
-                    } else {
-                        const parts = ratioString.split('/');
-                        if (parts.length === 2 && !isNaN(parseFloat(parts[0])) && !isNaN(parseFloat(parts[1])) && parseFloat(parts[1]) !== 0) {
-                            newRatio = parseFloat(parts[0]) / parseFloat(parts[1]);
-                        } else {
-                            console.warn(`Ratio invalide: ${ratioString}. Passage en mode libre.`);
-                            newRatio = NaN; // Fallback en mode libre si le ratio est mal formé
-                        }
-                    }
-                    console.log(`Application du ratio: ${newRatio}`);
-                    cropperInstance.setAspectRatio(newRatio);
-
-                    // Mettre en évidence le bouton actif (styling optionnel)
-                    ratioButtons.forEach(btn => btn.classList.remove('active-ratio')); // 'active-ratio' est une classe CSS que vous pouvez définir
-                    button.classList.add('active-ratio');
-                }
+                    setCropperAspectRatio(ratioString);                
             });
         });
     }
 
+    if (modalCropValidateBtn) {
+        modalCropValidateBtn.addEventListener('click', validateCropping);
+    }
+    if (modalCropCancelBtn) {
+        modalCropCancelBtn.addEventListener('click', cancelCropping);
+    }
+    
     if (modalRemoveWatermarkBtn) {
         modalRemoveWatermarkBtn.addEventListener('click', handleRemoveWatermark);
     }
