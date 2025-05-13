@@ -19,14 +19,17 @@ console.log('app.js: API service functions imported.');
 import { initializeSortableManager } from './sortableManager.js';
 console.log('app.js: Sortable manager function imported.');
 
+import { openModal as openImageModalFromManager, closeModal as closeModalFromManager, updateModalInfo as updateModalInfoFromManager, getCurrentModalImage } from './modalManager.js';
+console.log('app.js: Modal manager functions imported.');
+
 // --- Variables Globales ---
 let currentProductId = null;
 let allImageData = [];
 // let sortableCarousel = null; // <<< À SUPPRIMER
 // let sortableZones = {};    // <<< À SUPPRIMER
-let modalSwiperInstance = null;
-let modalImageList = [];
-let currentModalIndex = 0;
+//let modalSwiperInstance = null;
+//let modalImageList = [];
+//let currentModalIndex = 0;
 let cropperInstance = null; // Instance Cropper.js active
 let currentCroppingImage = null; // Données de l'image en cours de recadrage
 let currentEditActionContext = null;
@@ -170,260 +173,28 @@ const handleSaveChanges = async () => {
 
 // --- Logique de la Modal (Mise à jour pour Swiper) ---
 
-// Met à jour les infos affichées sous l'image dans la modale
-function updateModalInfo(index) {
-    if (index >= 0 && index < modalImageList.length) {
-        const imageData = modalImageList[index];
-        if (modalImageId) modalImageId.textContent = imageData.id;
-        // if (modalImageRoles) modalImageRoles.textContent = imageData.uses.join(', ') || 'Aucun'; // ANCIENNE LIGNE
-        currentModalIndex = index;
-        console.log(`Modal info mise à jour pour slide ${index}, ID: ${imageData.id}`);
-
-        // Afficher les dimensions de l'image
-        if (modalImageDimensions) {
-            modalImageDimensions.textContent = 'Chargement...'; // Message temporaire
-            const img = new Image();
-            img.onload = function() {
-                // Vérifier si on est toujours sur la même image (au cas où l'utilisateur swipe rapidement)
-                if (modalImageList[currentModalIndex]?.id === imageData.id) {
-                    modalImageDimensions.textContent = `${this.naturalWidth}x${this.naturalHeight}`;
-                    // modalImageDimensions.textContent = `<span class="math-inline">\{this\.naturalWidth\}x</span>{this.naturalHeight}`;
-                    // modalImageDimensions.textContent = `<span class="math-inline">\{this\.naturalWidth\}x</span>{this.naturalHeight}`;
-                }
-            };
-            img.onerror = function() {
-                if (modalImageList[currentModalIndex]?.id === imageData.id) {
-                    modalImageDimensions.textContent = 'N/A';
-                }
-            };
-            img.src = imageData.url; // L'URL de l'image actuelle
-        }
-
-        if (modalToggleSizeGuideBtn) {
-            const imageInAllData = allImageData.find(imgData => imgData.id === imageData.id);
-            if (imageInAllData && imageInAllData.uses && imageInAllData.uses.includes('size_guide')) {
-                modalToggleSizeGuideBtn.classList.add('active-size-guide');
-            } else {
-                modalToggleSizeGuideBtn.classList.remove('active-size-guide');
-            }
-            // Stocker l'ID de l'image actuelle sur le bouton pour l'event listener
-            modalToggleSizeGuideBtn.dataset.currentImageId = imageData.id;
-        }
-        
-        // Gérer la visibilité et l'état du bouton "DEL" dans la modale (logique existante)
-        if (modalMarkForDeletionBtn) {
-            const imageInAllData = allImageData.find(imgData => imgData.id === imageData.id);
-            const isMain = dropzoneMain?.querySelector(`.thumbnail-wrapper[data-image-id="${imageData.id}"]`);
-            const isGallery = dropzoneGallery?.querySelector(`.thumbnail-wrapper[data-image-id="${imageData.id}"]`);
-            const isCustom = dropzoneCustom?.querySelector(`.thumbnail-wrapper[data-image-id="${imageData.id}"]`);
-            const isAssigned = isMain || isGallery || isCustom;
-            const currentSlideElement = modalSwiperInstance?.slides[currentModalIndex];
-
-
-            if (!isAssigned && imageInAllData) {
-                modalMarkForDeletionBtn.style.display = 'inline-block';
-                modalMarkForDeletionBtn.onclick = () => {
-                    handleMarkForDeletionClick({ currentTarget: modalMarkForDeletionBtn }, imageData.id.toString());
-                    // Le reste de la logique de mise à jour du bouton DEL est maintenant dans handleMarkForDeletionClick
-                };
-
-                if (imageInAllData.markedForDeletion) {
-                    modalMarkForDeletionBtn.textContent = 'UNDO';
-                    modalMarkForDeletionBtn.classList.add('marked');
-                    if (currentSlideElement) currentSlideElement.classList.add('marked-for-deletion-slide');
-                } else {
-                    modalMarkForDeletionBtn.textContent = 'DEL';
-                    modalMarkForDeletionBtn.classList.remove('marked');
-                    if (currentSlideElement) currentSlideElement.classList.remove('marked-for-deletion-slide');
-                }
-            } else {
-                modalMarkForDeletionBtn.style.display = 'none';
-                modalMarkForDeletionBtn.onclick = null;
-                // S'assurer de retirer le style de suppression du slide si l'image est assignée
-                if (currentSlideElement) currentSlideElement.classList.remove('marked-for-deletion-slide');
-            }
-        }
-    }
-}
-
-// Ouvre la modal et initialise Swiper
-function openImageModal(imageId) {
-    console.log(`Ouverture modal pour image ID: ${imageId}`);
-    // 1. Déterminer la liste d'images à afficher
-    // Pour l'instant, on affiche TOUTES les images du produit
-    // TODO: Plus tard, on pourrait affiner pour n'afficher que celles de la zone cliquée + carousel ?
-    //modalImageList = [...allImageData]; // Copie de toutes les images
-    // Construire modalImageList dans l'ordre souhaité
-    const orderedImages = [];
-    const encounteredIds = new Set(); // Pour éviter les doublons dans Swiper si une image avait plusieurs rôles (peu probable mais sécurisant)
-
-    // Fonction utilitaire pour ajouter une image si pas déjà rencontrée
-    const addImageToOrderedList = (img) => {
-        if (img && !encounteredIds.has(img.id)) {
-            orderedImages.push(img);
-            encounteredIds.add(img.id);
-        }
-    };
-
-    // 1.1 Image Principale
-    const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
-    if (mainImageThumb) {
-        const mainImgId = mainImageThumb.dataset.imageId;
-        const mainImgData = allImageData.find(img => img.id.toString() === mainImgId);
-        addImageToOrderedList(mainImgData);
-    }
-
-    // 1.2. Images Custom
-    const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper') : [];
-    Array.from(customGalleryThumbs).forEach(thumb => {
-        const customImgId = thumb.dataset.imageId;
-        const customImgData = allImageData.find(img => img.id.toString() === customImgId);
-        addImageToOrderedList(customImgData);
-    });
-
-    // 1.3. Images Galerie Standard
-    const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
-    Array.from(galleryImageThumbs).forEach(thumb => {
-        const galleryImgId = thumb.dataset.imageId;
-        const galleryImgData = allImageData.find(img => img.id.toString() === galleryImgId);
-        addImageToOrderedList(galleryImgData);
-    });
-
-    // 1.4. Images Disponibles (celles dans le carrousel #image-carousel)
-    // Celles-ci sont dans allImageData mais PAS dans encounteredIds
-    allImageData.forEach(img => {
-        if (!encounteredIds.has(img.id) && !img.markedForDeletion) { // On ajoute celles non marquées pour suppression
-            addImageToOrderedList(img);
-        }
-    });
-    
-    // Si aucune image n'a été spécifiquement assignée et qu'il n'y a que des images dans allImageData (carrousel)
-    // et que orderedImages est vide, alors on remplit avec allImageData.
-    // Cela peut arriver si on ouvre la modale depuis une image du carrousel avant toute assignation.
-    if (orderedImages.length === 0 && allImageData.length > 0) {
-        allImageData.forEach(img => {
-            if (!img.markedForDeletion) { // On ajoute celles non marquées pour suppression
-                 addImageToOrderedList(img);
-            }
-        });
-    }
-
-
-    modalImageList = orderedImages;
-    console.log('Modal Image List (ordered):', modalImageList.map(img => img.id));
-    
-    // La suite de la fonction openImageModal (trouver initialIndex, peupler Swiper, etc.) reste la même.
-    
-    // 2. Trouver l'index de départ
-    const initialIndex = modalImageList.findIndex(img => img.id.toString() === imageId);
-    if (initialIndex === -1) {
-        console.error(`Image ID ${imageId} non trouvée dans modalImageList.`);
-        updateStatus(`Erreur: image ${imageId} non trouvée.`, 'error');
-        return;
-    }
-    currentModalIndex = initialIndex;
-    console.log(`Index initial: ${initialIndex}`);
-    
-    // 3. Peupler le wrapper Swiper dynamiquement
-    if (modalSwiperWrapper) {
-        modalSwiperWrapper.innerHTML = ''; // Vider les anciens slides
-        modalImageList.forEach(imageData => {
-            const slide = document.createElement('div');
-            slide.className = 'swiper-slide';
-            const img = document.createElement('img');
-            img.src = imageData.url;
-            img.alt = `Image ID ${imageData.id}`;
-            // Lazy loading natif ou Swiper ? Swiper a des options pour ça.
-             img.loading = 'lazy'; // Ajout lazy loading simple
-            slide.appendChild(img);
-            modalSwiperWrapper.appendChild(slide);
-        });
-        console.log(`${modalImageList.length} slides créés pour Swiper.`);
-    } else {
-         console.error("Wrapper Swiper (#modal-swiper-wrapper) non trouvé !");
-         return;
-    }
-
-    // 4. Détruire l'ancienne instance Swiper si elle existe
-    if (modalSwiperInstance) {
-        modalSwiperInstance.destroy(true, true);
-        modalSwiperInstance = null;
-         console.log("Ancienne instance Swiper détruite.");
-    }
-
-    // 5. Initialiser Swiper
-    try {
-         modalSwiperInstance = new Swiper('.modal-swiper', {
-             // Options Swiper
-             initialSlide: initialIndex, // Commence sur l'image cliquée
-             spaceBetween: 10, // Espace entre slides (si visibles)
-             // Navigation avec nos boutons personnalisés
-             navigation: {
-               nextEl: '#modal-next-btn',
-               prevEl: '#modal-prev-btn',
-             },
-              // Optionnel: autres modules utiles
-              keyboard: { // Contrôle clavier
-                enabled: true,
-              },
-             // lazy: true, // Chargement lazy des images géré par Swiper
-             loop: modalImageList.length > 1, // Boucle si plus d'une image?
-             observer: true, // Met à jour Swiper si le DOM change (utile?)
-             observeParents: true,
-
-             // Événement quand le slide change
-             on: {
-                 slideChange: function () {
-                     console.log(`Slide changé vers index: ${this.activeIndex}`);
-                     updateModalInfo(this.activeIndex); // Met à jour les infos (ID, Dimensions, et l'état du bouton Guide des Tailles)
-                     
-                     // La logique de mise à jour du bouton modalToggleSizeGuideBtn
-                     // est maintenant gérée DANS updateModalInfo().
-                     // Donc, plus besoin de la dupliquer ici.
-                 },
-                  init: function() {
-                      // Met à jour les infos pour le slide initial juste après l'init
-                      updateModalInfo(this.activeIndex); // Ceci va aussi régler l'état initial du bouton Guide des tailles
-                       console.log("Swiper initialisé.");
-                  }
-             },
-         });
-    } catch (e) {
-         console.error("Erreur lors de l'initialisation de Swiper:", e);
-         updateStatus("Erreur initialisation Swiper.", 'error');
-         return; // Ne pas afficher la modal si Swiper échoue
-    }
-
-    // Assurer l'état initial des boutons d'action et du cropper
-    resetModalToActionView(); // Réinitialise l'affichage (cache cropper, montre actions)
-
-    // 6. Afficher la modal
-    if (modalOverlay) modalOverlay.style.display = 'flex';
-}
 
 // Ferme la modal et détruit Swiper
-function closeModal() {
-    if (modalOverlay) modalOverlay.style.display = 'none';
-    // Détruire l'instance Swiper pour libérer la mémoire et éviter conflits
-    if (modalSwiperInstance) {
-        modalSwiperInstance.destroy(true, true); // true, true nettoie tout (listeners, styles)
-        modalSwiperInstance = null;
-         console.log("Instance Swiper détruite.");
-    }
-     if (cropperInstance) { // Détruit Cropper s'il était actif
-        cropperInstance.destroy();
-        cropperInstance = null;
-    }
-    currentCroppingImage = null; // Oublie l'image en cours de recadrage
-    console.log("Modal fermée et instances nettoyées.");
+function closeModal() { // Cette fonction reste dans app.js pour gérer Cropper pour l'instant
+    closeModalFromManager(); // Appelle la fonction du manager pour overlay et Swiper
+    
+    // La logique Cropper reste ici pour le moment
+    if (cropperInstance) { 
+        cropperInstance.destroy();
+        cropperInstance = null;
+        console.log("app.js: Instance Cropper détruite depuis closeModal d'app.js.");
+    }
+    currentCroppingImage = null; 
+    console.log("app.js: Modal fermée et instance Cropper (si active) nettoyée par app.js.");
 }
 
 // Gestionnaire de Clic pour le bouton Réglages (⚙️) - Appelle openImageModal
 function handleSettingsClick(event) {
-    const button = event.currentTarget;
-    const imageId = button.dataset.imageId; // Récupère l'ID depuis le bouton
-    console.log(`Clic sur Réglages pour Image ID: ${imageId}`);
-    openImageModal(imageId); // Ouvre la modal pour cette image
+    const button = event.currentTarget;
+    const imageId = button.dataset.imageId; 
+    console.log(`app.js: Clic sur Réglages pour Image ID: ${imageId}`);
+//     openImageModal(imageId); // ANCIEN APPEL
+    openImageModalFromManager(imageId, allImageData); // NOUVEL APPEL
 }
 
 // Gère le clic sur le bouton "Guide des tailles" dans la modale
@@ -487,6 +258,7 @@ function handleSizeGuideToggle(event) { // L'événement vient maintenant du bou
 
     updateStatus("Statut 'Guide des tailles' mis à jour localement.", "info");
 }
+
 // Gère le clic sur le bouton "DEL" dans le carrousel OU l'appel direct depuis la modale
 function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
     let imageId;
@@ -495,15 +267,16 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
     if (directImageId) {
         imageId = directImageId;
         // Essayer de trouver le conteneur dans le carrousel pour la synchro visuelle si possible
-        container = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`);
+        if (imageCarousel) { // Assurez-vous que imageCarousel est défini et accessible
+             container = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`);
+        }
     } else { // Vient d'un événement de clic
         const button = eventOrButton.currentTarget;
         imageId = button.dataset.imageId;
         container = button.closest('.carousel-image-container');
     }
 
-
-    if (!imageId) { // || (!container && !directImageId) enlevé car container peut être null si appelé directement pour une image non dans le carousel
+    if (!imageId) {
         console.error("Impossible de trouver l'ID pour marquer pour suppression.");
         return;
     }
@@ -523,7 +296,7 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
 
     // Mettre à jour l'apparence visuelle du carrousel SI l'élément y est
     if (container) {
-        const delButtonInCarousel = container.querySelector('.del-btn'); // Le bouton DEL du carrousel
+        const delButtonInCarousel = container.querySelector('.del-btn');
         if (isMarked) {
             container.classList.add('marked-for-deletion');
             if (delButtonInCarousel) delButtonInCarousel.title = 'Annuler le marquage pour suppression';
@@ -532,12 +305,13 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
             if (delButtonInCarousel) delButtonInCarousel.title = 'Marquer pour suppression définitive';
         }
     } else if (directImageId) {
-        console.log(`Image ${directImageId} (appel direct) marquée/démarquée. Pas de conteneur carrousel trouvé pour màj visuelle immédiate (normal si elle n'y est plus).`);
+        console.log(`Image ${directImageId} (appel direct) marquée/démarquée. Pas de conteneur carrousel trouvé pour màj visuelle immédiate.`);
     }
 
-
     // Mettre à jour l'apparence du bouton dans la modale si elle est ouverte et concerne cette image
-    if (modalOverlay.style.display === 'flex' && modalMarkForDeletionBtn && modalImageList[currentModalIndex]?.id === imageIdNum) {
+    // On utilise getCurrentModalImage() qui est importé depuis modalManager.js
+    const currentModalImgForButton = getCurrentModalImage(); 
+    if (modalOverlay && modalOverlay.style.display === 'flex' && modalMarkForDeletionBtn && currentModalImgForButton?.id === imageIdNum) {
         if (isMarked) {
             modalMarkForDeletionBtn.textContent = 'UNDO';
             modalMarkForDeletionBtn.classList.add('marked');
@@ -545,17 +319,33 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
             modalMarkForDeletionBtn.textContent = 'DEL';
             modalMarkForDeletionBtn.classList.remove('marked');
         }
+        // Appel explicite pour rafraîchir toute la modale si l'image active est modifiée
+        // Cela s'assurera que updateModalInfo dans modalManager met à jour le slide également.
+        // On doit trouver l'index actuel de l'image dans la liste utilisée par la modale.
+        // Pour l'instant, on se fie au fait que si le bouton est mis à jour, c'est suffisant,
+        // et updateModalInfo sera appelé par Swiper lors du prochain changement de slide.
+        // Pour un rafraîchissement immédiat du slide, il faudrait que modalManager.js expose
+        // soit l'index actuel, soit une fonction pour rafraîchir la vue active.
+        // La fonction updateModalInfoFromManager(index, allImageData) pourrait être appelée si on connait l'index.
+        // Pour l'instant, laissons comme ça, la fonction updateModalInfo de modalManager
+        // s'occupe de la classe du slide lorsqu'elle est appelée.
     }
 
-    // Mettre aussi à jour l'apparence du slide Swiper si l'image est actuellement affichée
-    const currentSlideElementInModal = modalSwiperInstance?.slides[currentModalIndex];
-    if (currentSlideElementInModal && modalImageList[currentModalIndex]?.id === imageIdNum) {
-        if (isMarked) {
-            currentSlideElementInModal.classList.add('marked-for-deletion-slide');
-        } else {
-            currentSlideElementInModal.classList.remove('marked-for-deletion-slide');
-        }
-    }
+    // La partie suivante qui mettait à jour currentSlideElementInModal est supprimée car:
+    // 1. currentModalIndex et modalSwiperInstance ne sont plus directement accessibles ici.
+    // 2. La logique de mise à jour du slide (.classList.add/remove('marked-for-deletion-slide'))
+    //    est DÉJÀ PRÉSENTE dans la fonction updateModalInfo de modalManager.js.
+    //    Cette fonction updateModalInfo est appelée par Swiper quand le slide change
+    //    ou quand la modale est initialisée/ouverte.
+    //
+    // const currentSlideElementInModal = modalSwiperInstance?.slides[currentModalIndex]; // SUPPRIMÉ
+    // if (currentSlideElementInModal && modalImageList[currentModalIndex]?.id === imageIdNum) { // SUPPRIMÉ
+    //     if (isMarked) { // SUPPRIMÉ
+    //         currentSlideElementInModal.classList.add('marked-for-deletion-slide'); // SUPPRIMÉ
+    //     } else { // SUPPRIMÉ
+    //         currentSlideElementInModal.classList.remove('marked-for-deletion-slide'); // SUPPRIMÉ
+    //     } // SUPPRIMÉ
+    // } // SUPPRIMÉ
 
     updateStatus(`Image ${imageIdNum} ${isMarked ? 'marquée pour suppression' : 'ne sera plus supprimée'}. Enregistrez pour appliquer.`, 'info');
 }
@@ -568,7 +358,12 @@ function startCropping() {
         console.error("Index modal invalide.");
         return;
     }
-    currentCroppingImage = modalImageList[currentModalIndex];
+    currentCroppingImage = getCurrentModalImage();
+    if (!currentCroppingImage) { // Vérification ajoutée
+        console.error("app.js: startCropping - Impossible d'obtenir l'image actuelle de la modale.");
+        updateStatus("Erreur: Aucune image sélectionnée pour le recadrage.", "error");
+        return;
+    }
     console.log(`Démarrage recadrage pour Image ID: ${currentCroppingImage.id}`);
 
     // 1. Préparer l'interface visuelle
@@ -870,7 +665,8 @@ async function validateCropping() {
 async function handleRemoveWatermark() {
     // Déterminer l'image à traiter : celle du mode recadrage (currentCroppingImage)
     // ou, si pas en mode recadrage, celle actuellement affichée dans la modale Swiper (modalImageList[currentModalIndex]).
-    const imageToProcess = cropperInstance ? currentCroppingImage : modalImageList[currentModalIndex];
+    // const imageToProcess = cropperInstance ? currentCroppingImage : modalImageList[currentModalIndex]; // ANCIENNE LIGNE
+    const imageToProcess = cropperInstance ? currentCroppingImage : getCurrentModalImage(); // NOUVELLE LIGNE
 
     if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
         updateStatus("Données de l'image invalides ou aucune image sélectionnée pour retirer le watermark.", "error");
@@ -896,7 +692,8 @@ async function handleRemoveWatermark() {
 
 // Gère le clic sur le bouton "Générer Mockup"
 async function handleGenerateMockup() {
-    const imageToProcess = cropperInstance ? currentCroppingImage : modalImageList[currentModalIndex];
+    // const imageToProcess = cropperInstance ? currentCroppingImage : modalImageList[currentModalIndex]; // ANCIENNE LIGNE
+    const imageToProcess = cropperInstance ? currentCroppingImage : getCurrentModalImage(); // NOUVELLE LIGNE
 
     if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
         updateStatus("Données de l'image invalides ou aucune image sélectionnée pour générer le mockup.", "error");
