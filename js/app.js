@@ -1101,15 +1101,15 @@ const fetchProductData = async () => {
     if (imageCarousel) imageCarousel.innerHTML = '<p>Chargement...</p>';
     document.querySelectorAll('.dropzone .thumbnail-container').forEach(container => container.innerHTML = '');
      // Vider aussi les instances Sortable précédentes
-     if (sortableCarousel) sortableCarousel.destroy();
-     Object.values(sortableZones).forEach(instance => instance.destroy());
-     sortableZones = {};
+     // if (sortableCarousel) sortableCarousel.destroy();
+     // Object.values(sortableZones).forEach(instance => instance.destroy());
+     // sortableZones = {};
      allImageData = []; // Vider les données stockées
 
 
     try {
         //const urlToFetch = `${N8N_GET_DATA_WEBHOOK_URL}?productId=${currentProductId}`;
-        //const response = await fetch(urlToFetch);
+        //const response = await fetch(urlToFetch);f
         //if (!response.ok) throw new Error(`Erreur serveur n8n: ${response.status}`);
         //const data = await response.json();
 
