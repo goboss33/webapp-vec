@@ -456,7 +456,8 @@ async function handleRemoveWatermark() {
     // Déterminer l'image à traiter : celle du mode recadrage (currentCroppingImage)
     // ou, si pas en mode recadrage, celle actuellement affichée dans la modale Swiper (modalImageList[currentModalIndex]).
     // const imageToProcess = cropperInstance ? currentCroppingImage : modalImageList[currentModalIndex]; // ANCIENNE LIGNE
-    const imageToProcess = cropperInstance ? currentCroppingImage : getCurrentModalImage(); // NOUVELLE LIGNE
+    //const imageToProcess = cropperInstance ? currentCroppingImage : getCurrentModalImage(); // NOUVELLE LIGNE
+    const imageToProcess = getCurrentModalImage();
 
     if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
         updateStatus("Données de l'image invalides ou aucune image sélectionnée pour retirer le watermark.", "error");
@@ -482,11 +483,12 @@ async function handleRemoveWatermark() {
 
 // Gère le clic sur le bouton "Générer Mockup"
 async function handleGenerateMockup() {
-    const imageToProcess = isCropperActive() ? null : getCurrentModalImage(); // Simplifié: si crop actif, pas d'image de base pour mockup simple
+    //const imageToProcess = isCropperActive() ? null : getCurrentModalImage(); // Simplifié: si crop actif, pas d'image de base pour mockup simple
                                                                           // currentCroppingImage n'est plus global.
                                                                           // On pourrait passer l'image du cropper si c'est un cas d'usage.
                                                                           // Pour l'instant, mockup depuis image non recadrée.
 
+    const imageToProcess = getCurrentModalImage();
     if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
         updateStatus("Aucune image sélectionnée pour générer le mockup (ou recadrage en cours).", "error");
         console.error("handleGenerateMockup: imageToProcess invalide ou manquante.", imageToProcess);
@@ -501,6 +503,7 @@ async function handleGenerateMockup() {
         payloadData: {}
     };
 
+    console.log('[APP.JS] handleGenerateMockup - Context DÉFINI:', JSON.parse(JSON.stringify(currentEditActionContext))); // AJOUTER CETTE LIGNE
     // Appel direct à la version orchestrée avec gestion UI
     await callExecuteConfirmedActionWithUiManagement('new');
 }
@@ -669,6 +672,7 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
  * @param {string} editMode - 'replace' ou 'new'
  */
 async function callExecuteConfirmedActionWithUiManagement(editMode) {
+    console.log(`[APP.JS] callExecuteConfirmedActionWithUiManagement - Entrée. Mode: ${editMode}. Contexte initial au moment de l'entrée:`, JSON.parse(JSON.stringify(currentEditActionContext || {}))); // AJOUTER CETTE LIGNE
     if (!currentEditActionContext) {
         console.error("app.js: currentEditActionContext est null avant d'appeler actionsManager.");
         updateStatus("Erreur : Contexte d'action manquant.", "error");
@@ -685,14 +689,20 @@ async function callExecuteConfirmedActionWithUiManagement(editMode) {
     hideEditActionConfirmation();
 
     try {
+        // Vous pouvez utiliser le snapshot si vous voulez être absolument sûr que la valeur ne change pas
+        // de manière inattendue entre le log et l'appel, mais passer currentEditActionContext directement
+        // devrait fonctionner car c'est une variable dans la portée de cette fonction (globale au module).
+        // Le JSON.stringify est surtout pour un log précis de la valeur à un instant T.
+        const contextPourLog = JSON.parse(JSON.stringify(currentEditActionContext || {}));
+        console.log('[APP.JS] callExecuteConfirmedActionWithUiManagement - Contexte sur le point d\'être envoyé à actionsManager:', contextPourLog);
+        
         await actionsManager.executeConfirmedAction(
             editMode,
-            currentEditActionContext, // global app.js
-            currentProductId,       // global app.js
-            allImageData,           // global app.js (passé par référence)
-            updateImageAfterCrop    // fonction de app.js
+            currentEditActionContext, // <<<<<< CORRIGÉ : Assurez-vous que cet argument est bien là
+            currentProductId,
+            allImageData,
+            updateImageAfterCrop
         );
-        // Le message de succès est déjà géré dans actionsManager ou par updateImageAfterCrop
     } catch (error) {
         console.error(`app.js: Erreur retournée par actionsManager.executeConfirmedAction pour le mode '${editMode}':`, error);
         updateStatus(`Erreur (action ${currentEditActionContext?.type || 'inconnue'}, mode ${editMode}): ${error.message}`, 'error');
