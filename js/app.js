@@ -155,15 +155,13 @@ const handleSaveChanges = async () => {
                 // Note: Inutile de les retirer des dropzones car elles ne devraient pas y être si elles sont dans le carrousel
             });
              // Mettre à jour la modale si ouverte et contient une image supprimée ?
-             if (modalSwiperInstance) {
-                  // Il faudrait reconstruire modalImageList ou la filtrer et update Swiper
-                  // Pour l'instant, on peut simplement fermer la modale si l'image active a été supprimée
-                  const currentModalImageId = modalImageList[currentModalIndex]?.id;
-                  if (currentModalImageId && imageIdsToDelete.includes(currentModalImageId)) {
-                      closeModal();
-                      updateStatus("Modifications enregistrées. L'image affichée a été supprimée.", 'info');
-                  }
-             }
+             if (modalOverlay.style.display === 'flex') { // Vérifie si la modale est ouverte
+                const currentModalImgData = getCurrentModalImage();
+                if (currentModalImgData && imageIdsToDelete.includes(currentModalImgData.id)) {
+                    closeModal(); // closeModal de app.js, qui appelle closeModalFromManager
+                    updateStatus("Modifications enregistrées. L'image affichée dans la modale a été supprimée.", 'info');
+                }
+            }
         }
     } catch (error) {
         console.error("Erreur lors de l'enregistrement via n8n:", error);
