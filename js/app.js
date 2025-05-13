@@ -177,18 +177,17 @@ const handleSaveChanges = async () => {
 // --- Logique de la Modal (Mise à jour pour Swiper) ---
 
 
-// Ferme la modal et détruit Swiper
-function closeModal() { // Cette fonction reste dans app.js pour gérer Cropper pour l'instant
-    closeModalFromManager(); // Appelle la fonction du manager pour overlay et Swiper
-    
-    // La logique Cropper reste ici pour le moment
-    if (cropperInstance) { 
-        cropperInstance.destroy();
-        cropperInstance = null;
-        console.log("app.js: Instance Cropper détruite depuis closeModal d'app.js.");
-    }
-    currentCroppingImage = null; 
-    console.log("app.js: Modal fermée et instance Cropper (si active) nettoyée par app.js.");
+// Dans app.js
+function closeModal() {
+    closeModalFromManager(); // Pour overlay et Swiper
+
+    // Si un recadrage était en cours, il faut aussi l'annuler proprement via le manager
+    if (isCropperActive()) { // Utilise la fonction de cropperManager
+        console.log("app.js: closeModal - Recadrage actif détecté, annulation via cropperManager.");
+        cancelCropperFromManager(); // Cela nettoiera l'instance cropper dans le manager
+    }
+    // currentCroppingImage est maintenant géré par le manager, pas besoin de le nullifier ici
+    // console.log("app.js: Modal fermée."); // Le log de cropperManager est plus précis pour le crop.
 }
 
 // Gestionnaire de Clic pour le bouton Réglages (⚙️) - Appelle openImageModal
