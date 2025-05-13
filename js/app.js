@@ -710,17 +710,8 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
 
             addGalleryImageToDOM(newImageObject);
 
-            if (modalSwiperInstance && modalSwiperWrapper) {
-                modalImageList.push(newImageObject);
-                const slide = document.createElement('div');
-                slide.className = 'swiper-slide';
-                const img = document.createElement('img');
-                img.src = newImageObject.url;
-                img.alt = `Image ID ${newImageObject.id}`;
-                img.loading = 'lazy';
-                slide.appendChild(img);
-                modalSwiperWrapper.appendChild(slide);
-                modalSwiperInstance.update();
+            if (modalOverlay && modalOverlay.style.display === 'flex') { // Vérifie si la modale est visible
+                addImageToModalSwiper(newImageObject); // Appel à la fonction du manager
             }
             updateStatus(`Nouvelle image (ID: ${newImageObject.id}) ajoutée à la galerie via '${type}' !`, 'success');
         }
