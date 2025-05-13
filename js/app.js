@@ -740,8 +740,8 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
     } catch (error) {
         console.error(`Échec de l'action '${type}' en mode '${editMode}':`, error);
         updateStatus(`Erreur (${type}, ${editMode}): ${error.message}`, 'error');
-        if (cropperInstance) { 
-            cancelCropping();
+        if (isCropperActive()) { // Utilise la fonction de cropperManager
+            cancelCropperFromManager();
         } else { 
             resetModalToActionView();
         }
