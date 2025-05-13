@@ -730,9 +730,10 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
             updateStatus(`Nouvelle image (ID: ${newImageObject.id}) ajoutée à la galerie via '${type}' !`, 'success');
         }
 
-        if (type === 'crop' && cropperInstance) {
-            cancelCropping(); 
-        } else if (type === 'removeWatermark' || (type === 'generateMockup' && !cropperInstance) ) { 
+        if (type === 'crop' && isCropperActive()) { // Utilise la fonction de cropperManager
+        //    cancelCropping(); // ANCIEN APPEL, cancelCropping est dans app.js et appelle le manager
+            cancelCropperFromManager(); // APPEL DIRECT au manager pour être sûr
+        } else if (type === 'removeWatermark' || (type === 'generateMockup' && !isCropperActive()) ) { 
             resetModalToActionView(); 
         }
 
