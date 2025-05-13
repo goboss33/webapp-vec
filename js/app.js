@@ -708,15 +708,7 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
             };
             allImageData.push(newImageObject);
 
-            if (dropzoneGallery) {
-                const galleryContainer = dropzoneGallery.querySelector('.thumbnail-container');
-                if (galleryContainer) {
-                    if (!galleryContainer.querySelector(`.thumbnail-wrapper[data-image-id="${newImageObject.id}"]`)) {
-                        const thumbnail = createThumbnail(newImageObject, 'gallery'); 
-                        galleryContainer.appendChild(thumbnail);
-                    }
-                }
-            }
+            addGalleryImageToDOM(newImageObject);
 
             if (modalSwiperInstance && modalSwiperWrapper) {
                 modalImageList.push(newImageObject);
