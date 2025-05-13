@@ -167,6 +167,67 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
     onClickSettingsCallback = settingsClickHandler;
     onClickMarkForDeletionCallback = markForDeletionClickHandler;
 
+    console.log("sortableManager.js: Initializing with new image data. Count:", currentAllImageData.length);
+
+    // 1. Vider les conteneurs avant de re-peupler
+    if (imageCarousel) {
+        imageCarousel.innerHTML = ''; // Vider le carrousel principal
+    } else {
+        console.error("sortableManager.js: imageCarousel (DOM element) non trouvé pour le nettoyage.");
+    }
+    // Vider les conteneurs des zones de dépôt
+    [dropzoneMain, dropzoneGallery, dropzoneCustom].forEach(zoneEl => {
+        if (zoneEl) {
+            const container = zoneEl.querySelector('.thumbnail-container');
+            if (container) {
+                container.innerHTML = '';
+            }
+        }
+    });
+
+    // 2. Peupler le carrousel et les zones de dépôt avec les images initiales
+    if (imageCarousel && currentAllImageData.length > 0) {
+        const rolePriority = ['main', 'gallery', 'custom'];
+        currentAllImageData.forEach(image => {
+            let placed = false;
+            for (const role of rolePriority) {
+                if (image.uses && image.uses.includes(role)) {
+                    const targetZoneElement = role === 'main' ? dropzoneMain : (role === 'gallery' ? dropzoneGallery : dropzoneCustom);
+                    if (targetZoneElement) {
+                        const container = targetZoneElement.querySelector('.thumbnail-container');
+                        const maxImages = parseInt(targetZoneElement.dataset.maxImages) || 999;
+                        let canPlace = true;
+
+                        if (role === 'main' && container && container.children.length >= 1) {
+                            console.warn(`sortableManager.js: Image ${image.id} marquée 'main', mais zone déjà remplie lors du peuplement initial.`);
+                            canPlace = false;
+                        } else if (role === 'custom' && container && container.children.length >= maxImages) {
+                            console.warn(`sortableManager.js: Zone ${role} (max ${maxImages}) pleine, ne peut placer initialement ${image.id}.`);
+                            canPlace = false;
+                        }
+
+                        if (canPlace && container) {
+                            container.appendChild(createThumbnail(image, role)); // Utilise le createThumbnail interne
+                            placed = true;
+                            break; 
+                        }
+                    }
+                }
+            }
+            if (!placed) {
+                // Si l'image n'a pas été placée dans une dropzone, elle va dans le carrousel
+                // Sauf si elle est marquée pour suppression et ne devrait pas y être du tout initialement
+                // (Normalement, la logique de filtrage de 'markedForDeletion' se fait avant d'envoyer à initializeSortableManager si besoin)
+                imageCarousel.appendChild(createCarouselItem(image)); // Utilise le createCarouselItem interne
+            }
+        });
+        console.log("sortableManager.js: Initial population of items complete.");
+    } else if (currentAllImageData.length === 0 && imageCarousel) {
+        imageCarousel.innerHTML = '<p>Aucune image disponible.</p>'; // Afficher si pas d'images
+    }
+
+
+    // 3. Initialiser SortableJS (le reste de la fonction est similaire à avant)
     if (!Sortable) {
         console.error("sortableManager.js: SortableJS n'est pas chargé !");
         updateStatus("Erreur: Bibliothèque SortableJS manquante.", "error");
@@ -178,12 +239,13 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
     Object.values(moduleSortableZones).forEach(instance => instance.destroy());
     moduleSortableZones = {};
 
-    if (!imageCarousel) {
+    if (!imageCarousel) { // Vérification redondante mais sûre
         console.error("sortableManager.js: imageCarousel (DOM element) non trouvé. Abandon de l'initialisation de SortableJS.");
         return;
     }
 
     moduleSortableCarousel = new Sortable(imageCarousel, {
+        // ... (le reste de la configuration de moduleSortableCarousel reste INCHANGÉ) ...
         group: {
             name: 'shared',
             pull: true,
@@ -203,9 +265,11 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
         }
     });
 
-    const dropZoneElements = [dropzoneMain, dropzoneGallery, dropzoneCustom].filter(el => el); // Filtre les éléments non trouvés
+    const dropZoneElements = [dropzoneMain, dropzoneGallery, dropzoneCustom].filter(el => el); 
 
     dropZoneElements.forEach(zoneElement => {
+        // ... (le reste de la configuration des dropzones dans la boucle forEach reste INCHANGÉ) ...
+        // ... (y compris toute la logique complexe de onAdd et onRemove) ...
         const container = zoneElement.querySelector('.thumbnail-container');
         if (!container) {
             console.warn(`sortableManager.js: Conteneur de vignettes non trouvé pour la zone ${zoneElement.id}. Skip.`);
@@ -353,7 +417,7 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
                     updateStatus(`Image ${droppedImageId} ajoutée à la zone ${currentRole}.`, 'success');
                 }
                 console.log(`sortableManager.js -> Enfants final dans ${currentRole}: ${targetContainer.children.length}`);
-            }, // --- Fin de la logique onAdd ---
+            }, 
             onRemove: function(evt) {
                 const itemEl = evt.item;
                 const removedImageId = itemEl.dataset.imageId;
