@@ -913,7 +913,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     
-    if (confirmActionCancelBtn) confirmActionCancelBtn.addEventListener('click', hideEditActionConfirmation);
+    if (confirmActionCancelBtn) confirmActionCancelBtn.addEventListener('click', () => {
+        hideEditActionConfirmation();
+        currentEditActionContext = null; // <<<<<<<<<<<< ICI ON NULLIFIE currentEditActionContext
+    });
     if (modalGenerateMockupBtn) modalGenerateMockupBtn.addEventListener('click', handleGenerateMockup); // <-- NOUVELLE LIGNE
 
     if (modalMarkForDeletionBtn) {
