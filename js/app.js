@@ -672,82 +672,101 @@ async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 
  * @param {string} editMode - 'replace' ou 'new'
  */
 async function callExecuteConfirmedActionWithUiManagement(editMode) {
-    console.log(`[APP.JS] callExecuteConfirmedActionWithUiManagement - Entrée. Mode: ${editMode}. Contexte global initial:`, JSON.parse(JSON.stringify(currentEditActionContext || {})));
+    console.log(`[APP.JS] callExecuteConfirmedActionWithUiManagement - Entrée. Mode: ${editMode}.`);
+    console.log(`[APP.JS] Valeur de currentEditActionContext (GLOBAL) au DÉBUT:`, JSON.parse(JSON.stringify(currentEditActionContext || {})));
 
     if (!currentEditActionContext) {
-        console.error("app.js: ERREUR CRITIQUE - currentEditActionContext est null/undefined AU DÉBUT de callExecuteConfirmedActionWithUiManagement.");
-        updateStatus("Erreur : Contexte d'action manquant initialement.", "error");
-        // Pas besoin de hideEditActionConfirmation() ici car elle est déjà gérée par les boutons ou n'est pas pertinente
+        console.error("app.js: ERREUR - currentEditActionContext est null/undefined AU DÉBUT de callExecuteConfirmedActionWithUiManagement.");
+        updateStatus("Erreur critique : Contexte d'action manquant initialement.", "error");
         if (isCropperActive()) {
             cancelCropperFromManager();
         } else {
             resetModalToActionView();
         }
-        return;
+        // Pas besoin de hideLoading() ici car il n'a pas été montré
+        // Pas besoin de nullifier currentEditActionContext car il est déjà null
+        return; // Quitter la fonction
     }
 
-    // Sauvegarder le contexte dans une variable locale AVANT d'appeler d'autres fonctions
-    const localContextToAction = currentEditActionContext;
+    // ** CRUCIAL : Copier la référence du contexte dans une variable locale **
+    // ** AVANT d'appeler toute autre fonction qui pourrait avoir des effets de bord **
+    const contextePourCetteAction = currentEditActionContext;
 
-    console.log(`[APP.JS] callExecuteConfirmedActionWithUiManagement - localContextToAction AVANT hideEditActionConfirmation:`, JSON.parse(JSON.stringify(localContextToAction || {})));
+    console.log(`[APP.JS] contextePourCetteAction (LOCAL) copié AVANT hideEditActionConfirmation:`, JSON.parse(JSON.stringify(contextePourCetteAction || {})));
 
-    hideEditActionConfirmation(); // Appelée pour gérer l'UI de la sous-modale de confirmation
+    // Gérer l'UI de la (sous-)modale de confirmation.
+    // Cette fonction ne devrait pas modifier currentEditActionContext globalement.
+    hideEditActionConfirmation();
 
-    // Vérifier si la variable GLOBALE a changé après hideEditActionConfirmation
-    console.log(`[APP.JS] callExecuteConfirmedActionWithUiManagement - currentEditActionContext (GLOBAL) APRÈS hideEditActionConfirmation:`, JSON.parse(JSON.stringify(currentEditActionContext || {})));
-    // Vérifier si la variable LOCALE a changé (elle ne devrait pas si c'est une référence à un objet qui n'est pas nullifié)
-    console.log(`[APP.JS] callExecuteConfirmedActionWithUiManagement - localContextToAction (LOCAL) APRÈS hideEditActionConfirmation:`, JSON.parse(JSON.stringify(localContextToAction || {})));
+    console.log(`[APP.JS] Valeur de currentEditActionContext (GLOBAL) APRÈS hideEditActionConfirmation:`, JSON.parse(JSON.stringify(currentEditActionContext || {})));
+    console.log(`[APP.JS] Valeur de contextePourCetteAction (LOCAL) APRÈS hideEditActionConfirmation:`, JSON.parse(JSON.stringify(contextePourCetteAction || {})));
 
+    // Vérification finale avant l'appel à actionsManager
+    if (!contextePourCetteAction) {
+        console.error("app.js: ERREUR CRITIQUE - contextePourCetteAction (copie locale) est null/undefined avant l'appel à actionsManager. Cela ne devrait jamais arriver si la logique est correcte.");
+        updateStatus("Erreur interne : Perte de contexte d'action.", "error");
+        if (isCropperActive()) {
+            cancelCropperFromManager();
+        } else {
+            resetModalToActionView();
+        }
+        hideLoading(); // Si jamais showLoading a été appelé avant cette erreur.
+        currentEditActionContext = null; // Assurer la nullification de la globale.
+        return; // Quitter la fonction
+    }
+    
+    console.log('[APP.JS] Contexte sur le point d\'être envoyé à actionsManager (depuis contextePourCetteAction):', JSON.parse(JSON.stringify(contextePourCetteAction)));
 
     try {
-        // Utiliser la variable locale sauvegardée pour l'appel et le log
-        const contextPourLog = JSON.parse(JSON.stringify(localContextToAction || {}));
-        console.log('[APP.JS] callExecuteConfirmedActionWithUiManagement - Contexte (depuis localContextToAction) sur le point d\'être envoyé à actionsManager:', contextPourLog);
-        
-        if (!localContextToAction) { // Ajout d'une sécurité ici
-            console.error("app.js: ERREUR - localContextToAction est devenu null/undefined avant l'appel à actionsManager.");
-            throw new Error("Contexte d'action perdu avant l'envoi.");
-        }
-
         await actionsManager.executeConfirmedAction(
             editMode,
-            localContextToAction, // <<<< UTILISER LA VARIABLE LOCALE SAUVEGARDÉE
+            contextePourCetteAction, // <<<< UTILISER LA COPIE LOCALE
             currentProductId,
             allImageData,
             updateImageAfterCrop
         );
-        // Le message de succès est déjà géré dans actionsManager ou par updateImageAfterCrop
     } catch (error) {
-        console.error(`app.js: Erreur retournée par actionsManager.executeConfirmedAction pour le mode '${editMode}':`, error);
-        // Assurez-vous que currentEditContext (ou localContextToAction) est disponible si l'erreur vient d'actionsManager
-        const actionTypeForError = localContextToAction ? localContextToAction.type : 'inconnue';
-        updateStatus(`Erreur (action ${actionTypeForError}, mode ${editMode}): ${error.message}`, 'error');
+        console.error(`app.js: Erreur retournée par actionsManager.executeConfirmedAction. Mode '${editMode}'. Type d'action: '${contextePourCetteAction?.type || 'inconnu'}'. Erreur:`, error);
+        updateStatus(`Erreur (action ${contextePourCetteAction?.type || 'inconnue'}, mode ${editMode}): ${error.message}`, 'error');
         
-        // Assurer la réinitialisation de la vue même en cas d'erreur
-        // Cette logique est déjà dans le finally, mais on peut la laisser ici aussi pour plus de sûreté en cas d'erreur précoce.
+        // La logique de restauration de la vue est principalement dans le finally,
+        // mais une action immédiate peut être nécessaire si l'erreur est précoce.
         if (isCropperActive()) {
             cancelCropperFromManager();
         } else {
             resetModalToActionView();
         }
     } finally {
-        hideLoading();
+        hideLoading(); // S'assurer que le loading est masqué
         
-        const actionTypeFinal = localContextToAction ? localContextToAction.type : (currentEditActionContext ? currentEditActionContext.type : null);
+        const typeActionEffectuee = contextePourCetteAction?.type; // Utiliser le type du contexte local qui a été traité
 
-        if (actionTypeFinal === 'crop' && isCropperActive()) {
+        // Logique de nettoyage de l'UI basée sur l'action effectuée
+        if (typeActionEffectuee === 'crop' && isCropperActive()) {
+            console.log(`[APP.JS] finally: Action était crop, appel de cancelCropperFromManager.`);
             cancelCropperFromManager(); 
-        } else if (actionTypeFinal && (actionTypeFinal === 'removeWatermark' || actionTypeFinal === 'generateMockup') && !isCropperActive()) {
+        } else if (typeActionEffectuee && (typeActionEffectuee === 'removeWatermark' || typeActionEffectuee === 'generateMockup')) {
+            // Pour removeWatermark ou generateMockup, la modale devrait revenir à la vue d'action normale.
+            // Si cropper était actif (ne devrait pas l'être pour ces actions car les boutons sont cachés), on le cancel.
+            // Sinon, on reset la vue.
+            if (isCropperActive()) { // Cas de sécurité, ne devrait pas arriver
+                console.warn(`[APP.JS] finally: Cropper actif pour ${typeActionEffectuee}, annulation.`);
+                cancelCropperFromManager();
+            } else {
+                console.log(`[APP.JS] finally: Action ${typeActionEffectuee}, appel de resetModalToActionView.`);
+                resetModalToActionView();
+            }
+        } else if (isCropperActive()) { // Si une action inconnue ou contexte perdu, mais cropper actif
+             console.log(`[APP.JS] finally: Contexte perdu ou type inconnu, mais cropper actif. Appel de cancelCropperFromManager.`);
+             cancelCropperFromManager();
+        } else { // Contexte perdu ou type inconnu, pas de crop actif
+            console.log(`[APP.JS] finally: Contexte perdu ou type inconnu, pas de crop. Appel de resetModalToActionView.`);
             resetModalToActionView();
-        } else if (!actionTypeFinal && isCropperActive()) { // Si le contexte a été perdu mais que cropper est actif
-            cancelCropperFromManager();
-        } else if (!actionTypeFinal && !isCropperActive()) { // Contexte perdu, pas de crop
-             resetModalToActionView();
         }
 
-
-        currentEditActionContext = null; // Nettoyer le contexte global après l'opération
-        console.log(`app.js: Fin du traitement UI pour action (type: ${actionTypeFinal || 'contexte perdu'}), mode '${editMode}'.`);
+        // Toujours nullifier la variable globale après l'action.
+        currentEditActionContext = null;
+        console.log(`[APP.JS] callExecuteConfirmedActionWithUiManagement - FIN. Mode: '${editMode}'. currentEditActionContext global nullifié.`);
     }
 }
 
