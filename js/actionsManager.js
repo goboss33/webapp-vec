@@ -59,31 +59,33 @@ export async function executeConfirmedAction(
         editMode: editMode
     };
 
-    // Si le mode est 'new', n8n a besoin des IDs actuels de la galerie pour éviter les conflits de noms.
+    console.log('[actionsManager.js] basePayload initial:', JSON.parse(JSON.stringify(basePayload))); // LOG 1
+
     if (editMode === 'new') {
-        // Cette logique de récupération des IDs de galerie peut être abstraite si besoin,
-        // mais pour l'instant, nous supposons que `sortableManager.js` ne l'expose pas directement.
-        // Nous allons donc la laisser ici, ou la simplifier si `dropzoneGallery` n'est pas directement accessible/pertinent ici.
-        // Pour l'instant, comme `executeImageActionAPI` prend juste le payload, on peut ne pas le collecter ici
-        // si le workflow n8n n'en a plus besoin explicitement pour `removeWatermark` ou `generateMockup` en mode `new`.
-        // Le workflow crop en mode 'new' le gère car il ajoute à la galerie.
-        // Vérifions si payloadData contient déjà currentGalleryImageIds pour le type 'crop'.
-        // Les autres types ('removeWatermark', 'generateMockup') en mode 'new' créent juste une nouvelle image sans se soucier
-        // des IDs de galerie existants, car ils ne sont pas assignés à une galerie par défaut lors de la création.
-        // On garde la structure simple pour l'instant.
         if (dropzoneGallery) {
             const galleryImageThumbs = dropzoneGallery.querySelectorAll('.thumbnail-container .thumbnail-wrapper');
-            const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
+            console.log('[actionsManager.js] Nombre de galleryImageThumbs trouvées:', galleryImageThumbs.length); // LOG 2
+            const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => {
+                console.log('[actionsManager.js] Thumbnail wrapper dataset imageId:', wrapper.dataset.imageId); // LOG 3 (pour chaque image)
+                return wrapper.dataset.imageId;
+            });
             basePayload.currentGalleryImageIds = galleryImageIds;
-            console.log('actionsManager.js: IDs de galerie actuels collectés pour le mode new:', galleryImageIds);
+            console.log('[actionsManager.js] basePayload APRÈS ajout currentGalleryImageIds:', JSON.parse(JSON.stringify(basePayload))); // LOG 4
+            console.log('[actionsManager.js] IDs de galerie actuels collectés pour le mode new:', galleryImageIds);
         } else {
             console.warn('actionsManager.js: dropzoneGallery non trouvée, currentGalleryImageIds ne sera pas envoyé.');
-            basePayload.currentGalleryImageIds = []; // Envoyer un tableau vide si la zone n'est pas trouvée
+            basePayload.currentGalleryImageIds = [];
+            console.log('[actionsManager.js] basePayload APRÈS setting currentGalleryImageIds à [] (dropzone non trouvée):', JSON.parse(JSON.stringify(basePayload))); // LOG 5
         }
     }
 
     const finalPayload = { ...basePayload, ...payloadData };
+    console.log('[actionsManager.js] payloadData (les données spécifiques à l\'action comme "crop"):', JSON.parse(JSON.stringify(payloadData))); // LOG 6
+    console.log('[actionsManager.js] finalPayload CRÉÉ:', JSON.parse(JSON.stringify(finalPayload))); // LOG 7 (remplace le log précédent du payload)
 
+
+    console.log(`actionsManager.js: Exécution de l'action: ${type}, Mode: ${editMode}, Webhook: ${webhookUrl}`); // Payload loggué juste au-dessus
+    
     if (type === 'crop') {
         webhookUrl = N8N_CROP_IMAGE_WEBHOOK_URL;
     } else if (type === 'removeWatermark') {
