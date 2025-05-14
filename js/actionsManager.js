@@ -71,6 +71,15 @@ export async function executeConfirmedAction(
         // Les autres types ('removeWatermark', 'generateMockup') en mode 'new' créent juste une nouvelle image sans se soucier
         // des IDs de galerie existants, car ils ne sont pas assignés à une galerie par défaut lors de la création.
         // On garde la structure simple pour l'instant.
+        if (dropzoneGallery) {
+            const galleryImageThumbs = dropzoneGallery.querySelectorAll('.thumbnail-container .thumbnail-wrapper');
+            const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
+            basePayload.currentGalleryImageIds = galleryImageIds;
+            console.log('actionsManager.js: IDs de galerie actuels collectés pour le mode new:', galleryImageIds);
+        } else {
+            console.warn('actionsManager.js: dropzoneGallery non trouvée, currentGalleryImageIds ne sera pas envoyé.');
+            basePayload.currentGalleryImageIds = []; // Envoyer un tableau vide si la zone n'est pas trouvée
+        }
     }
 
     const finalPayload = { ...basePayload, ...payloadData };
