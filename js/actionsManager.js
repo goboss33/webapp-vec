@@ -8,6 +8,7 @@ import {
     modalOverlay, // Pour vérifier si la modale est visible (pour addImageToModalSwiper)
     // Si d'autres éléments DOM sont directement manipulés PAR CETTE FONCTION, ajoutez-les.
     // Pour l'instant, executeConfirmedAction utilise principalement d'autres managers.
+    dropzoneGallery
 } from './dom.js';
 import { showLoading, hideLoading, updateStatus, resetModalToActionView } from './uiUtils.js';
 import { executeImageActionAPI } from './apiService.js';
@@ -122,6 +123,12 @@ export async function executeConfirmedAction(
             };
             currentAllImageData.push(newImageObject); // Modifie le tableau de app.js via sa référence
 
+            if (dropzoneGallery) { // Vérifier si l'élément existe
+                addGalleryImageToDOM(newImageObject); // Utilise la fonction de sortableManager
+                console.log(`actionsManager.js: Nouvelle image ID ${newImageObject.id} ajoutée au DOM de la dropzone-gallery.`);
+            } else {
+                console.warn("actionsManager.js: dropzoneGallery non trouvée, impossible d'ajouter la nouvelle image au DOM de la galerie.");
+            }
             // Ajoute au carrousel via sortableManager (qui a besoin de son propre createCarouselItem)
             // Pour l'instant, on va supposer qu'on a une fonction `addCarouselItemToDOM` dans sortableManager
             // ou alors on doit repenser comment les images sont ajoutées au carrousel principal.
