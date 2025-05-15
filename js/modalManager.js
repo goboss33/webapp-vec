@@ -41,7 +41,7 @@ export function updateModalInfo(index, currentAllImageData) {
             const img = new Image();
             img.onload = function() {
                 if (moduleModalImageList[moduleCurrentModalIndex]?.id === imageData.id) {
-                    modalImageDimensions.textContent = `<span class="math-inline">\{this\.naturalWidth\}x</span>{this.naturalHeight}`;
+                    modalImageDimensions.innerHTML = `<span class="math-inline">\{this\.naturalWidth\}x</span>{this.naturalHeight}`;
                 }
             };
             img.onerror = function() {
