@@ -97,10 +97,6 @@ export function resetModalToActionView() {
         modalGenerateMockupBtn.disabled = false;
     }
 
-    if (modalToggleSizeGuideBtn) { // <<<< AJOUTER CE BLOC
-        modalToggleSizeGuideBtn.style.display = 'inline-block'; // Ou 'block' si c'est son style par défaut
-        modalToggleSizeGuideBtn.disabled = false;
-    }
     // Note: D'autres boutons comme modalMarkForDeletionBtn, modalToggleSizeGuideBtn
     // sont gérés dynamiquement par updateModalInfo ou des logiques spécifiques
     // et ne sont pas forcément réinitialisés globalement ici à 'inline-block'.
