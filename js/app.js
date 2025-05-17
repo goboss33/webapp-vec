@@ -349,6 +349,10 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
     //     } // SUPPRIMÉ
     // } // SUPPRIMÉ
 
+    if (modalOverlay.style.display === 'flex') {
+        refreshCurrentModalViewDataFromManager(allImageData);
+    }
+
     updateStatus(`Image ${imageIdNum} ${isMarked ? 'marquée pour suppression' : 'ne sera plus supprimée'}. Enregistrez pour appliquer.`, 'info');
 }
 
