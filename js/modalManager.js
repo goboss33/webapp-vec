@@ -192,14 +192,14 @@ export function openModal(imageId, currentAllImageData) {
             observeParents: true,
             on: {
                 slideChange: function () {
-                    console.log(`modalManager.js: Swiper slide changé vers index: ${this.activeIndex}`);
-                    // Passe currentAllImageData à updateModalInfo
-                    updateModalInfo(this.activeIndex, currentAllImageData); 
+                    updateModalInfo(this.activeIndex, currentAllImageData);
+                    // Si des modifications de dimensions étaient en cours et non validées pour le slide précédent,
+                    // on pourrait vouloir cacher le bouton "Valider Dimensions" ici aussi,
+                    // car updateModalInfo le fera pour le nouveau slide.
+                    if (validateDimensionsBtn) validateDimensionsBtn.style.display = 'none';
                 },
                 init: function() {
-                    // Passe currentAllImageData à updateModalInfo
-                    updateModalInfo(this.activeIndex, currentAllImageData); 
-                    console.log("modalManager.js: Swiper initialisé.");
+                    updateModalInfo(this.activeIndex, currentAllImageData);
                 }
             },
         });
