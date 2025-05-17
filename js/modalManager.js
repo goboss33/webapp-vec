@@ -281,3 +281,10 @@ export function updateImageInSwiper(imageId, newImageUrl) {
         console.warn(`modalManager.js: Image ID ${imageId} non trouvée dans moduleModalImageList pour mise à jour Swiper.`);
     }
 }
+
+export function refreshCurrentModalViewData(currentAllImageData) {
+    if (moduleModalSwiperInstance && moduleModalSwiperInstance.initialized && moduleCurrentModalIndex !== -1) {
+        console.log("modalManager.js: Rafraîchissement manuel de la vue pour le slide actuel:", moduleCurrentModalIndex);
+        updateModalInfo(moduleCurrentModalIndex, currentAllImageData);
+    }
+}
