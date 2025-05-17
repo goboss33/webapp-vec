@@ -396,11 +396,16 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
                         console.log(`sortableManager.js   -> Limite (${currentMaxImages}) atteinte pour 'custom'. Retrait.`);
                         addedElementInDom.remove(); 
                         updateStatus(`Limite de ${currentMaxImages} images atteinte pour galerie custom.`, 'warn');
-                        if (itemEl.classList.contains('carousel-image-container')) {
+                        /*if (itemEl.classList.contains('carousel-image-container')) {
                             const originalImageData = currentAllImageData.find(img => img.id.toString() === droppedImageId);
                             if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
                                 imageCarousel.appendChild(createCarouselItem(originalImageData));
                             }
+                        }*/
+                        const originalImageData = currentAllImageData.find(img => img.id.toString() === droppedImageId);
+                        if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
+                            imageCarousel.appendChild(createCarouselItem(originalImageData)); // createCarouselItem est interne au module
+                            console.log(`sortableManager.js     -> Image ID ${droppedImageId} retournée au carrousel car zone custom pleine.`);
                         }
                         return; 
                     } else {
