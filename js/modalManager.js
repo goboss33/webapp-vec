@@ -1,7 +1,8 @@
 // js/modalManager.js
 import {
     modalOverlay, modalCloseBtn, modalSwiperContainer, modalSwiperWrapper,
-    modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalImageInfo,
+    modalImageId, /* modalImageDimensions, */modalPrevBtn, modalNextBtn, modalImageInfo,
+    targetWidthInput, targetHeightInput, validateDimensionsBtn,
     modalMarkForDeletionBtn, modalToggleSizeGuideBtn,
     dropzoneMain, dropzoneGallery, dropzoneCustom // Pour construire modalImageList
 } from './dom.js';
@@ -36,17 +37,23 @@ export function updateModalInfo(index, currentAllImageData) {
         moduleCurrentModalIndex = index; // Important de mettre à jour l'index interne au module
         console.log(`modalManager.js: Modal info mise à jour pour slide ${index}, ID: ${imageData.id}`);
 
-        if (modalImageDimensions) {
-            modalImageDimensions.textContent = 'Chargement...';
+        // Gérer les dimensions avec les nouveaux champs input
+        if (targetWidthInput && targetHeightInput) {
+            targetWidthInput.value = ''; // Effacer au cas où
+            targetHeightInput.value = ''; // Effacer au cas où
+            if (validateDimensionsBtn) validateDimensionsBtn.style.display = 'none'; // Cacher le bouton initialement
+
             const img = new Image();
             img.onload = function() {
                 if (moduleModalImageList[moduleCurrentModalIndex]?.id === imageData.id) {
-                    modalImageDimensions.innerHTML = `${this.naturalWidth}x${this.naturalHeight}`; // <<<< UTILISEZ CECI
+                    targetWidthInput.value = this.naturalWidth;
+                    targetHeightInput.value = this.naturalHeight;
                 }
             };
             img.onerror = function() {
                 if (moduleModalImageList[moduleCurrentModalIndex]?.id === imageData.id) {
-                    modalImageDimensions.textContent = 'N/A';
+                    targetWidthInput.value = ''; // Ou une valeur par défaut comme 0 ou 'N/A' (mais c'est un input number)
+                    targetHeightInput.value = '';
                 }
             };
             img.src = imageData.url;
