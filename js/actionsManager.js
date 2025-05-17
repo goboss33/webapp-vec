@@ -3,90 +3,70 @@ import {
     N8N_CROP_IMAGE_WEBHOOK_URL,
     N8N_REMOVE_WATERMARK_WEBHOOK_URL,
     N8N_GENERATE_MOCKUP_WEBHOOK_URL,
-    N8N_RESIZE_IMAGE_WEBHOOK_URL
+    N8N_RESIZE_IMAGE_WEBHOOK_URL // Assurez-vous que cette constante est bien définie dans config.js
 } from './config.js';
 import {
-    modalOverlay, // Pour vérifier si la modale est visible (pour addImageToModalSwiper)
-    // Si d'autres éléments DOM sont directement manipulés PAR CETTE FONCTION, ajoutez-les.
-    // Pour l'instant, executeConfirmedAction utilise principalement d'autres managers.
+    modalOverlay,
     dropzoneGallery
 } from './dom.js';
-import { showLoading, hideLoading, updateStatus, resetModalToActionView } from './uiUtils.js';
+import { showLoading, hideLoading, updateStatus } from './uiUtils.js'; // resetModalToActionView n'est pas directement utilisé ici
 import { executeImageActionAPI } from './apiService.js';
-import { addGalleryImageToDOM } from './sortableManager.js'; // Utilisé par executeConfirmedAction
-import { addImageToModalSwiper, updateImageInSwiper } from './modalManager.js'; // Utilisé par executeConfirmedAction
-import { cancelCropper as cancelCropperFromManager, isCropperActive } from './cropperManager.js'; // Utilisé par executeConfirmedAction
+import { addGalleryImageToDOM } from './sortableManager.js';
+import { addImageToModalSwiper } from './modalManager.js'; // updateImageInSwiper n'est pas utilisé directement ici
 
 console.log('actionsManager.js module loaded');
 
-// Pour gérer les variables d'état qui étaient globales dans app.js
-// Nous allons les passer en paramètre aux fonctions qui en ont besoin au lieu de les recréer ici.
-// let currentProductId_actions; // Sera passé en argument
-// let allImageData_actions;     // Sera passé en argument
-// let currentEditActionContext_actions; // Sera passé en argument ou retourné/géré par des fonctions spécifiques
-
-/**
- * Exécute une action d'édition d'image confirmée (crop, removeWatermark, mockup).
- * @param {string} editMode - 'replace' ou 'new'.
- * @param {Object} currentEditContext - L'objet currentEditActionContext d'app.js.
- * @param {string} productId - L'ID du produit actuel (currentProductId d'app.js).
- * @param {Array} currentAllImageData - Référence au tableau allImageData d'app.js.
- * @param {Function} onUpdateImageAfterCrop - Référence à la fonction updateImageAfterCrop d'app.js.
- * @returns {Promise<void>}
- */
 export async function executeConfirmedAction(
     editMode,
-    currentEditContext,
+    currentEditContext, // Reçu comme contextePourCetteAction depuis app.js
     productId,
-    currentAllImageData,
-    onUpdateImageAfterCrop
+    currentAllImageData, // Référence au tableau allImageData d'app.js
+    onUpdateImageAfterCrop // Callback vers updateImageAfterCrop d'app.js
 ) {
-    console.log('actionsManager.js: executeConfirmedAction called. Mode:', editMode, 'Context REÇU:', JSON.parse(JSON.stringify(currentEditContext || {}))); // MODIFIER CETTE LIGNE
+    console.log('actionsManager.js: executeConfirmedAction called. Mode:', editMode, 'Context REÇU:', JSON.parse(JSON.stringify(currentEditContext || {})));
 
-    if (!currentEditContext) {
-        console.error("actionsManager.js: Aucun contexte d'action d'édition trouvé pour exécuter.");
-        updateStatus("Erreur : Contexte d'action manquant.", "error");
-        // La confirmation est cachée par l'appelant (app.js) avant d'appeler cette fonction.
-        // La restauration de la vue (Cropper ou reset) est aussi gérée par l'appelant dans le `finally` ou `catch`
-        return;
+    if (!currentEditContext || !currentEditContext.type || !currentEditContext.imageData) {
+        console.error("actionsManager.js: Contexte d'action d'édition invalide ou manquant.", currentEditContext);
+        // updateStatus est généralement géré par l'appelant dans le catch, mais on peut en mettre un ici
+        updateStatus("Erreur : Contexte d'action invalide.", "error");
+        // Il est préférable de lancer une erreur pour que l'appelant la gère proprement
+        throw new Error("Contexte d'action d'édition invalide ou manquant reçu par actionsManager.");
     }
 
     const { type, imageData, payloadData } = currentEditContext;
     let webhookUrl = '';
+
     const basePayload = {
-        productId: productId, // Utilise le productId passé en argument
+        productId: productId,
         imageId: imageData.id,
-        imageUrl: imageData.url.split('?')[0], // Enlève les query params de l'URL si présents
+        imageUrl: imageData.url.split('?')[0],
         editMode: editMode
     };
-
-    console.log('[actionsManager.js] basePayload initial:', JSON.parse(JSON.stringify(basePayload))); // LOG 1
+    console.log('[actionsManager.js] basePayload initial:', JSON.parse(JSON.stringify(basePayload)));
 
     if (editMode === 'new') {
         if (dropzoneGallery) {
             const galleryImageThumbs = dropzoneGallery.querySelectorAll('.thumbnail-container .thumbnail-wrapper');
-            console.log('[actionsManager.js] Nombre de galleryImageThumbs trouvées:', galleryImageThumbs.length); // LOG 2
+            console.log('[actionsManager.js] Nombre de galleryImageThumbs trouvées:', galleryImageThumbs.length);
             const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => {
-                console.log('[actionsManager.js] Thumbnail wrapper dataset imageId:', wrapper.dataset.imageId); // LOG 3 (pour chaque image)
+                // console.log('[actionsManager.js] Thumbnail wrapper dataset imageId:', wrapper.dataset.imageId); // Peut être verbeux
                 return wrapper.dataset.imageId;
             });
             basePayload.currentGalleryImageIds = galleryImageIds;
-            console.log('[actionsManager.js] basePayload APRÈS ajout currentGalleryImageIds:', JSON.parse(JSON.stringify(basePayload))); // LOG 4
+            console.log('[actionsManager.js] basePayload APRÈS ajout currentGalleryImageIds:', JSON.parse(JSON.stringify(basePayload)));
             console.log('[actionsManager.js] IDs de galerie actuels collectés pour le mode new:', galleryImageIds);
         } else {
             console.warn('actionsManager.js: dropzoneGallery non trouvée, currentGalleryImageIds ne sera pas envoyé.');
             basePayload.currentGalleryImageIds = [];
-            console.log('[actionsManager.js] basePayload APRÈS setting currentGalleryImageIds à [] (dropzone non trouvée):', JSON.parse(JSON.stringify(basePayload))); // LOG 5
+            console.log('[actionsManager.js] basePayload APRÈS setting currentGalleryImageIds à [] (dropzone non trouvée):', JSON.parse(JSON.stringify(basePayload)));
         }
     }
 
     const finalPayload = { ...basePayload, ...payloadData };
-    console.log('[actionsManager.js] payloadData (les données spécifiques à l\'action comme "crop"):', JSON.parse(JSON.stringify(payloadData))); // LOG 6
-    console.log('[actionsManager.js] finalPayload CRÉÉ:', JSON.parse(JSON.stringify(finalPayload))); // LOG 7 (remplace le log précédent du payload)
+    console.log('[actionsManager.js] payloadData (données spécifiques à l\'action):', JSON.parse(JSON.stringify(payloadData)));
+    console.log('[actionsManager.js] finalPayload CRÉÉ:', JSON.parse(JSON.stringify(finalPayload)));
 
-
-    console.log(`actionsManager.js: Exécution de l'action: ${type}, Mode: ${editMode}, Webhook: ${webhookUrl}`); // Payload loggué juste au-dessus
-    
+    // Détermination de webhookUrl
     if (type === 'crop') {
         webhookUrl = N8N_CROP_IMAGE_WEBHOOK_URL;
     } else if (type === 'removeWatermark') {
@@ -96,16 +76,14 @@ export async function executeConfirmedAction(
     } else if (type === 'resizeImage') {
         webhookUrl = N8N_RESIZE_IMAGE_WEBHOOK_URL;
     } else {
-        console.error(`actionsManager.js: Type d'action inconnu lors de l'exécution: ${type}`);
-        // hideLoading() et updateStatus() seront appelés par l'appelant dans le bloc catch/finally.
-        // On lance une erreur pour que l'appelant la gère.
-        throw new Error(`Type d'action inconnu '${type}'.`);
+        console.error(`actionsManager.js: Type d'action inconnu lors de la détermination du webhook: ${type}`);
+        throw new Error(`Type d'action inconnu '${type}'. Impossible de déterminer le webhook.`);
     }
 
-    console.log(`actionsManager.js: Exécution de l'action: ${type}, Mode: ${editMode}, Webhook: ${webhookUrl}, Payload:`, finalPayload);
+    // Log avant l'appel API
+    console.log(`actionsManager.js: Exécution de l'action: ${type}, Mode: ${editMode}, Webhook: ${webhookUrl}, Payload à envoyer:`, JSON.parse(JSON.stringify(finalPayload)));
     showLoading(`Traitement de l'image (${type}, Mode: ${editMode})...`);
-    updateStatus(`Traitement (${type}, Mode: ${editMode}) en cours...`, 'info');
-    // hideEditActionConfirmation(); // Est appelé AVANT l'appel à executeConfirmedAction dans app.js
+    // updateStatus est fait par l'appelant ou ici, mais showLoading inclut souvent un message.
 
     try {
         const result = await executeImageActionAPI(webhookUrl, finalPayload);
@@ -113,15 +91,16 @@ export async function executeConfirmedAction(
 
         if (!result || result.status !== 'success' || !result.newImageUrl) {
             let errorDetail = result.message || `Réponse invalide du workflow n8n pour '${type}' en mode '${editMode}'.`;
-            if (!result.newImageUrl) errorDetail += " 'newImageUrl' manquant.";
+            if (!result.newImageUrl && type !== 'delete') { /* Pour delete, newImageUrl n'est pas attendu */
+                errorDetail += " 'newImageUrl' manquant.";
+            }
             if (result.status !== 'success') errorDetail += ` Statut incorrect: ${result.status}.`;
             throw new Error(errorDetail);
         }
 
         if (editMode === 'replace') {
-            // Appel du callback passé en argument
-            onUpdateImageAfterCrop(imageData.id.toString(), result.newImageUrl);
-            updateStatus(`Image (ID: ${imageData.id}) remplacée avec succès via '${type}' !`, 'success');
+            onUpdateImageAfterCrop(imageData.id.toString(), result.newImageUrl); // imageData vient de currentEditContext
+            updateStatus(`Image (ID: ${imageData.id}) modifiée avec succès via '${type}' !`, 'success');
         } else { // editMode === 'new'
             if (!result.newImageId) {
                 throw new Error("L'ID de la nouvelle image ('newImageId') est manquant dans la réponse n8n pour le mode 'new'.");
@@ -129,53 +108,28 @@ export async function executeConfirmedAction(
             const newImageObject = {
                 id: result.newImageId,
                 url: result.newImageUrl,
-                status: 'current', // ou tout autre statut par défaut pertinent
-                uses: ['gallery'] // Par défaut, les nouvelles images pourraient aller en galerie
-                                  // ou cela pourrait être configuré/décidé autrement.
-                                  // Pour l'instant, cette affectation 'gallery' n'a pas d'impact direct
-                                  // car l'image est juste ajoutée à allImageData et au carrousel/swiper.
+                status: 'current',
+                uses: [] // Par défaut, ou ['gallery'] si c'est l'intention
             };
-            currentAllImageData.push(newImageObject); // Modifie le tableau de app.js via sa référence
+            currentAllImageData.push(newImageObject); // Modifie la référence du tableau de app.js
 
-            if (dropzoneGallery) { // Vérifier si l'élément existe
-                addGalleryImageToDOM(newImageObject); // Utilise la fonction de sortableManager
+            if (dropzoneGallery) {
+                addGalleryImageToDOM(newImageObject);
                 console.log(`actionsManager.js: Nouvelle image ID ${newImageObject.id} ajoutée au DOM de la dropzone-gallery.`);
             } else {
                 console.warn("actionsManager.js: dropzoneGallery non trouvée, impossible d'ajouter la nouvelle image au DOM de la galerie.");
             }
-            // Ajoute au carrousel via sortableManager (qui a besoin de son propre createCarouselItem)
-            // Pour l'instant, on va supposer qu'on a une fonction `addCarouselItemToDOM` dans sortableManager
-            // ou alors on doit repenser comment les images sont ajoutées au carrousel principal.
-            // La fonction existante `addGalleryImageToDOM` est pour les THUMBNAILS dans les zones.
-            // Il nous faut l'équivalent pour le CAROUSEL principal.
-            // TEMPORAIREMENT: on appelle `addGalleryImageToDOM` pour voir l'effet, mais c'est incorrect.
-            // On corrigera cela plus tard en ajoutant une fonction à sortableManager pour ajouter au carrousel,
-            // ou en appelant `WorkspaceProductData` pour tout rafraîchir (moins idéal).
-            // Pour l'instant, on va se contenter de l'ajouter à `allImageData` et à la modale.
-            // Le carrousel sera mis à jour lors du prochain `WorkspaceProductData` ou si on implemente
-            // un `addCarouselItemFromData(newImageObject)` dans `sortableManager`.
-
-            // Mieux : on va appeler la fonction pour ajouter au carousel (si elle existe, sinon on la créera)
-            // Pour l'instant, on ne l'appelle pas pour éviter une erreur si elle n'est pas dans sortableManager.
-            // On se concentre sur la modale.
-            // addCarouselItemToDOM(newImageObject); // Supposons que cela existe dans sortableManager ou app.js
 
             if (modalOverlay && modalOverlay.style.display === 'flex') {
                 addImageToModalSwiper(newImageObject);
             }
-            updateStatus(`Nouvelle image (ID: ${newImageObject.id}) générée via '${type}' et ajoutée. Elle apparaîtra dans le carrousel après un rechargement ou une sauvegarde.`, 'success');
+            updateStatus(`Nouvelle image (ID: ${newImageObject.id}) créée via '${type}' et ajoutée !`, 'success');
         }
-
-        // La gestion de la vue (cancelCropper ou resetModalToActionView) sera faite par l'appelant
-        // dans le bloc `finally` de l'appel à `executeConfirmedAction` dans `app.js`.
-
     } catch (error) {
         console.error(`actionsManager.js: Échec de l'action '${type}' en mode '${editMode}':`, error);
-        // Remonter l'erreur pour que l'appelant puisse la gérer (showStatus, hideLoading, resetView)
-        throw error;
+        throw error; // Remonter l'erreur pour que l'appelant (app.js) la gère (status, hideLoading, reset view)
     }
-    // hideLoading() sera appelé par l'appelant dans le bloc `finally`.
-    // console.log(`actionsManager.js: Fin du traitement pour action '${type}', mode '${editMode}'.`);
+    // hideLoading() est géré par l'appelant (app.js) dans le bloc finally.
 }
 
-// D'autres fonctions seront ajoutées ici...
+// Potentiellement d'autres fonctions d'actionsManager ici à l'avenir (handleSaveChanges, etc.)
