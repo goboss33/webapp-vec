@@ -3,11 +3,20 @@ import {
     N8N_UPDATE_DATA_WEBHOOK_URL,
     N8N_CROP_IMAGE_WEBHOOK_URL,
     N8N_REMOVE_WATERMARK_WEBHOOK_URL,
-    N8N_GENERATE_MOCKUP_WEBHOOK_URL
+    N8N_GENERATE_MOCKUP_WEBHOOK_URL,
+    N8N_RESIZE_IMAGE_WEBHOOK_URL
 } from './config.js';
 console.log('app.js main script loaded, N8N URLs imported.');
 
-import { initDomElements, productIdElement, productNameElement, saveChangesButton, statusElement, dropzoneMain, dropzoneGallery, dropzoneCustom, imageCarouselContainer, imageCarousel, modalOverlay, modalCloseBtn, /* modalImageContainer, */ modalSwiperContainer, modalSwiperWrapper, modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo, modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn, cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer, modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn, editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn } from './dom.js';
+import { initDomElements, productIdElement, productNameElement, saveChangesButton, 
+        statusElement, dropzoneMain, dropzoneGallery, dropzoneCustom, imageCarouselContainer, 
+        imageCarousel, modalOverlay, modalCloseBtn, /* modalImageContainer, */ modalSwiperContainer, 
+        modalSwiperWrapper, modalImageId, /*modalImageDimensions, */modalPrevBtn, modalNextBtn, modalActions, 
+        modalImageInfo, modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn, 
+        cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer, 
+        modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn, editActionConfirmationOverlay, 
+        confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn,
+        targetWidthInput, targetHeightInput, validateDimensionsBtn} from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
 
 import { updateStatus, showLoading, hideLoading, resetModalToActionView } from './uiUtils.js';
@@ -852,7 +861,65 @@ const fetchProductData = async () => {
     }
 };
 
-// --- Initialisation de l'application ---
+function showValidateDimensionsButton() {
+    if (validateDimensionsBtn) {
+        // On pourrait ajouter une logique pour vérifier si les dimensions ont réellement changé par rapport à l'original
+        // mais pour l'instant, on l'affiche dès qu'il y a une saisie.
+        validateDimensionsBtn.style.display = 'inline-block';
+    }
+}
+
+// Nouveau gestionnaire d'événements pour le clic sur "Valider Dimensions"
+async function handleValidateDimensions() {
+    console.log("app.js: Clic sur 'Valider Dimensions'");
+    const imageToProcess = getCurrentModalImage(); // De modalManager
+
+    if (!imageToProcess || !imageToProcess.id) {
+        updateStatus("Aucune image sélectionnée pour l'adaptation des dimensions.", "error");
+        if (validateDimensionsBtn) validateDimensionsBtn.style.display = 'none'; // Cacher si erreur
+        return;
+    }
+
+    const targetWidth = parseInt(targetWidthInput.value, 10);
+    const targetHeight = parseInt(targetHeightInput.value, 10);
+
+    if (isNaN(targetWidth) || targetWidth <= 0 || isNaN(targetHeight) || targetHeight <= 0) {
+        updateStatus("Veuillez entrer une largeur et une hauteur cibles valides.", "warn");
+        // Ne pas cacher le bouton ici, pour que l'utilisateur puisse corriger et re-valider.
+        return;
+    }
+
+    // Vérifier si les dimensions ont réellement changé par rapport à l'image originale
+    // (Nécessite de stocker ou de re-récupérer les dimensions originales au moment du clic)
+    // Pour simplifier pour l'instant, on procède toujours.
+    // Plus tard, on pourrait ajouter :
+    // const originalImg = new Image();
+    // originalImg.src = imageToProcess.url;
+    // originalImg.onload = () => {
+    //     if (targetWidth === originalImg.naturalWidth && targetHeight === originalImg.naturalHeight) {
+    //         updateStatus("Les dimensions cibles sont identiques aux dimensions originales.", "info");
+    //         if (validateDimensionsBtn) validateDimensionsBtn.style.display = 'none';
+    //         return;
+    //     }
+    //     // Continuer avec la logique ci-dessous...
+    // }
+
+    currentEditActionContext = {
+        type: 'resizeImage', // Nouveau type d'action
+        imageData: imageToProcess,
+        payloadData: {
+            targetWidth: targetWidth,
+            targetHeight: targetHeight,
+            // borderColor: '#000000' // Valeur par défaut ou à récupérer si champ existe
+        }
+    };
+    console.log('[APP.JS] handleValidateDimensions - Context DÉFINI:', JSON.parse(JSON.stringify(currentEditActionContext)));
+
+    if (validateDimensionsBtn) validateDimensionsBtn.style.display = 'none'; // Cacher après avoir cliqué et avant la confirmation
+    showEditActionConfirmation(); // Afficher la sous-modale "Remplacer/Nouvelle image"
+}
+
+// --- Initialisation de l'application DOMContentLoaded  ---
 document.addEventListener('DOMContentLoaded', () => {
     // Initialise le SDK Telegram SI il est disponible
     if (window.Telegram && window.Telegram.WebApp) {
@@ -953,6 +1020,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn("app.js: Clic sur DEL modal, mais aucun data-image-id trouvé sur le bouton.");
             }
         });
+    }
+
+    if (targetWidthInput) {
+        targetWidthInput.addEventListener('input', showValidateDimensionsButton);
+    }
+    if (targetHeightInput) {
+        targetHeightInput.addEventListener('input', showValidateDimensionsButton);
+    }
+    if (validateDimensionsBtn) {
+        validateDimensionsBtn.addEventListener('click', handleValidateDimensions);
     }
     
     // Récupérer les données initiales
