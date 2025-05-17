@@ -70,10 +70,16 @@
 
                 <button id="modal-next-btn" class="modal-nav-btn swiper-button-next-custom">&gt;</button>
             </div>
-            <div id="modal-image-info">
+            <div id="modal-image-info" style="margin-bottom: 10px;">
                 <p>ID: <span id="modal-image-id"></span></p>
-                <p>Taille: <span id="modal-image-dimensions">Chargement...</span></p> 
-            </div> 
+                <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+                    <span>Dimensions (L x H px):</span>
+                    <input type="number" id="target-width-input" style="width: 70px;" min="1">
+                    <span>x</span>
+                    <input type="number" id="target-height-input" style="width: 70px;" min="1">
+                    <button id="validate-dimensions-btn" class="action-btn" style="display: none; margin-left: 10px;">Valider Dimensions</button>
+                </div>
+            </div>
             
             <div id="modal-cropper-container" style="display: none; margin-bottom: 15px; max-height: 50vh; overflow: hidden;">
                 <img id="image-to-crop" src="" alt="Image à recadrer" style="max-width: 100%;">
