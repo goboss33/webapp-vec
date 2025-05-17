@@ -225,6 +225,9 @@ export function closeModal() {
         moduleModalSwiperInstance = null;
         console.log("modalManager.js: Instance Swiper détruite.");
     }
+    if (validateDimensionsBtn) {
+        validateDimensionsBtn.style.display = 'none';
+    }
     // La destruction de CropperInstance sera gérée par la fonction closeModal qui reste dans app.js pour l'instant,
     // ou par cancelCropping si le recadrage est annulé.
 }
