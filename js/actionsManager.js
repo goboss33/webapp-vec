@@ -2,7 +2,8 @@
 import {
     N8N_CROP_IMAGE_WEBHOOK_URL,
     N8N_REMOVE_WATERMARK_WEBHOOK_URL,
-    N8N_GENERATE_MOCKUP_WEBHOOK_URL
+    N8N_GENERATE_MOCKUP_WEBHOOK_URL,
+    N8N_RESIZE_IMAGE_WEBHOOK_URL
 } from './config.js';
 import {
     modalOverlay, // Pour vérifier si la modale est visible (pour addImageToModalSwiper)
