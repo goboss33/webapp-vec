@@ -1,0 +1,853 @@
+/* Styles Généraux */
+body {
+    font-family: sans-serif;
+    padding: 15px;
+    color: var(--tg-theme-text-color);
+    background-color: var(--tg-theme-bg-color);
+    margin: 0;
+}
+
+/* En-tête */
+h1 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+#productId {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    color: var(--tg-theme-hint-color, #6c757d);
+}
+hr {
+    border: none;
+    border-top: 1px solid var(--tg-theme-hint-color, #ccc);
+    margin: 15px 0;
+}
+
+/* Section Infos Produit */
+h2 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+#productName {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-weight: normal;
+}
+
+/* Section Assignation des Rôles */
+h3 { /* Titres de section (Assigner les Rôles, Images Disponibles) */
+    margin-top: 15px; /* Ajout espace au dessus */
+    margin-bottom: 10px;
+    font-size: 1em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
+     margin-top: 0;
+}
+
+/* --- Styles pour la Nouvelle Disposition --- */
+
+/* Conteneur Global pour l'assignation */
+.role-assignment-container {
+    margin-bottom: 20px;
+}
+
+/* Conteneur pour la ligne du haut (Principale + Custom) */
+.top-row-zones {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* Style de base commun à TOUTES les zones de dépôt */
+.dropzone {
+    border: 2px dashed var(--tg-theme-hint-color, #ccc);
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--tg-theme-secondary-bg-color, #f8f8f8);
+    /* Les hauteurs et flex sont définis spécifiquement ci-dessous */
+}
+
+/* Styles spécifiques pour les zones de la ligne du haut */
+#dropzone-main {
+    flex: 0 0 100px; /* Largeur fixe */
+    max-height: 110px;
+    min-height: 110px; /* Pour assurer la même hauteur que Custom au départ */
+}
+#dropzone-custom {
+    flex: 1; /* Prend le reste de la largeur */
+    max-height: 110px; /* Même hauteur max que Principale */
+    min-height: 110px;
+}
+
+/* Style spécifique pour la zone Galerie (pleine largeur) */
+#dropzone-gallery.full-width-zone {
+    width: 100%; /* Prend toute la largeur */
+    max-height: 250px; /* Plus de hauteur */
+    min-height: 110px; /* Hauteur min */
+}
+
+/* Titre dans les Zones */
+.dropzone h3 {
+    margin: 0;
+    padding: 8px;
+    font-size: 0.85em;
+    color: var(--tg-theme-hint-color, #6c757d);
+    flex-shrink: 0;
+    border-bottom: 1px solid #eee;
+    background-color: rgba(128,128,128,0.03);
+    text-align: center;
+}
+
+/* Conteneur des Miniatures dans les Zones (avec scroll) */
+.dropzone .thumbnail-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 60px; /* Espace minimum même vide */
+}
+
+/* Wrapper pour chaque Miniature + Bouton */
+.dropzone .thumbnail-wrapper {
+    position: relative;
+    width: 55px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+    border: 1px solid #eee;
+    border-radius: 3px;
+}
+
+/* Image Miniature dans les Zones */
+.dropzone .img-thumbnail {
+    display: block;
+    max-width: 50px;
+    max-height: 50px;
+    object-fit: cover;
+}
+
+/* Bouton Supprimer sur Miniature */
+.dropzone .remove-thumbnail-btn {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    width: 18px;
+    height: 18px;
+    background-color: rgba(200, 0, 0, 0.8);
+    color: white;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 16px;
+    padding: 0;
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.dropzone .remove-thumbnail-btn:hover {
+    background-color: rgba(255, 0, 0, 0.9);
+}
+
+/* Carousel d'Images Disponibles */
+#image-carousel-container {
+    border: 1px solid var(--tg-theme-hint-color, #ccc);
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: rgba(128,128,128,0.05);
+    border-radius: 5px;
+    overflow-x: auto;
+    min-height: 150px;
+}
+#image-carousel {
+    display: flex;
+    gap: 10px;
+    padding-bottom: 10px;
+    min-width: min-content;
+}
+#image-carousel .carousel-image-container {
+    border: 1px solid #eee;
+    padding: 5px;
+    background-color: #fff;
+    border-radius: 3px;
+    text-align: center;
+    min-width: 110px;
+    flex-shrink: 0;
+}
+#image-carousel img {
+    max-width: 100px;
+    max-height: 100px;
+    display: block;
+    margin: 0 auto 5px auto;
+    cursor: grab;
+}
+#image-carousel p {
+    font-size: 0.8em;
+    margin: 0;
+    color: var(--tg-theme-hint-color, #6c757d);
+    word-break: break-all;
+}
+
+/* Bouton Enregistrer */
+#saveChangesButton {
+    display: block;
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1em;
+    cursor: pointer;
+    background-color: var(--tg-theme-button-color);
+    color: var(--tg-theme-button-text-color);
+    border: none;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+#saveChangesButton:disabled {
+    opacity: 0.7;
+}
+
+/* Message de Statut */
+#status {
+    margin-top: 15px;
+    font-style: italic;
+    min-height: 1.2em;
+    color: var(--tg-theme-hint-color, #6c757d);
+    text-align: center;
+}
+.status-success { color: green; }
+.status-error { color: red; }
+.status-warn { color: orange; }
+
+
+/* Styles Drag & Drop (Fantômes) */
+.sortable-drag { /* Élément qui suit la souris */
+    opacity: 0.75 !important;
+    background-color: #fff !important;
+    border: 1px dashed #555 !important;
+    border-radius: 4px !important;
+    padding: 3px !important;
+    width: 60px !important;
+    height: 60px !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.sortable-drag img {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+}
+.sortable-drag p { display: none !important; }
+
+.dropzone .thumbnail-container .sortable-ghost { /* Placeholder dans la zone cible */
+     opacity: 0.4 !important;
+     background-color: #d0e0ff !important;
+     border: 2px dashed blue !important;
+     border-radius: 3px !important;
+     width: 55px !important; /* Taille du wrapper */
+     height: 55px !important; /* Taille du wrapper */
+     overflow: hidden !important;
+     box-shadow: none !important;
+     padding: 0 !important;
+}
+.dropzone .thumbnail-container .sortable-ghost img,
+.dropzone .thumbnail-container .sortable-ghost p {
+    display: none !important; /* Masque contenu interne du placeholder */
+}
+
+/* --- Style pour le bouton Réglages --- */
+.settings-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.1em; /* Taille de l'icône engrenage */
+    padding: 2px 4px;
+    line-height: 1;
+    color: var(--tg-theme-hint-color, #555);
+    margin-left: 5px; /* Espace par rapport à l'info ID dans carousel */
+}
+.settings-btn:hover {
+    background-color: #eee;
+    border-color: #aaa;
+}
+/* Positionnement spécifique pour le bouton sur les miniatures */
+.thumbnail-wrapper .settings-btn {
+    position: absolute;
+    /* MODIFIÉ: Positionner en bas à droite A L'INTERIEUR */
+    bottom: 2px;  /* Petite marge par rapport au bord bas */
+    right: 2px;   /* Petite marge par rapport au bord droit */
+    /* Styles précédents (taille, couleur, etc.) */
+    width: 18px;
+    height: 18px;
+    background-color: rgba(0, 100, 200, 0.8); /* Bleu */
+    color: white;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 3px; /* Légèrement arrondi */
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 14px; /* Ajuster pour centrer l'icône si besoin */
+    padding: 0;
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.thumbnail-wrapper .settings-btn:hover {
+     background-color: rgba(0, 120, 255, 0.9);
+}
+/* --- Style pour l'icône Guide des Tailles (Centrée) --- */
+.eih-item-icon.size-guide-icon {
+    /* --- Positionnement au centre --- */
+    position: absolute; /* Requis pour le positionnement absolu */
+    top: 50%;           /* Centre verticalement par rapport au haut */
+    left: 50%;          /* Centre horizontalement par rapport à la gauche */
+    transform: translate(-50%, -50%); /* Décale l'icône de moitié de sa propre taille pour un centrage parfait */
+
+    /* --- Apparence --- */
+    display: none; /* Caché par défaut, affiché par la classe parente */
+    width: 24px;   /* Taille du carré violet (ajustez si besoin) */
+    height: 24px;  /* Taille du carré violet */
+    background-color: #8A2BE2; /* Violet */
+    border-radius: 4px; /* Coins légèrement arrondis */
+    color: white;       /* Couleur de l'icône 📏 */
+    font-size: 16px;    /* Taille de l'icône 📏 (ajustez si besoin) */
+    line-height: 24px;  /* Aligner l'icône verticalement dans le carré (même valeur que height) */
+    text-align: center; /* Aligner l'icône horizontalement */
+    z-index: 10;        /* Pour être au-dessus de l'image miniature */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3); /* Ombre légère */
+    cursor: default; /* Pour indiquer que ce n'est pas cliquable */
+
+    /* Empêcher la sélection de l'icône elle-même si l'utilisateur essaie de draguer la miniature */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Classe pour afficher l'icône */
+/* Assurez-vous que le conteneur parent (thumbnail-wrapper ou carousel-image-container)
+   a une position relative pour que l'absolu fonctionne correctement par rapport à lui */
+.thumbnail-wrapper,
+.carousel-image-container {
+    position: relative; /* ESSENTIEL pour le positionnement absolu de l'icône enfant */
+}
+
+.has-size-guide-icon .size-guide-icon {
+    display: block; /* Afficher l'icône lorsque la classe parente est présente */
+}
+
+/* Optionnel : Ajuster légèrement la position des autres boutons (X et Settings) s'ils se superposent */
+/* Par exemple, les décaler un peu plus vers les coins */
+/*
+.thumbnail-wrapper .remove-thumbnail-btn {
+    top: -8px;
+    right: -8px;
+}
+.thumbnail-wrapper .settings-btn {
+    bottom: -8px;
+    right: -8px;
+}
+*/
+
+/* --- Style pour le bouton Réglages --- */
+.settings-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.1em; /* Taille de l'icône engrenage */
+    padding: 2px 4px;
+    line-height: 1;
+    color: var(--tg-theme-hint-color, #555);
+    margin-left: 5px; /* Espace par rapport à l'info ID dans carousel */
+}
+.settings-btn:hover {
+    background-color: #eee;
+    border-color: #aaa;
+}
+/* Positionnement spécifique pour le bouton sur les miniatures */
+.thumbnail-wrapper .settings-btn {
+    position: absolute;
+    bottom: -7px; /* Ajuste pour le positionner */
+    right: -7px; /* Ajuste */
+    width: 18px; /* Taille similaire au bouton supprimer */
+    height: 18px;
+    font-size: 12px;
+    line-height: 14px; /* Ajuster */
+    background-color: rgba(0, 100, 200, 0.8); /* Bleu */
+    border-color: rgba(0,0,0,0.2);
+    color: white;
+     box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.thumbnail-wrapper .settings-btn:hover {
+     background-color: rgba(0, 120, 255, 0.9);
+}
+/* Cache le bouton réglage sur le carousel (temporaire si on veut que les actions soient que sur les vignettes) */
+/* Ou ajuste le style pour qu'il soit moins proéminent */
+/* .carousel-image-container .settings-btn { display: none; } */
+
+
+/* --- Styles pour la Modal --- */
+.modal-overlay {
+    position: fixed; /* Reste en place même si on scrolle */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Fond semi-transparent */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Au-dessus de tout */
+}
+
+.modal-content {
+    background-color: var(--tg-theme-bg-color, #fff);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    width: 90%; /* Largeur sur mobile */
+    max-width: 600px; /* Largeur max sur desktop */
+    position: relative;
+    max-height: 90vh; /* Hauteur max */
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--tg-theme-hint-color, #aaa);
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+}
+.modal-close:hover {
+    color: var(--tg-theme-text-color, #333);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.2em;
+}
+
+.modal-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Espace les flèches */
+    margin-bottom: 15px;
+    flex-shrink: 0; /* Empêche de rétrécir */
+}
+
+#modal-image {
+    display: block;
+    max-width: calc(100% - 80px); /* Largeur max moins les flèches */
+    max-height: 60vh; /* Hauteur max pour l'image */
+    object-fit: contain; /* Pour voir toute l'image */
+    margin: 0 auto; /* Centrer si moins large */
+}
+
+.modal-nav-btn {
+    background: none;
+    border: none;
+    font-size: 2em;
+    font-weight: bold;
+    color: var(--tg-theme-link-color, #007bff);
+    cursor: pointer;
+    padding: 0 10px;
+}
+.modal-nav-btn:hover {
+    opacity: 0.7;
+}
+/* Cacher les boutons si pas de navigation possible (sera géré en JS) */
+.modal-nav-btn[disabled] {
+    opacity: 0.3;
+    cursor: default;
+}
+
+
+#modal-image-info {
+    font-size: 0.9em;
+    color: var(--tg-theme-hint-color, #555);
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+    margin-bottom: 15px;
+    flex-shrink: 0;
+}
+#modal-image-info p {
+    margin: 2px 0;
+}
+
+#modal-actions {
+    border-top: 1px solid #eee;
+    padding: 10px; /* Un peu moins de padding vertical */
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Espacement légèrement réduit */
+    justify-content: center;
+
+    /* --- Styles pour le sticky --- */
+    position: sticky;
+    bottom: 0;
+    background-color: var(--tg-theme-bg-color, #fff); /* Important pour ne pas voir à travers */
+    z-index: 10; /* Pour être au-dessus du contenu qui scrolle mais sous la modale elle-même */
+    /* Optionnel: une petite ombre pour délimiter */
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    /* Assurer que le padding ne cause pas de double scrollbar avec le viewport */
+    margin-left: -20px; /* Compense le padding de .modal-content */
+    margin-right: -20px;
+    margin-bottom: -20px; /* Compense le padding de .modal-content */
+    padding-left: 20px; /* Rétablir le padding interne */
+    padding-right: 20px;
+    padding-bottom: 10px; /* Rétablir le padding interne */
+}
+
+/* Ajustement pour .modal-content pour permettre le scroll sans que les actions soient coupées au départ */
+.modal-content {
+    /* ... autres styles ... */
+    padding-bottom: 70px; /* Espace pour les boutons sticky (ajuster selon hauteur réelle des boutons) */
+}
+
+/* --- Styles pour Swiper dans la Modale --- */
+.modal-image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centre le Swiper si moins large */
+    margin-bottom: 15px;
+    /* flex-shrink: 0; */ /* On enlève pour laisser Swiper gérer */
+    position: relative; /* Pour positionner les boutons custom si besoin */
+    width: 100%; /* Prend toute la largeur dispo */
+    max-height: 65vh; /* Hauteur max pour cette section */
+    overflow: hidden; /* Cache ce qui dépasse de Swiper */
+}
+
+/* Conteneur Swiper principal */
+.modal-swiper {
+    width: 90%; /* Ajuste la largeur du slider */
+    max-width: 500px; /* Limite max */
+    height: auto; /* S'adapte à la hauteur de l'image */
+    margin: 0 10px; /* Espace pour les boutons */
+}
+
+/* Style pour chaque slide */
+.swiper-slide {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center; /* Centre l'image si plus petite */
+    background-color: var(--tg-theme-secondary-bg-color, #f8f8f8); /* Fond pour chaque slide */
+    height: auto; /* Important pour que Swiper calcule la hauteur */
+}
+
+/* Style pour l'image DANS une slide */
+.swiper-slide img {
+    display: block;
+    max-width: 100%;
+    max-height: 60vh; /* Limite la hauteur de l'image elle-même */
+    height: auto; /* Garde les proportions */
+    object-fit: contain;
+    border: 5px solid black; /* NOUVELLE BORDURE */
+    box-sizing: border-box;  /* NOUVEAU pour inclure la bordure dans la taille */
+}
+
+/* Style pour les boutons de navigation personnalisés */
+.modal-nav-btn {
+    background: none;
+    border: none;
+    font-size: 2.5em; /* Un peu plus gros */
+    font-weight: bold;
+    color: var(--tg-theme-link-color, #007bff);
+    cursor: pointer;
+    padding: 0 5px; /* Ajuste le padding */
+    z-index: 10; /* Assure qu'ils sont cliquables */
+    line-height: 1;
+}
+.modal-nav-btn:hover {
+    opacity: 0.7;
+}
+/* Style pour les boutons désactivés (géré par Swiper) */
+.swiper-button-disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+/* Cache les boutons par défaut de Swiper si jamais ils apparaissent */
+.swiper-button-next, .swiper-button-prev {
+    display: none !important;
+}
+/* Cache les indicateurs de pagination par défaut */
+.swiper-pagination {
+    display: none !important;
+}
+
+/* --- Styles pour les Actions dans la Modale --- */
+#modal-actions {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+    text-align: center;
+    display: flex; /* Aligner les boutons */
+    flex-wrap: wrap; /* Passer à la ligne si besoin */
+    gap: 10px; /* Espacer les boutons */
+    justify-content: center; /* Centrer les boutons */
+}
+
+.action-btn {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid var(--tg-theme-button-color, #007bff);
+    background-color: transparent;
+    color: var(--tg-theme-button-color, #007bff);
+}
+.action-btn:hover:not(:disabled) {
+    background-color: rgba(0, 123, 255, 0.1); /* Léger fond au survol */
+}
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.success-btn {
+    border-color: #28a745;
+    color: #28a745;
+}
+.success-btn:hover:not(:disabled) {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.cancel-btn {
+     border-color: #dc3545;
+     color: #dc3545;
+}
+.cancel-btn:hover:not(:disabled) {
+     background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Conteneur pour l'image à recadrer */
+#modal-cropper-container {
+    width: 100%;
+    background-color: #222; /* Fond sombre pour voir les bords */
+    /* max-height: 50vh; */ /* ON RETIRE CETTE LIGNE */
+    overflow: hidden; /* Garder pour Cropper */
+    display: none; /* Reste caché initialement */
+    margin-bottom: 15px;
+    /* Laisser Cropper gérer la hauteur interne */
+}
+#image-to-crop {
+     display: block; /* Important pour que Cropper prenne les bonnes dimensions */
+     max-width: 100%; /* L'image prendra la largeur, Cropper gère le reste */
+     /* Pas de hauteur ou max-height ici */
+     opacity: 0; /* Cacher pendant le chargement */
+     transition: opacity 0.3s; /* Petite transition */
+}
+#image-to-crop.loaded {
+    opacity: 1; /* Afficher quand chargée */
+}
+.cropper-container {
+    direction: ltr;
+    font-size: 0;
+    line-height: 0;
+    position: relative;
+    -ms-touch-action: none;
+    touch-action: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Styles pour l'indicateur de chargement */
+#loading-overlay {
+    position: fixed; /* Couvre toute la page */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Fond semi-transparent */
+    z-index: 2000; /* Au dessus de tout, même la modale */
+    display: flex;
+    flex-direction: column; /* Aligner spinner et texte */
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+}
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 4px solid #fff;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+#loading-overlay p {
+    font-size: 1em;
+}
+
+.aspect-btn.active-ratio {
+    background-color: var(--tg-theme-button-color, #007bff);
+    color: var(--tg-theme-button-text-color, #fff);
+    border-color: var(--tg-theme-button-color, #007bff);
+}
+
+/* Styles pour la confirmation d'action d'édition */
+.edit-action-confirmation-overlay {
+    position: absolute; /* Ou fixed si vous voulez qu'elle couvre toute la modale principale */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.95); /* Fond blanc semi-transparent pour couvrir les actions en dessous */
+    z-index: 10; /* Pour être au-dessus des autres éléments de la modale, mais sous l'overlay principal */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.edit-action-confirmation-content {
+    background-color: var(--tg-theme-bg-color, #fff);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.edit-action-confirmation-content h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.edit-action-confirmation-buttons button {
+    margin: 5px;
+}
+
+/* Style pour le bouton Supprimer (DEL) dans le carrousel */
+.carousel-image-container .del-btn {
+    position: absolute;
+    top: -7px; /* Ou ajuster selon vos autres icônes */
+    /* Décaler légèrement à gauche du bouton settings s'il est à droite, ou positionner à gauche */
+    right: 20px; /* Exemple si settings est à -7px right */
+    /* OU: left: -7px; si vous préférez à gauche */
+    width: 35px;  /* Un peu plus large pour "DEL" */
+    height: 18px;
+    padding: 0 5px;
+    background-color: #dc3545; /* Rouge */
+    color: white;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px; /* Petite police */
+    font-weight: bold;
+    line-height: 16px; /* Ajuster pour centrer */
+    z-index: 10;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    display: inline-block; /* Affiché par défaut sur les items du carrousel */
+}
+
+.carousel-image-container .del-btn:hover {
+    background-color: #c82333; /* Rouge plus foncé au survol */
+}
+
+/* Style pour indiquer qu'une image est marquée pour suppression */
+.carousel-image-container.marked-for-deletion {
+    opacity: 0.5;
+    border: 2px dashed #dc3545 !important; /* Bordure rouge en pointillés */
+}
+
+.carousel-image-container.marked-for-deletion img {
+    /* Optionnel: rendre l'image elle-même moins proéminente */
+    /* filter: grayscale(80%); */
+}
+
+.carousel-image-container.marked-for-deletion .settings-btn,
+.carousel-image-container.marked-for-deletion .del-btn {
+    /* Optionnel: griser les boutons d'action quand marqué pour suppression */
+    /* filter: saturate(0); */
+    /* Ou simplement changer le style du bouton DEL */
+}
+
+ .carousel-image-container.marked-for-deletion .del-btn {
+    background-color: #ffc107; /* Jaune/Orange pour indiquer "Annuler Suppression" */
+    color: black;
+ }
+ .carousel-image-container.marked-for-deletion .del-btn:hover {
+    background-color: #e0a800;
+ }
+
+.danger-btn {
+    border-color: #dc3545;
+    color: #dc3545;
+}
+.danger-btn:hover:not(:disabled) {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545; /* S'assurer que la couleur du texte reste au survol */
+}
+.danger-btn.marked { /* Pour quand l'image est déjà marquée */
+    border-color: #ffc107;
+    color: #212529; /* Ou une autre couleur de texte pour le jaune */
+    background-color: rgba(255, 193, 7, 0.1);
+}
+.danger-btn.marked:hover:not(:disabled) {
+    background-color: rgba(255, 193, 7, 0.2);
+}
+
+.swiper-slide.marked-for-deletion-slide img {
+    opacity: 0.5;
+    border: 2px dashed #dc3545 !important; /* Pointillés rouges */
+    box-sizing: border-box; /* Pour que la bordure ne décale pas trop */
+}
+
+.action-btn.icon-btn {
+    font-size: 1.2em; /* Ajuster la taille de l'icône si besoin */
+    padding: 6px 10px; /* Ajuster le padding pour un bouton plus carré */
+    min-width: 40px; /* Largeur minimale */
+    line-height: 1.2;
+    border: 2px solid var(--tg-theme-hint-color, #ccc); /* Bordure par défaut (inactif) */
+    background-color: transparent;
+    color: var(--tg-theme-text-color, #333);
+}
+
+.action-btn.icon-btn.active-size-guide {
+    background-color: #8A2BE2; /* Fond violet quand actif */
+    border-color: #8A2BE2; /* Bordure violette quand actif */
+    color: white; /* Couleur de l'icône quand actif */
+}
+
+.action-btn.icon-btn:not(.active-size-guide) {
+    border-color: #8A2BE2; /* Bordure violette quand inactif */
+    color: #8A2BE2; /* Couleur de l'icône quand inactif */
+}
+
+.action-btn.icon-btn:hover:not(:disabled):not(.active-size-guide) {
+    background-color: rgba(138, 43, 226, 0.1); /* Léger fond violet au survol si inactif */
+}
+.action-btn.icon-btn:hover:not(:disabled).active-size-guide {
+    background-color: #7A1CC0; /* Violet un peu plus foncé au survol si actif */
+}
