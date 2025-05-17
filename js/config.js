@@ -8,3 +8,5 @@ export const N8N_UPDATE_DATA_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/w
 export const N8N_CROP_IMAGE_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/crop-n-replace-img';
 export const N8N_REMOVE_WATERMARK_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/remove-watermark';
 export const N8N_GENERATE_MOCKUP_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/create-mockup';
+
+export const N8N_RESIZE_IMAGE_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/resize-image';
