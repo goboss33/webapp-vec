@@ -16,7 +16,8 @@ import {
     modalActions, // Needed for resetModalToActionView
     modalCropBtn, // Needed for resetModalToActionView
     modalRemoveWatermarkBtn, // Needed for resetModalToActionView
-    modalGenerateMockupBtn // Needed for resetModalToActionView
+    modalGenerateMockupBtn, // Needed for resetModalToActionView
+    modalToggleSizeGuideBtn
     // Ajoutez d'autres éléments DOM importés ici si resetModalToActionView en a besoin de plus
 } from './dom.js';
 
