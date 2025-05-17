@@ -6,7 +6,10 @@ console.log('dom.js module loaded');
 export let productIdElement, productNameElement, saveChangesButton, statusElement;
 export let dropzoneMain, dropzoneGallery, dropzoneCustom;
 export let imageCarouselContainer, imageCarousel;
-export let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperContainer, modalSwiperWrapper, modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo;
+
+export let modalOverlay, modalCloseBtn, modalImageContainer, modalSwiperContainer, modalSwiperWrapper, modalImageId, /* modalImageDimensions, */ modalPrevBtn, modalNextBtn, modalActions, modalImageInfo;
+export let targetWidthInput, targetHeightInput, validateDimensionsBtn;
+
 export let modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn;
 export let cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer;
 export let modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn;
@@ -36,7 +39,12 @@ export function initDomElements() {
     modalSwiperContainer = document.querySelector('.modal-swiper');
     modalSwiperWrapper = document.getElementById('modal-swiper-wrapper');
     modalImageId = document.getElementById('modal-image-id');
-    modalImageDimensions = document.getElementById('modal-image-dimensions');
+    
+    //modalImageDimensions = document.getElementById('modal-image-dimensions');
+    targetWidthInput = document.getElementById('target-width-input');
+    targetHeightInput = document.getElementById('target-height-input');
+    validateDimensionsBtn = document.getElementById('validate-dimensions-btn');
+    
     modalPrevBtn = document.getElementById('modal-prev-btn');
     modalNextBtn = document.getElementById('modal-next-btn');
     modalActions = document.getElementById('modal-actions');
