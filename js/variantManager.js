@@ -142,27 +142,40 @@ function renderAvailableSwatches() {
  * @param {string|number} imageId - The ID of the image element.
  * @param {Object} colorData - The color term object (must include hex, value, name).
  */
+// Dans variantManager.js
 export function renderColorSwatchIndicator(imageId, colorData) {
-    if (!colorData || !colorData.hex || !colorData.value) {
-        console.error('[variantManager] Invalid colorData for renderColorSwatchIndicator. HEX and value are required.', colorData);
+    // Condition plus flexible pour accepter soit 'value' soit 'colorSlug' pour le slug,
+    // et soit 'name' soit 'termName' pour le nom.
+    const slug = colorData.value || colorData.colorSlug;
+    const name = colorData.name || colorData.termName;
+    const hex = colorData.hex || colorData.colorHex; // Accepter aussi colorHex
+
+    if (!hex || !slug) { // On a besoin au moins du hex et du slug (qui sert pour dataset)
+        console.error('[variantManager] Invalid colorData for renderColorSwatchIndicator. HEX and (value/colorSlug) are required.', JSON.parse(JSON.stringify(colorData)));
+        // Retirer tout indicateur existant si les données sont invalides pour éviter un état incohérent
+        removeColorSwatchIndicator(imageId);
         return;
     }
-    console.log(`[variantManager] Rendering indicator for image ${imageId}, color ${colorData.name} (${colorData.hex})`);
 
-    // Find all placeholders for this image ID (one in carousel, one in a dropzone if present)
+    // Utiliser le nom disponible, sinon le slug comme fallback pour le titre
+    const displayName = name || slug;
+
+    console.log(`[variantManager] Rendering indicator for image ${imageId}, color <span class="math-inline">\{displayName\} \(</span>{hex}), slug ${slug}`);
+
     const placeholders = document.querySelectorAll(`.image-color-indicator-placeholder[data-indicator-for-image-id="${imageId}"]`);
 
     if (placeholders.length === 0) {
-        console.warn(`[variantManager] No placeholder found for image ID ${imageId} to render color indicator.`);
+        // Ce log est utile s'il se produit de manière inattendue après l'initialisation.
+        // console.warn(`[variantManager] No placeholder found for image ID ${imageId} to render color indicator.`);
         return;
     }
 
     placeholders.forEach(placeholder => {
-        placeholder.innerHTML = ''; // Clear any existing indicator
-        placeholder.style.backgroundColor = colorData.hex;
-        placeholder.title = `Couleur: ${colorData.name}`;
-        placeholder.dataset.assignedColorSlug = colorData.value; // Store slug for easy removal/check
-        placeholder.classList.add('active-indicator'); // Add class to make it visible (styling via CSS)
+        placeholder.innerHTML = ''; 
+        placeholder.style.backgroundColor = hex;
+        placeholder.title = `Couleur: ${displayName}`;
+        placeholder.dataset.assignedColorSlug = slug; 
+        placeholder.classList.add('active-indicator');
     });
 }
 
