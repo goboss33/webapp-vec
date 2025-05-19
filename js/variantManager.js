@@ -360,7 +360,7 @@ function configureSortableForColorSwatches(allImageDataRef) { // allImageDataRef
  */
 export function dissociateColorFromImage(imageId, colorSlugToDissociate, allImageDataRef, productVariantDataRef) {
     const imageIdStr = imageId.toString();
-    console.log(`[variantManager] Attempting to dissociate color '<span class="math-inline">\{colorSlugToDissociate\}' from image ID '</span>{imageIdStr}'`);
+    console.log(`[variantManager] Attempting to dissociate color '${colorSlugToDissociate}' from image ID '${imageIdStr}'`);
 
     if (!currentImageColorMappings.has(imageIdStr)) {
         console.warn(`[variantManager] Image ID '${imageIdStr}' has no color mapping to dissociate.`);
@@ -407,7 +407,7 @@ export function dissociateColorFromImage(imageId, colorSlugToDissociate, allImag
     renderAvailableSwatches();
 
     updateStatus(`Couleur ${currentMapping.termName || colorSlugToDissociate} dissociée de l'image ID ${imageIdStr}.`, 'info');
-    console.log(`[variantManager] Color '<span class="math-inline">\{colorSlugToDissociate\}' dissociated from image ID '</span>{imageIdStr}'. Mappings:`, currentImageColorMappings, "Available:", availableColorTerms.map(t=>t.value));
+    console.log(`[variantManager] Color '${currentMapping.termName || colorSlugToDissociate}' dissociated from image ID '${imageIdStr}'. Mappings:`, currentImageColorMappings, "Available:", availableColorTerms.map(t=>t.value));
     return true; // Succès
 }
 
