@@ -205,7 +205,7 @@ function handleThumbnailRemoveClickInternal(event) {
 
 
 // --- Initialisation de SortableJS (Fonction exportée principale) ---
-export function initializeSortableManager(imageData, settingsClickHandler, markForDeletionClickHandler) {
+export function initializeSortableManager(imageData, settingsClickHandler, markForDeletionClickHandler, refreshIndicatorCb) {
     currentAllImageData = imageData; // Met à jour la référence aux données des images
     onClickSettingsCallback = settingsClickHandler;
     onClickMarkForDeletionCallback = markForDeletionClickHandler;
