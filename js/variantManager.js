@@ -418,3 +418,22 @@ export function dissociateColorFromImage(imageId, colorSlugToDissociate, allImag
 export function getProductVariantData() {
     return productVariantColorData;
 }
+
+/**
+ * Retrieves the current image to color slug mappings.
+ * @returns {Array<Object>} An array of objects, e.g., [{ imageId: "123", colorSlug: "rouge" }, ...]
+ * Returns an empty array if no mappings exist.
+ */
+export function getVariantColorMappings() {
+    const mappings = [];
+    if (currentImageColorMappings && currentImageColorMappings.size > 0) {
+        currentImageColorMappings.forEach((colorData, imageId) => {
+            mappings.push({
+                imageId: imageId, // imageId est déjà une chaîne ici
+                colorSlug: colorData.colorSlug
+            });
+        });
+    }
+    console.log('[variantManager] getVariantColorMappings executed. Mappings to save:', mappings);
+    return mappings;
+}
