@@ -34,14 +34,8 @@ console.log('app.js: Variant manager functions imported.');
 // --- Variables Globales ---
 let currentProductId = null;
 let allImageData = [];
-// let sortableCarousel = null; // <<< À SUPPRIMER
-// let sortableZones = {};    // <<< À SUPPRIMER
-//let modalSwiperInstance = null;
-//let modalImageList = [];
-//let currentModalIndex = 0;
-//let cropperInstance = null; // Instance Cropper.js active
-//let currentCroppingImage = null; // Données de l'image en cours de recadrage
 let currentEditActionContext = null;
+let currentSystemColorAttributeSlug = null;
 
 // --- Fonctions Utilitaires ---
 
