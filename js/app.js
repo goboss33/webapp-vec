@@ -840,7 +840,12 @@ const fetchProductData = async () => {
             }
             
             // Initialiser SortableJS pour les images AVANT, pour que les placeholders soient créés
-            initializeSortableManager(allImageData, handleSettingsClick, handleMarkForDeletionClick);
+            initializeSortableManager(
+                allImageData, 
+                handleSettingsClick, 
+                handleMarkForDeletionClick,
+                variantManager.refreshIndicatorForImage // Passer la fonction en callback
+            );
             
             // Appeler l'initialisation du gestionnaire de variantes ENSUITE
             variantManager.initVariantColorSwatches(parsedVariantColorAttributes, allImageData);
