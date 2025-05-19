@@ -1022,7 +1022,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentEditActionContext = null; // <<<<<<<<<<<< ICI ON NULLIFIE currentEditActionContext
     });
     if (modalGenerateMockupBtn) modalGenerateMockupBtn.addEventListener('click', handleGenerateMockup); // <-- NOUVELLE LIGNE
-
+    if (modalReplaceBackgroundBtn) modalReplaceBackgroundBtn.addEventListener('click', handleReplaceBackground);
+    
     if (modalMarkForDeletionBtn) {
         modalMarkForDeletionBtn.addEventListener('click', (event) => {
             const imageId = event.currentTarget.dataset.imageId;
