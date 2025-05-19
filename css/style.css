@@ -918,8 +918,8 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
 /* Style pour le placeholder de l'indicateur de couleur sur les images */
 .image-color-indicator-placeholder {
     position: absolute;
-    top: 3px;
-    right: 3px;
+    top: -2px;
+    left: 3px;
     width: 16px;  /* Taille de la pastille sur l'image */
     height: 16px;
     border-radius: 50%; /* Cercle */
