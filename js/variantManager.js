@@ -349,3 +349,64 @@ function configureSortableForColorSwatches(allImageDataRef) { // allImageDataRef
     console.log('[variantManager] SortableJS initialized for SWATCH SOURCE CONTAINER ONLY.');
     // Il n'y a plus de boucle pour initialiser Sortable sur les imageTargetContainers ici.
 }
+
+/**
+ * Dissociates a color from a specific image.
+ * Updates internal state and UI.
+ * @param {string|number} imageId The ID of the image to dissociate the color from.
+ * @param {string} colorSlugToDissociate The slug of the color to remove from the image.
+ * @param {Array} allImageDataRef Reference to the global allImageData array from app.js
+ * @param {Object} productVariantDataRef Reference to productVariantColorData (for term details)
+ */
+export function dissociateColorFromImage(imageId, colorSlugToDissociate, allImageDataRef, productVariantDataRef) {
+    const imageIdStr = imageId.toString();
+    console.log(`[variantManager] Attempting to dissociate color '<span class="math-inline">\{colorSlugToDissociate\}' from image ID '</span>{imageIdStr}'`);
+
+    if (!currentImageColorMappings.has(imageIdStr)) {
+        console.warn(`[variantManager] Image ID '${imageIdStr}' has no color mapping to dissociate.`);
+        return false; // Aucune action si pas de mapping
+    }
+
+    const currentMapping = currentImageColorMappings.get(imageIdStr);
+    if (currentMapping.colorSlug !== colorSlugToDissociate) {
+        console.warn(`[variantManager] Image ID '<span class="math-inline">\{imageIdStr\}' is mapped to '</span>{currentMapping.colorSlug}', not '${colorSlugToDissociate}'. No action taken.`);
+        return false;
+    }
+
+    // 1. Retirer le mapping
+    currentImageColorMappings.delete(imageIdStr);
+
+    // 2. Mettre à jour allImageDataRef
+    const imageInData = allImageDataRef.find(img => img.id.toString() === imageIdStr);
+    if (imageInData) {
+        imageInData.assigned_variant_color_slug = null;
+        delete imageInData.assigned_color_name;
+        delete imageInData.assigned_color_hex;
+    }
+
+    // 3. Retirer l'indicateur visuel de l'image
+    removeColorSwatchIndicator(imageIdStr);
+
+    // 4. Remettre la pastille de couleur dans la liste des disponibles
+    // (Trouver l'objet terme complet pour le slug dissocié)
+    if (productVariantDataRef && productVariantDataRef.terms) {
+        const termObject = productVariantDataRef.terms.find(term => term.value === colorSlugToDissociate);
+        if (termObject) {
+            // S'assurer qu'elle n'y est pas déjà pour éviter les doublons (peu probable ici, mais bonne pratique)
+            if (!availableColorTerms.some(t => t.value === termObject.value)) {
+                availableColorTerms.push(termObject);
+            }
+        } else {
+            console.warn(`[variantManager] Could not find term object for slug '${colorSlugToDissociate}' to add back to available terms.`);
+        }
+    } else {
+        console.warn(`[variantManager] productVariantColorData.terms not available for dissociation logic.`);
+    }
+
+    // 5. Rafraîchir l'affichage des pastilles disponibles
+    renderAvailableSwatches();
+
+    updateStatus(`Couleur ${currentMapping.termName || colorSlugToDissociate} dissociée de l'image ID ${imageIdStr}.`, 'info');
+    console.log(`[variantManager] Color '<span class="math-inline">\{colorSlugToDissociate\}' dissociated from image ID '</span>{imageIdStr}'. Mappings:`, currentImageColorMappings, "Available:", availableColorTerms.map(t=>t.value));
+    return true; // Succès
+}
