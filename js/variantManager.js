@@ -254,55 +254,77 @@ function configureSortableForColorSwatches(allImageDataRef) { // Pass allImageDa
             sort: false, // Prevent re-sorting of images within these lists BY THIS Sortable instance. Image sorting is handled by sortableManager.js
 
             onAdd: function (/**Event*/evt) {
-                const droppedSwatchElement = evt.item; // The cloned swatch
-                const targetContainer = evt.to;    // The .thumbnail-container or #image-carousel
-                let targetImageElement = evt.target; // The actual image element the swatch was dropped onto
-                                                    // Needs to be the .carousel-image-container or .thumbnail-wrapper
-
+                const droppedElement = evt.item; // L'élément qui a été glissé et déposé
+                const targetContainer = evt.to;  // Le conteneur où il a été déposé (ex: .thumbnail-container)
+            
+                // --- DEBUT DE LA SECTION MODIFIÉE ---
+                // Vérifier si l'élément déposé est une pastille de couleur
+                if (!droppedElement.classList.contains('color-swatch-draggable')) {
+                    console.log('[variantManager] onAdd: Ignored drop. Item is NOT a color-swatch-draggable. Item:', droppedElement);
+                    // Si l'élément n'est pas une pastille, cette instance Sortable ne doit pas le gérer.
+                    // On retire l'élément du DOM cible si cette instance l'y a ajouté.
+                    // Cela permet à l'instance Sortable de sortableManager de gérer le déplacement.
+                    if (droppedElement.parentElement === targetContainer) {
+                        targetContainer.removeChild(droppedElement); // Retire l'élément indésirable
+                        // Important: Il faut aussi le remettre dans son conteneur d'origine si possible,
+                        // ou notifier l'autre Sortable. C'est la partie délicate.
+                        // Pour l'instant, le simple retrait pourrait suffire si sortableManager
+                        // gère le "fallback" ou si l'utilisateur le redrag.
+                        // Alternative: on peut essayer de forcer un "revert" via les options de groupe
+                        // ou en dispatchant un événement que l'autre sortable écoute.
+                        // Pour le moment, on se contente de retirer et de loguer.
+                         console.warn('[variantManager] Element non-pastille retiré de la cible. Le drag original d\'image devrait être géré par sortableManager.');
+                    }
+                    return; // Ne pas traiter plus loin dans cette fonction
+                }
+                // --- FIN DE LA SECTION MODIFIÉE ---
+            
+                // Si on arrive ici, droppedElement EST une pastille de couleur
+                const droppedSwatchElement = droppedElement;
+                let targetImageElement = evt.target; // L'élément HTML réel sous la souris lors du drop
+            
                 // Traverse up if the event.target is an inner element of the draggable item
                 if (!targetImageElement.matches('.carousel-image-container, .thumbnail-wrapper')) {
                     targetImageElement = targetImageElement.closest('.carousel-image-container, .thumbnail-wrapper');
                 }
-
-                console.log('[variantManager] onAdd - Dropped swatch:', droppedSwatchElement, 'onto target image element:', targetImageElement, 'in container:', targetContainer);
-
+            
+                console.log('[variantManager] onAdd - Processing DRAGGED SWATCH:', droppedSwatchElement, 'onto target image element:', targetImageElement, 'in container:', targetContainer);
+            
                 if (!targetImageElement || (!targetImageElement.dataset.imageId && !targetImageElement.closest('[data-image-id]'))) {
                     console.error('[variantManager] Could not determine target image ID for the dropped swatch.');
                     droppedSwatchElement.remove(); // Remove the clone
-                    updateStatus('Erreur: Cible de dépôt invalide.', 'error');
+                    updateStatus('Erreur: Cible de dépôt invalide pour la pastille.', 'error');
+                    // Remettre la pastille dans la source si possible
+                    renderAvailableSwatches(); // Pour reconstruire la liste des pastilles si une a été retirée par erreur
                     return;
                 }
-
-                // Ensure targetImageElement is the one with data-image-id
+                
                 if (!targetImageElement.dataset.imageId) {
                     targetImageElement = targetImageElement.closest('[data-image-id]');
                 }
-                 if (!targetImageElement) {
-                    console.error('[variantManager] CRITICAL: Still could not determine target image ID element.');
+                if (!targetImageElement) {
+                    console.error('[variantManager] CRITICAL: Still could not determine target image ID element for swatch drop.');
                     droppedSwatchElement.remove();
+                    renderAvailableSwatches();
                     return;
                 }
-
-
+            
                 const targetImageId = targetImageElement.dataset.imageId;
-                const newColorData = { // Extract from the dropped swatch
+                const newColorData = {
                     colorSlug: droppedSwatchElement.dataset.colorSlug,
                     colorHex: droppedSwatchElement.dataset.colorHex,
                     termId: droppedSwatchElement.dataset.termId,
                     termName: droppedSwatchElement.dataset.termName
                 };
-
+            
                 console.log(`[variantManager] Assigning color ${newColorData.termName} (slug: ${newColorData.colorSlug}) to image ID ${targetImageId}`);
-
-                // --- Conflict Resolution & State Update Logic ---
-
-                // 1. What color was I_target (targetImageId) previously assigned?
+            
+                // --- Logique de Conflit & Mise à Jour d'État (reste la même) ---
                 let oldColorSlugForTargetImage = null;
                 if (currentImageColorMappings.has(targetImageId)) {
                     oldColorSlugForTargetImage = currentImageColorMappings.get(targetImageId).colorSlug;
                 }
-
-                // 2. What image was newColorData.colorSlug previously assigned to?
+            
                 let oldImageIdForNewColor = null;
                 for (const [imgId, colorMap] of currentImageColorMappings.entries()) {
                     if (colorMap.colorSlug === newColorData.colorSlug) {
@@ -310,57 +332,38 @@ function configureSortableForColorSwatches(allImageDataRef) { // Pass allImageDa
                         break;
                     }
                 }
-
-                // --- Perform updates ---
-
-                // A. If targetImageId was previously assigned oldColorSlugForTargetImage
+                
                 if (oldColorSlugForTargetImage && oldColorSlugForTargetImage !== newColorData.colorSlug) {
                     console.log(`[variantManager] Image ${targetImageId} was previously ${oldColorSlugForTargetImage}. Dissociating old color.`);
-                    currentImageColorMappings.delete(targetImageId); // Tentatively remove, will be replaced or stay deleted if new color is same
+                    // currentImageColorMappings.delete(targetImageId); // Déjà géré ou sera écrasé
                     const oldTermData = productVariantColorData.terms.find(t => t.value === oldColorSlugForTargetImage);
                     if (oldTermData && !availableColorTerms.some(t => t.value === oldTermData.value)) {
                         availableColorTerms.push(oldTermData);
                     }
-                    // Update allImageData (app.js owns this, so we need a way to signal or update it)
                     const imgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
                     if (imgInAllData) imgInAllData.assigned_variant_color_slug = null;
-                    // UI for oldColorSlugForTargetImage on targetImageId will be overwritten by new one or removed if newColor is same
+                    // Pas besoin de removeColorSwatchIndicator ici, car on va mettre le nouveau.
                 }
-
-                // B. If newColorData.colorSlug was previously assigned to oldImageIdForNewColor
+            
                 if (oldImageIdForNewColor && oldImageIdForNewColor !== targetImageId) {
                     console.log(`[variantManager] Color ${newColorData.colorSlug} was previously on image ${oldImageIdForNewColor}. Dissociating from old image.`);
                     currentImageColorMappings.delete(oldImageIdForNewColor);
                     removeColorSwatchIndicator(oldImageIdForNewColor);
-                    // Update allImageData
                     const oldImgInAllData = allImageDataRef.find(img => img.id.toString() === oldImageIdForNewColor);
                     if (oldImgInAllData) oldImgInAllData.assigned_variant_color_slug = null;
                 }
-
-                // C. Establish the new assignment
-                currentImageColorMappings.set(targetImageId, {
-                    colorSlug: newColorData.colorSlug,
-                    colorHex: newColorData.colorHex,
-                    termId: newColorData.termId,
-                    termName: newColorData.termName
-                });
-                // Update allImageData
+            
+                currentImageColorMappings.set(targetImageId, { ...newColorData });
                 const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
                 if (targetImgInAllData) {
                     targetImgInAllData.assigned_variant_color_slug = newColorData.colorSlug;
                 }
-
+            
                 renderColorSwatchIndicator(targetImageId, newColorData);
-
-                // D. Update availableColorTerms list
                 availableColorTerms = availableColorTerms.filter(term => term.value !== newColorData.colorSlug);
-
-                // E. Refresh the list of draggable swatches in the UI
                 renderAvailableSwatches();
-
-                // F. Remove the cloned swatch element from the DOM (it's now represented by the indicator)
-                droppedSwatchElement.remove();
-
+                droppedSwatchElement.remove(); // Supprime le clone de la pastille
+            
                 console.log('[variantManager] Updated currentImageColorMappings:', currentImageColorMappings);
                 console.log('[variantManager] Updated availableColorTerms:', availableColorTerms.map(t=>t.value));
                 updateStatus(`Couleur ${newColorData.termName} assignée à l'image ID ${targetImageId}.`, 'success');
