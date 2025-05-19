@@ -243,7 +243,17 @@ function configureSortableForColorSwatches(allImageDataRef) { // Pass allImageDa
         const instance = new Sortable(containerElement, {
             group: {
                 name: 'image-targets', // Common group for all image targets
-                put: ['color-swatches'] // Accept items from 'color-swatches' group
+                put: function (to, from, dragEl, event) {
+                    // Accepter le dépôt seulement si l'élément glissé est une pastille de couleur
+                    const isColorSwatch = dragEl.classList.contains('color-swatch-draggable');
+                    if (isColorSwatch) {
+                        console.log('[variantManager] Group Put Function: Allowing drop of color swatch:', dragEl);
+                        return true; // Autoriser le dépôt de la pastille
+                    } else {
+                        console.log('[variantManager] Group Put Function: Preventing drop of non-color swatch (likely an image):', dragEl);
+                        return false; // Empêcher le dépôt si ce n'est pas une pastille de couleur
+                    }
+                } // Accept items from 'color-swatches' group
             },
             animation: 150,
             draggable: '.carousel-image-container, .thumbnail-wrapper', // Specify what can be sorted *within* these lists (image reordering)
