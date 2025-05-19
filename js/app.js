@@ -822,6 +822,14 @@ const fetchProductData = async () => {
                      if(container) container.style.display = 'none';
                  }
             }
+            
+            // Initialiser SortableJS pour les images AVANT, pour que les placeholders soient créés
+            initializeSortableManager(
+                allImageData, 
+                handleSettingsClick, 
+                handleMarkForDeletionClick,
+                variantManager.refreshIndicatorForImage // Passer la fonction en callback
+            );
 
             // Stocker le slug du premier attribut de couleur trouvé (s'il y en a un)
             if (parsedVariantColorAttributes && parsedVariantColorAttributes.length > 0 && parsedVariantColorAttributes[0].attribute_slug) {
@@ -831,14 +839,6 @@ const fetchProductData = async () => {
                 currentSystemColorAttributeSlug = null; // Assurer qu'il est null s'il n'est pas trouvé
                 console.log('app.js: Aucun slug d\'attribut de couleur système trouvé/stocké.');
             }
-            
-            // Initialiser SortableJS pour les images AVANT, pour que les placeholders soient créés
-            initializeSortableManager(
-                allImageData, 
-                handleSettingsClick, 
-                handleMarkForDeletionClick,
-                variantManager.refreshIndicatorForImage // Passer la fonction en callback
-            );
             
             // Appeler l'initialisation du gestionnaire de variantes ENSUITE
             variantManager.initVariantColorSwatches(parsedVariantColorAttributes, allImageData);
