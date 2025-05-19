@@ -11,9 +11,6 @@ import {
 } from './dom.js';
 
 import { updateStatus } from './uiUtils.js';
-// Import SortableJS if you plan to initialize Sortable for swatches from this module.
-// Otherwise, Sortable initialization might be coordinated from app.js or sortableManager.js
-import Sortable from 'sortablejs'; // Assurez-vous que le chemin est correct si vous l'importez directement
 
 console.log('variantManager.js module loaded');
 
