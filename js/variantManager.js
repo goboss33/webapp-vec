@@ -434,6 +434,6 @@ export function getVariantColorMappings() {
             });
         });
     }
-    console.log('[variantManager] getVariantColorMappings executed. Mappings to save:', mappings);
+    console.log('[variantManager] getVariantColorMappings executed. Mappings to save:', JSON.parse(JSON.stringify(mappings)));
     return mappings;
 }
