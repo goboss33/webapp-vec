@@ -501,6 +501,27 @@ async function handleGenerateMockup() {
     await callExecuteConfirmedActionWithUiManagement('new');
 }
 
+async function handleReplaceBackground() {
+    const imageToProcess = getCurrentModalImage(); // Fonction de modalManager.js
+    if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
+        updateStatus("Aucune image sélectionnée pour remplacer le fond.", "error");
+        console.error("handleReplaceBackground: imageToProcess invalide ou manquante.", imageToProcess);
+        return;
+    }
+
+    console.log(`Préparation pour le remplacement du fond (ID Image Produit: ${imageToProcess.id}).`);
+
+    currentEditActionContext = { // currentEditActionContext est global dans app.js
+        type: 'replaceBackground', // Nouveau type d'action
+        imageData: imageToProcess,
+        payloadData: {} // Pas de données spécifiques au payload ici, N8N s'occupera du reste
+    };
+
+    console.log('[APP.JS] handleReplaceBackground - Context DÉFINI:', JSON.parse(JSON.stringify(currentEditActionContext)));
+    // Appel direct à la version orchestrée avec gestion UI, en mode 'new'
+    await callExecuteConfirmedActionWithUiManagement('new');
+}
+
 function showEditActionConfirmation() {
     if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'flex';
     // Optionnel: cacher les boutons d'action principaux de la modale pendant ce choix
