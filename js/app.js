@@ -26,6 +26,10 @@ import { startCropper, cancelCropper as cancelCropperFromManager, validateCropDa
 console.log('app.js: Cropper manager functions imported.');
 
 import * as actionsManager from './actionsManager.js';
+console.log('app.js: Actions manager functions imported.');
+
+import * as variantManager from './variantManager.js';
+console.log('app.js: Variant manager functions imported.');
 
 // --- Variables Globales ---
 let currentProductId = null;
@@ -801,35 +805,43 @@ const fetchProductData = async () => {
         if (data.images && Array.isArray(data.images)) {
             allImageData = data.images; // Stocker
 
-            // === BLOC DE PEUPLEMENT INITIAL À SUPPRIMER DE APP.JS ===
-            // if (allImageData.length > 0) {
-            //     imageCarousel.innerHTML = ''; // Vider "Chargement..."
-
-            //     // Priorité pour placement initial
-            //     const rolePriority = ['main', 'gallery', 'custom'];
-
-            //     allImageData.forEach(image => {
-            //         let placed = false;
-            //         for (const role of rolePriority) {
-            //             if (image.uses.includes(role)) {
-            //                 // ... (logique de placement) ...
-            //                  if (canPlace && container) {
-            //                      container.appendChild(createThumbnail(image, role)); // APPEL SUPPRIMÉ
-            //                      placed = true;
-            //                      break; 
-            //                  }
-            //             }
-            //         }
-            //         // Si non placé dans une zone, mettre dans le carousel
-            //         if (!placed) {
-            //             imageCarousel.appendChild(createCarouselItem(image)); // APPEL SUPPRIMÉ
-            //         }
-            //     });
-            // } else { // Ce else est pour if (allImageData.length > 0)
-            //     imageCarousel.innerHTML = '<p>Aucune image disponible.</p>'; // Géré par sortableManager
-            //     updateStatus("Aucune image trouvée.", 'info');
-            // }
-            // === FIN DU BLOC DE PEUPLEMENT INITIAL À SUPPRIMER ===
+            // Préparer les données pour variantManager
+            let parsedVariantColorAttributes = [];
+            if (data.variantColorAttributes) {
+                if (typeof data.variantColorAttributes === 'string') {
+                    try {
+                        parsedVariantColorAttributes = JSON.parse(data.variantColorAttributes);
+                        console.log('app.js: variantColorAttributes (string) parsed successfully:', parsedVariantColorAttributes);
+                    } catch (e) {
+                        console.error('app.js: Failed to parse variantColorAttributes string:', e);
+                        updateStatus('Erreur format données couleurs variantes.', 'error');
+                        // Vous pourriez vouloir cacher la section des couleurs ici ou afficher un message spécifique
+                        if (variantManager.variantColorAssignmentContainer) { // Accès direct au DOM element via dom.js si exporté ou via variantManager
+                            const container = document.getElementById('variant-color-assignment-container');
+                            if(container) container.style.display = 'none';
+                        }
+                    }
+                } else if (Array.isArray(data.variantColorAttributes)) {
+                    parsedVariantColorAttributes = data.variantColorAttributes;
+                    console.log('app.js: variantColorAttributes is already an array:', parsedVariantColorAttributes);
+                } else {
+                    console.warn('app.js: variantColorAttributes is neither a string nor an array. Type:', typeof data.variantColorAttributes);
+                     if (variantManager.variantColorAssignmentContainer) {
+                         const container = document.getElementById('variant-color-assignment-container');
+                         if(container) container.style.display = 'none';
+                     }
+                }
+            } else {
+                console.log('app.js: No variantColorAttributes found in data.');
+                 if (variantManager.variantColorAssignmentContainer) {
+                     const container = document.getElementById('variant-color-assignment-container');
+                     if(container) container.style.display = 'none';
+                 }
+            }
+            
+            // Appeler l'initialisation du gestionnaire de variantes
+            // avec les attributs parsés et la référence à allImageData
+            variantManager.initVariantColorSwatches(parsedVariantColorAttributes, allImageData);
 
             // Initialiser SortableJS seulement APRÈS avoir stocké les données et (avant) peuplé le DOM
             initializeSortableManager(allImageData, handleSettingsClick, handleMarkForDeletionClick); // Cet appel reste
