@@ -144,35 +144,43 @@ function renderAvailableSwatches() {
  */
 // Dans variantManager.js
 export function renderColorSwatchIndicator(imageId, colorData) {
-    // Condition plus flexible pour accepter soit 'value' soit 'colorSlug' pour le slug,
-    // et soit 'name' soit 'termName' pour le nom.
-    const slug = colorData.value || colorData.colorSlug;
-    const name = colorData.name || colorData.termName;
-    const hex = colorData.hex || colorData.colorHex; // Accepter aussi colorHex
+    console.log(`[variantManager] renderColorSwatchIndicator CALLED for imageId: ${imageId}. Raw colorData:`, JSON.parse(JSON.stringify(colorData)));
 
-    if (!hex || !slug) { // On a besoin au moins du hex et du slug (qui sert pour dataset)
-        console.error('[variantManager] Invalid colorData for renderColorSwatchIndicator. HEX and (value/colorSlug) are required.', JSON.parse(JSON.stringify(colorData)));
-        // Retirer tout indicateur existant si les données sont invalides pour éviter un état incohérent
-        removeColorSwatchIndicator(imageId);
+    if (!colorData) {
+        console.error(`[variantManager] renderColorSwatchIndicator: colorData is NULL or UNDEFINED for imageId ${imageId}.`);
+        removeColorSwatchIndicator(imageId); // Assurer le nettoyage
         return;
     }
 
-    // Utiliser le nom disponible, sinon le slug comme fallback pour le titre
-    const displayName = name || slug;
+    const slug = colorData.value || colorData.colorSlug;
+    const name = colorData.name || colorData.termName;
+    const hexValue = colorData.hex || colorData.colorHex; // Renommé pour clarté
 
-    console.log(`[variantManager] Rendering indicator for image ${imageId}, color <span class="math-inline">\{displayName\} \(</span>{hex}), slug ${slug}`);
+    // Logs de débogage critiques :
+    console.log(`[variantManager] renderColorSwatchIndicator - For imageId ${imageId}:`);
+    console.log(`  Attempted slug from colorData.value: "${colorData.value}", from colorData.colorSlug: "${colorData.colorSlug}" -> RESULTING slug: "${slug}"`);
+    console.log(`  Attempted hex from colorData.hex: "${colorData.hex}", from colorData.colorHex: "${colorData.colorHex}" -> RESULTING hexValue: "${hexValue}"`);
+    console.log(`  Is !hexValue true? ${!hexValue}. Is !slug true? ${!slug}. Combined condition: ${!hexValue || !slug}`);
+
+    if (!hexValue || !slug) {
+        console.error(`[variantManager] FINAL CHECK FAILED for imageId ${imageId}: Invalid colorData. hexValue="${hexValue}", slug="${slug}"`, JSON.parse(JSON.stringify(colorData)));
+        removeColorSwatchIndicator(imageId);
+        return;
+    }
+    
+    const displayName = name || slug;
+    // console.log(`[variantManager] Rendering indicator for image ${imageId}, color ${displayName} (${hexValue}), slug ${slug}`); // Ce log est bon, mais peut être redondant si les précédents sont clairs
 
     const placeholders = document.querySelectorAll(`.image-color-indicator-placeholder[data-indicator-for-image-id="${imageId}"]`);
 
     if (placeholders.length === 0) {
-        // Ce log est utile s'il se produit de manière inattendue après l'initialisation.
-        // console.warn(`[variantManager] No placeholder found for image ID ${imageId} to render color indicator.`);
+        // console.warn(`[variantManager] No placeholder found for image ID ${imageId} during renderColorSwatchIndicator.`);
         return;
     }
 
     placeholders.forEach(placeholder => {
         placeholder.innerHTML = ''; 
-        placeholder.style.backgroundColor = hex;
+        placeholder.style.backgroundColor = hexValue;
         placeholder.title = `Couleur: ${displayName}`;
         placeholder.dataset.assignedColorSlug = slug; 
         placeholder.classList.add('active-indicator');
