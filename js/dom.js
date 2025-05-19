@@ -13,6 +13,7 @@ export let modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletion
 export let editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn;
 export let loadingOverlay;
 export let modalToggleSizeGuideBtn;
+export let variantColorAssignmentContainer, availableColorSwatchesContainer, variantColorAttributeNameElement;
 
 // Fonction pour initialiser toutes les références DOM
 export function initDomElements() {
@@ -67,6 +68,10 @@ export function initDomElements() {
     confirmActionReplaceBtn = document.getElementById('confirm-action-replace');
     confirmActionNewBtn = document.getElementById('confirm-action-new');
     confirmActionCancelBtn = document.getElementById('confirm-action-cancel');
+
+    variantColorAssignmentContainer = document.getElementById('variant-color-assignment-container');
+    availableColorSwatchesContainer = document.getElementById('available-color-swatches');
+    variantColorAttributeNameElement = document.getElementById('variant-color-attribute-name');
 
     console.log('dom.js: DOM elements initialized.');
 }
