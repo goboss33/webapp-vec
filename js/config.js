@@ -9,4 +9,4 @@ export const N8N_CROP_IMAGE_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/we
 export const N8N_REMOVE_WATERMARK_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/remove-watermark';
 export const N8N_GENERATE_MOCKUP_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/create-mockup';
 
-export const N8N_REPLACE_BACKGROUND_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/remove-watermark'; // TEMP: Utilise le même que Mockup
+export const N8N_REPLACE_BACKGROUND_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/replace-background';
