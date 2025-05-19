@@ -192,9 +192,6 @@ function handleThumbnailRemoveClickInternal(event) {
             const carouselItem = createCarouselItem(originalImageData); // Utilise le createCarouselItem interne
             imageCarousel.appendChild(carouselItem);
             console.log(`sortableManager.js: Image ID=${imageId} retournée au carousel.`);
-            if (typeof onRefreshIndicatorCallback === 'function') {
-                onRefreshIndicatorCallback(originalImageData.id);
-            }
         } else {
             console.log(`sortableManager.js: Image ID=${imageId} déjà présente dans le carousel.`);
         }
@@ -390,11 +387,8 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
                             if (targetContainer.contains(addedElementInDom)) {
                                 targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
                             } else {
-                                targetContainer.innerHTML = ''; 
                                 targetContainer.appendChild(thumbnailWrapper);
-                            }
-                            if (typeof onRefreshIndicatorCallback === 'function') {
-                                onRefreshIndicatorCallback(originalImageData.id); // ou droppedImageId
+                                if (addedElementInDom.parentElement) addedElementInDom.remove();
                             }
                         } else { 
                             console.error(`sortableManager.js [onAdd Main] Données image non trouvées pour ID ${droppedImageId}.`);
