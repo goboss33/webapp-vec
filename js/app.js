@@ -839,12 +839,11 @@ const fetchProductData = async () => {
                  }
             }
             
-            // Appeler l'initialisation du gestionnaire de variantes
-            // avec les attributs parsés et la référence à allImageData
+            // Initialiser SortableJS pour les images AVANT, pour que les placeholders soient créés
+            initializeSortableManager(allImageData, handleSettingsClick, handleMarkForDeletionClick);
+            
+            // Appeler l'initialisation du gestionnaire de variantes ENSUITE
             variantManager.initVariantColorSwatches(parsedVariantColorAttributes, allImageData);
-
-            // Initialiser SortableJS seulement APRÈS avoir stocké les données et (avant) peuplé le DOM
-            initializeSortableManager(allImageData, handleSettingsClick, handleMarkForDeletionClick); // Cet appel reste
 
             updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
         } else { // Ce else est pour if (data.images && Array.isArray(data.images))
