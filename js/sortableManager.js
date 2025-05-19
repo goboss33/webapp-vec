@@ -317,153 +317,145 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
             group: 'shared',
             pull: true,
             animation: 150,
+            // Dans sortableManager.js, dans la boucle dropZoneElements.forEach(...)
+            // Remplacez l'intégralité de la fonction onAdd existante par celle-ci :
             onAdd: function (evt) {
-                const itemEl = evt.item; 
+                const itemEl = evt.item; // L'élément glissé, ex: .carousel-image-container
                 const droppedImageId = itemEl.dataset.imageId;
-                const targetContainer = evt.to; 
-                const currentRole = role; 
-                const currentMaxImages = maxImages; 
-
+                const targetContainer = evt.to; // Le .thumbnail-container de la zone de dépôt
+                const currentRole = role; // 'role' est de la portée externe (main, gallery, custom)
+                const currentMaxImages = maxImages; // 'maxImages' aussi
+            
                 console.log(`sortableManager.js [onAdd ${currentRole}] ID ${droppedImageId} déposé. Enfants avant modif: ${targetContainer.children.length}`);
-
-                let addedElementInDom = Array.from(targetContainer.children).find(child => child.dataset.imageId === droppedImageId);
-                if (!addedElementInDom) {
-                    if (itemEl && itemEl.dataset.imageId === droppedImageId){
-                        addedElementInDom = itemEl; 
-                        console.warn(`sortableManager.js [onAdd ${currentRole}] Impossible de trouver l'élément ajouté comme enfant direct. Utilisation de evt.item.`);
-                    } else {
-                        console.error(`sortableManager.js [onAdd ${currentRole}] CRITICAL: Impossible de retrouver l'élément DOM ajouté (ID: ${droppedImageId})`);
-                        if (itemEl && itemEl.parentNode === targetContainer) itemEl.remove();
-                        updateStatus(`Erreur interne lors du dépôt de l'image ${droppedImageId}.`, 'error');
-                        return; 
-                    }
-                }
-
+            
+                // evt.item est l'élément DOM qui a été ajouté à targetContainer par SortableJS.
+                // Il est déjà physiquement dans targetContainer à ce stade.
+                let addedElementInDom = itemEl; 
+            
+                // Vérification de doublon (basée sur l'ID de l'image)
                 let duplicateCount = 0;
                 Array.from(targetContainer.children).forEach(child => {
+                    // On compte combien d'enfants (y compris celui qu'on vient d'ajouter) ont cet ID.
+                    // Si addedElementInDom est bien celui qui vient d'être ajouté, on s'attend à duplicateCount >= 1.
                     if (child.dataset.imageId === droppedImageId) {
                         duplicateCount++;
                     }
                 });
-
-                if (duplicateCount > 1) {
-                    console.log("sortableManager.js -> Doublon détecté après ajout, retrait de l'élément ajouté.");
-                    addedElementInDom.remove(); 
+            
+                if (duplicateCount > 1) { // Si > 1, cela signifie qu'il était déjà là AVANT cet ajout
+                    console.log(`sortableManager.js -> Doublon détecté pour ID ${droppedImageId} dans ${currentRole}. Retrait de l'élément ajouté.`);
+                    addedElementInDom.remove(); // Retirer l'élément qui vient d'être ajouté en double
                     updateStatus(`Image ${droppedImageId} déjà présente dans la zone ${currentRole}.`, 'warn');
-                    if (itemEl.classList.contains('carousel-image-container')) {
-                        const originalImageData = currentAllImageData.find(img => img.id.toString() === droppedImageId);
-                        if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
-                            imageCarousel.appendChild(createCarouselItem(originalImageData));
+                    // Pas besoin de remettre dans le carrousel ici, car l'original y est toujours (si pull: 'clone' pour carrousel)
+                    // ou si l'utilisateur l'a pris d'une autre zone, il y est toujours.
+                    // Si le carrousel n'est pas en mode clone, il faudrait le recréer ici.
+                    // Le carrousel est en mode pull:true, put:false (pas clone). Donc l'item est retiré du carrousel.
+                    // Il faut le recréer dans le carrousel si le drop est invalide ici.
+                    const originalImageDataForDup = currentAllImageData.find(img => img.id.toString() === droppedImageId);
+                    if (originalImageDataForDup && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
+                        const carouselItem = createCarouselItem(originalImageDataForDup);
+                        imageCarousel.appendChild(carouselItem);
+                        if (typeof onRefreshIndicatorCallback === 'function') { // Rafraîchir l'indicateur sur le nouvel item du carrousel
+                            onRefreshIndicatorCallback(originalImageDataForDup.id);
                         }
                     }
                     return; 
                 }
-
-                // Logique Spécifique au Rôle (main, custom, gallery)
+            
+                // Logique Spécifique au Rôle et Transformation
+                let thumbnailWrapper = null;
+                const originalImageData = currentAllImageData.find(img => img.id.toString() === droppedImageId);
+            
+                if (!originalImageData) {
+                    console.error(`sortableManager.js [onAdd ${currentRole}] Données image originales non trouvées pour ID ${droppedImageId}. Retrait.`);
+                    addedElementInDom.remove();
+                    updateStatus(`Erreur données image ${droppedImageId}.`, 'error');
+                    return;
+                }
+            
                 if (currentRole === 'main') {
                     console.log("sortableManager.js -> Logique 'main': Nettoyage et remplacement.");
-                    const elementsToRemove = Array.from(targetContainer.children).filter(child => child !== addedElementInDom);
-                    elementsToRemove.forEach(child => {
-                        const childImageId = child.dataset.imageId;
-                        console.log(`sortableManager.js     -> Retrait de l'ID ${childImageId}`);
-                        const oldImageData = currentAllImageData.find(img => img.id.toString() === childImageId);
-                        if (oldImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${childImageId}"]`)) {
-                            console.log(`sortableManager.js       -> Retour au carrousel pour ID: ${childImageId}`);
-                            imageCarousel.appendChild(createCarouselItem(oldImageData));
-                        }
-                        child.remove();
-                    });
-
-                    if (addedElementInDom.classList.contains('carousel-image-container')) {
-                        const originalImageData = currentAllImageData.find(img => img.id.toString() === droppedImageId);
-                        if (originalImageData) {
-                            const thumbnailWrapper = createThumbnail(originalImageData, currentRole);
-                            if (targetContainer.contains(addedElementInDom)) {
-                                targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
-                            } else {
-                                targetContainer.appendChild(thumbnailWrapper);
-                                if (addedElementInDom.parentElement) addedElementInDom.remove();
+                    // Retirer tous les autres enfants du conteneur 'main'
+                    Array.from(targetContainer.children).forEach(child => {
+                        if (child !== addedElementInDom) { // Ne pas se retirer soi-même pour l'instant
+                            const childImageId = child.dataset.imageId;
+                            console.log(`sortableManager.js     -> Nettoyage: Retrait ID ${childImageId} de la zone 'main'.`);
+                            const oldImageData = currentAllImageData.find(img => img.id.toString() === childImageId);
+                            if (oldImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${childImageId}"]`)) {
+                                const carouselItem = createCarouselItem(oldImageData);
+                                imageCarousel.appendChild(carouselItem);
+                                if (typeof onRefreshIndicatorCallback === 'function') {
+                                    onRefreshIndicatorCallback(oldImageData.id);
+                                }
                             }
+                            child.remove();
+                        }
+                    });
+                    // Maintenant, targetContainer ne contient que addedElementInDom (ou est vide si addedElementInDom a été retiré par le nettoyage)
+                    // Il faut s'assurer que addedElementInDom est bien le .carousel-image-container
+                    if (addedElementInDom.classList.contains('carousel-image-container')) {
+                        thumbnailWrapper = createThumbnail(originalImageData, currentRole);
+                        targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
+                    } else { // Si ce n'est pas un item du carrousel (ex: déjà une vignette d'une autre zone)
+                        thumbnailWrapper = addedElementInDom; // C'est déjà une vignette, on la garde
+                        // Mettre à jour son titre si elle vient d'une autre zone
+                        const thumbImg = thumbnailWrapper.querySelector('.img-thumbnail');
+                        if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${currentRole}`;
+                        const removeBtn = thumbnailWrapper.querySelector('.remove-thumbnail-btn');
+                        if(removeBtn) removeBtn.title = `Retirer de ${currentRole}`;
+                    }
+                    updateStatus(`Image ${droppedImageId} définie comme principale.`, 'success');
+            
+                } else if (currentRole === 'custom') {
+                    console.log("sortableManager.js -> Logique 'custom'.");
+                    // Le nombre d'enfants est vérifié APRÈS l'ajout par SortableJS.
+                    // Si addedElementInDom est celui qui fait dépasser, targetContainer.children.length sera > currentMaxImages.
+                    if (targetContainer.children.length > currentMaxImages) {
+                        console.log(`sortableManager.js   -> Limite (${currentMaxImages}) atteinte pour 'custom'. Retrait de ID ${droppedImageId}.`);
+                        addedElementInDom.remove(); 
+                        updateStatus(`Limite de ${currentMaxImages} images atteinte pour galerie custom.`, 'warn');
+                        
+                        // Remettre l'item dans le carrousel
+                        if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
+                            const carouselItem = createCarouselItem(originalImageData);
+                            imageCarousel.appendChild(carouselItem);
                             if (typeof onRefreshIndicatorCallback === 'function') {
                                 onRefreshIndicatorCallback(originalImageData.id);
                             }
-                        } else { 
-                            console.error(`sortableManager.js [onAdd Main] Données image non trouvées pour ID ${droppedImageId}.`);
-                            if(addedElementInDom.parentNode === targetContainer) addedElementInDom.remove();
-                            updateStatus(`Erreur ajout image ${droppedImageId}.`, 'error');
-                        }
-                    } else if (addedElementInDom.classList.contains('thumbnail-wrapper')) {
-                        const thumbImg = addedElementInDom.querySelector('.img-thumbnail');
-                        if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${currentRole}`;
-                        const removeBtn = addedElementInDom.querySelector('.remove-thumbnail-btn');
-                        if(removeBtn) removeBtn.title = `Retirer de ${currentRole}`;
-                    } else {
-                         console.warn(`sortableManager.js [onAdd Main] L'élément ajouté (ID ${droppedImageId}) n'est ni du carrousel ni une vignette ?`);
-                        const originalImageData = currentAllImageData.find(img => img.id.toString() === droppedImageId);
-                        if (originalImageData) {
-                            const thumbnailWrapper = createThumbnail(originalImageData, currentRole);
-                            targetContainer.innerHTML = ''; 
-                            targetContainer.appendChild(thumbnailWrapper);
-                        } else {
-                            if(addedElementInDom.parentNode === targetContainer) addedElementInDom.remove();
-                        }
-                    }
-                    updateStatus(`Image ${droppedImageId} définie comme principale.`, 'success');
-
-                } else if (currentRole === 'custom') {
-                    console.log("sortableManager.js -> Logique 'custom'.");
-                    if (targetContainer.children.length > currentMaxImages) {
-                        console.log(`sortableManager.js   -> Limite (${currentMaxImages}) atteinte pour 'custom'. Retrait.`);
-                        addedElementInDom.remove(); 
-                        updateStatus(`Limite de ${currentMaxImages} images atteinte pour galerie custom.`, 'warn');
-                        /*if (itemEl.classList.contains('carousel-image-container')) {
-                            const originalImageData = currentAllImageData.find(img => img.id.toString() === droppedImageId);
-                            if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
-                                imageCarousel.appendChild(createCarouselItem(originalImageData));
-                            }
-                        }*/
-                        const originalImageData = currentAllImageData.find(img => img.id.toString() === droppedImageId);
-                        if (originalImageData && imageCarousel && !imageCarousel.querySelector(`.carousel-image-container[data-image-id="${droppedImageId}"]`)) {
-                            imageCarousel.appendChild(createCarouselItem(originalImageData)); // createCarouselItem est interne au module
-                            console.log(`sortableManager.js     -> Image ID ${droppedImageId} retournée au carrousel car zone custom pleine.`);
+                            console.log(`sortableManager.js     -> Image ID ${droppedImageId} retournée au carrousel.`);
                         }
                         return; 
                     } else {
                         if (addedElementInDom.classList.contains('carousel-image-container')) {
-                            const originalImageData = currentAllImageData.find(img => img.id.toString() === droppedImageId);
-                            if (originalImageData) {
-                                const thumbnailWrapper = createThumbnail(originalImageData, currentRole);
-                                targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
-                                if (typeof onRefreshIndicatorCallback === 'function') {
-                                    onRefreshIndicatorCallback(originalImageData.id);
-                                }
-                            } else { if(addedElementInDom.parentNode === targetContainer) addedElementInDom.remove(); }
-                        } else { 
-                            const thumbImg = addedElementInDom.querySelector('.img-thumbnail');
-                            if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${currentRole}`;
-                            const removeBtn = addedElementInDom.querySelector('.remove-thumbnail-btn');
-                            if(removeBtn) removeBtn.title = `Retirer de ${currentRole}`;
+                            thumbnailWrapper = createThumbnail(originalImageData, currentRole);
+                            targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
+                        } else { // Déjà une vignette
+                            thumbnailWrapper = addedElementInDom;
+                             const thumbImg = thumbnailWrapper.querySelector('.img-thumbnail');
+                             if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${currentRole}`;
+                             const removeBtn = thumbnailWrapper.querySelector('.remove-thumbnail-btn');
+                             if(removeBtn) removeBtn.title = `Retirer de ${currentRole}`;
                         }
                         updateStatus(`Image ${droppedImageId} ajoutée à la zone ${currentRole}.`, 'success');
                     }
                 } else { // currentRole === 'gallery'
                     console.log("sortableManager.js -> Logique 'gallery'.");
                     if (addedElementInDom.classList.contains('carousel-image-container')) {
-                        const originalImageData = currentAllImageData.find(img => img.id.toString() === droppedImageId);
-                        if (originalImageData) {
-                            const thumbnailWrapper = createThumbnail(originalImageData, currentRole);
-                            targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
-                            if (typeof onRefreshIndicatorCallback === 'function') {
-                                onRefreshIndicatorCallback(originalImageData.id);
-                            }
-                        } else { if(addedElementInDom.parentNode === targetContainer) addedElementInDom.remove(); }
-                    } else { 
-                        const thumbImg = addedElementInDom.querySelector('.img-thumbnail');
+                        thumbnailWrapper = createThumbnail(originalImageData, currentRole);
+                        targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
+                    } else { // Déjà une vignette
+                        thumbnailWrapper = addedElementInDom;
+                        const thumbImg = thumbnailWrapper.querySelector('.img-thumbnail');
                         if(thumbImg) thumbImg.title = `ID: ${droppedImageId}\nAssigné à: ${currentRole}`;
-                        const removeBtn = addedElementInDom.querySelector('.remove-thumbnail-btn');
+                        const removeBtn = thumbnailWrapper.querySelector('.remove-thumbnail-btn');
                         if(removeBtn) removeBtn.title = `Retirer de ${currentRole}`;
                     }
                     updateStatus(`Image ${droppedImageId} ajoutée à la zone ${currentRole}.`, 'success');
+                }
+            
+                // Appel du callback pour rafraîchir l'indicateur APRÈS que thumbnailWrapper est dans le DOM
+                if (thumbnailWrapper && typeof onRefreshIndicatorCallback === 'function') {
+                    onRefreshIndicatorCallback(droppedImageId); // ou originalImageData.id
                 }
                 console.log(`sortableManager.js -> Enfants final dans ${currentRole}: ${targetContainer.children.length}`);
             }, 
