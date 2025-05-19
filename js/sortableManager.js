@@ -78,6 +78,12 @@ function createCarouselItem(image) {
     buttonWrapper.appendChild(deleteBtn);
     container.appendChild(buttonWrapper);
 
+    const colorIndicatorPlaceholder = document.createElement('div');
+    colorIndicatorPlaceholder.className = 'image-color-indicator-placeholder';
+    // Cet attribut aidera à cibler le placeholder pour une image spécifique si besoin
+    colorIndicatorPlaceholder.dataset.indicatorForImageId = image.id;
+    container.appendChild(colorIndicatorPlaceholder);
+    
     if (sizeGuideIcon) {
         container.appendChild(sizeGuideIcon);
     }
@@ -113,6 +119,11 @@ function createThumbnail(image, targetRole) {
     container.appendChild(removeBtn);
     container.appendChild(settingsBtn);
 
+    const colorIndicatorPlaceholder = document.createElement('div');
+    colorIndicatorPlaceholder.className = 'image-color-indicator-placeholder';
+    colorIndicatorPlaceholder.dataset.indicatorForImageId = image.id;
+    container.appendChild(colorIndicatorPlaceholder);
+    
     if (image.uses && image.uses.includes('size_guide')) {
         const icon = document.createElement('span');
         icon.className = 'eih-item-icon size-guide-icon';
