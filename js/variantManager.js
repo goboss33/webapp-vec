@@ -167,6 +167,25 @@ export function renderColorSwatchIndicator(imageId, colorData) {
 }
 
 /**
+ * Re-renders the color swatch indicator for a specific image if it has an assigned color.
+ * @param {string|number} imageId The ID of the image.
+ */
+export function refreshIndicatorForImage(imageId) {
+    if (!imageId) return;
+    const imageIdStr = imageId.toString();
+
+    if (currentImageColorMappings.has(imageIdStr)) {
+        const colorData = currentImageColorMappings.get(imageIdStr);
+        console.log(`[variantManager] Refreshing indicator for image ${imageIdStr} with color ${colorData.termName}`);
+        renderColorSwatchIndicator(imageIdStr, colorData); // renderColorSwatchIndicator s'occupe de trouver les placeholders
+    } else {
+        // S'assurer qu'aucun indicateur n'est affiché si pas de mapping
+        // removeColorSwatchIndicator(imageIdStr); // Déjà fait par renderColorSwatchIndicator qui nettoie avant
+        console.log(`[variantManager] No color mapping for image ${imageIdStr}, no indicator to refresh.`);
+    }
+}
+
+/**
  * Removes the color indicator from a given image thumbnail or carousel item.
  * @param {string|number} imageId - The ID of the image element.
  */
