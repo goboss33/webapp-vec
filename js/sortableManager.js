@@ -19,6 +19,8 @@ let currentAllImageData = [];
 let onClickSettingsCallback = () => {};
 let onClickMarkForDeletionCallback = () => {};
 
+let onRefreshIndicatorCallback = () => {};
+
 
 // --- Fonctions de création d'éléments (internes au module) ---
 
@@ -83,10 +85,15 @@ function createCarouselItem(image) {
     // Cet attribut aidera à cibler le placeholder pour une image spécifique si besoin
     colorIndicatorPlaceholder.dataset.indicatorForImageId = image.id;
     container.appendChild(colorIndicatorPlaceholder);
-    
+
     if (sizeGuideIcon) {
         container.appendChild(sizeGuideIcon);
     }
+
+    if (typeof onRefreshIndicatorCallback === 'function') {
+        onRefreshIndicatorCallback(image.id); // Demander le rafraîchissement
+    }
+    
     return container;
 }
 
@@ -131,6 +138,10 @@ function createThumbnail(image, targetRole) {
         icon.title = 'Guide des tailles';
         container.appendChild(icon);
         container.classList.add('has-size-guide-icon');
+    }
+
+    if (typeof onRefreshIndicatorCallback === 'function') {
+        onRefreshIndicatorCallback(image.id); // Demander le rafraîchissement
     }
     return container;
 }
@@ -181,6 +192,9 @@ function handleThumbnailRemoveClickInternal(event) {
             const carouselItem = createCarouselItem(originalImageData); // Utilise le createCarouselItem interne
             imageCarousel.appendChild(carouselItem);
             console.log(`sortableManager.js: Image ID=${imageId} retournée au carousel.`);
+            if (typeof onRefreshIndicatorCallback === 'function') {
+                onRefreshIndicatorCallback(originalImageData.id);
+            }
         } else {
             console.log(`sortableManager.js: Image ID=${imageId} déjà présente dans le carousel.`);
         }
@@ -195,6 +209,7 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
     currentAllImageData = imageData; // Met à jour la référence aux données des images
     onClickSettingsCallback = settingsClickHandler;
     onClickMarkForDeletionCallback = markForDeletionClickHandler;
+    onRefreshIndicatorCallback = refreshIndicatorCb;
 
     console.log("sortableManager.js: Initializing with new image data. Count:", currentAllImageData.length);
 
@@ -377,6 +392,9 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
                             } else {
                                 targetContainer.innerHTML = ''; 
                                 targetContainer.appendChild(thumbnailWrapper);
+                            }
+                            if (typeof onRefreshIndicatorCallback === 'function') {
+                                onRefreshIndicatorCallback(originalImageData.id); // ou droppedImageId
                             }
                         } else { 
                             console.error(`sortableManager.js [onAdd Main] Données image non trouvées pour ID ${droppedImageId}.`);
