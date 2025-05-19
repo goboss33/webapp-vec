@@ -120,7 +120,8 @@ const handleSaveChanges = async () => {
         customGalleryImageIds: customGalleryImageIds,
         sizeGuideImageId: sizeGuideImageId, // **** AJOUTER CETTE LIGNE ****
         imageIdsToDelete: imageIdsToDelete,
-        variantColorMappings: variantColorMappings // **** AJOUTER CE CHAMP AU PAYLOAD ****
+        variantColorMappings: variantColorMappings, // **** AJOUTER CE CHAMP AU PAYLOAD ****
+        colorAttributeSlug: currentSystemColorAttributeSlug
     };
     console.log("Données envoyées à n8n:", payload);
 
@@ -820,6 +821,15 @@ const fetchProductData = async () => {
                      const container = document.getElementById('variant-color-assignment-container');
                      if(container) container.style.display = 'none';
                  }
+            }
+
+            // Stocker le slug du premier attribut de couleur trouvé (s'il y en a un)
+            if (parsedVariantColorAttributes && parsedVariantColorAttributes.length > 0 && parsedVariantColorAttributes[0].attribute_slug) {
+                currentSystemColorAttributeSlug = parsedVariantColorAttributes[0].attribute_slug;
+                console.log('app.js: Slug de l\'attribut de couleur système stocké :', currentSystemColorAttributeSlug);
+            } else {
+                currentSystemColorAttributeSlug = null; // Assurer qu'il est null s'il n'est pas trouvé
+                console.log('app.js: Aucun slug d\'attribut de couleur système trouvé/stocké.');
             }
             
             // Initialiser SortableJS pour les images AVANT, pour que les placeholders soient créés
