@@ -3,7 +3,8 @@ import {
     N8N_UPDATE_DATA_WEBHOOK_URL,
     N8N_CROP_IMAGE_WEBHOOK_URL,
     N8N_REMOVE_WATERMARK_WEBHOOK_URL,
-    N8N_GENERATE_MOCKUP_WEBHOOK_URL
+    N8N_GENERATE_MOCKUP_WEBHOOK_URL,
+    N8N_REPLACE_BACKGROUND_WEBHOOK_URL 
 } from './config.js';
 console.log('app.js main script loaded, N8N URLs imported.');
 
