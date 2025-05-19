@@ -959,3 +959,18 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     transform: scale(1.2);
     box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
 }
+
+/* --- Styles pour le feedback de drag des pastilles de couleur --- */
+body.dragging-color-swatch .carousel-image-container,
+body.dragging-color-swatch .thumbnail-wrapper {
+    outline: 2px dashed var(--tg-theme-button-color, #007bff); /* Surlignage quand on drague une pastille */
+    outline-offset: 2px;
+    cursor: grabbing; /* Ou une autre icône indiquant une cible de dépôt */
+}
+
+/* Optionnel: Style plus spécifique pour l'élément directement survolé */
+body.dragging-color-swatch .carousel-image-container:hover,
+body.dragging-color-swatch .thumbnail-wrapper:hover {
+    outline-style: solid;
+    background-color: rgba(0, 123, 255, 0.1); /* Léger fond bleu au survol */
+}
