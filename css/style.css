@@ -851,3 +851,111 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
 .action-btn.icon-btn:hover:not(:disabled).active-size-guide {
     background-color: #7A1CC0; /* Violet un peu plus foncé au survol si actif */
 }
+
+/* --- Styles pour la Gestion des Couleurs de Variantes --- */
+
+/* Conteneur de la section d'assignation des couleurs de variantes */
+#variant-color-assignment-container {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid var(--tg-theme-hint-color, #ddd);
+    border-radius: 5px;
+    background-color: var(--tg-theme-secondary-bg-color, #f9f9f9);
+}
+
+#variant-color-assignment-container h3 {
+    margin-top: 0; /* Ajustement pour le h3 dans ce conteneur */
+    margin-bottom: 10px;
+    font-size: 1em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+#variant-color-assignment-container h3 #variant-color-attribute-name {
+    font-weight: normal;
+    color: var(--tg-theme-text-color, #333);
+}
+
+/* Conteneur pour les pastilles de couleur disponibles */
+.available-swatches-container {
+    display: flex;
+    flex-wrap: wrap; /* Permet aux pastilles de passer à la ligne */
+    gap: 8px; /* Espace entre les pastilles */
+    padding: 10px;
+    min-height: 40px; /* Hauteur minimale même si vide */
+    border: 1px dashed var(--tg-theme-hint-color, #ccc);
+    border-radius: 4px;
+    background-color: var(--tg-theme-bg-color, #fff);
+}
+
+.no-swatches-message {
+    font-style: italic;
+    color: var(--tg-theme-hint-color, #777);
+    width: 100%;
+    text-align: center;
+}
+
+/* Style pour une pastille de couleur draggable */
+.color-swatch-draggable {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%; /* Cercle parfait */
+    border: 2px solid #fff; /* Petite bordure pour la démarquer si la couleur de fond est similaire */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    cursor: grab;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.7em; /* Pour un éventuel texte/initiale à l'intérieur */
+    color: white; /* Couleur du texte, à ajuster si vous mettez du texte */
+    transition: transform 0.1s ease-out;
+}
+.color-swatch-draggable:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Style pour le placeholder de l'indicateur de couleur sur les images */
+.image-color-indicator-placeholder {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 16px;  /* Taille de la pastille sur l'image */
+    height: 16px;
+    border-radius: 50%; /* Cercle */
+    border: 1px solid rgba(255, 255, 255, 0.7); /* Bordure claire pour la visibilité */
+    box-shadow: 0 0 3px rgba(0,0,0,0.5);
+    z-index: 5; /* Au-dessus de l'image mais sous les boutons de suppression/settings si besoin */
+    pointer-events: none; /* Pour ne pas interférer avec les clics sur l'image ou ses boutons */
+    background-color: transparent; /* Invisible par défaut */
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.image-color-indicator-placeholder.active-indicator {
+    opacity: 1; /* Rendre visible quand actif */
+    /* La background-color est définie par JavaScript */
+}
+
+/* Ajustement pour que le placeholder soit bien positionné sur les miniatures des zones de rôles */
+.thumbnail-wrapper .image-color-indicator-placeholder {
+    /* Les valeurs top/right/width/height de base devraient convenir, 
+       mais on peut les surcharger ici si nécessaire.
+       Par exemple, si les miniatures sont plus petites. */
+    width: 14px;
+    height: 14px;
+    top: 2px;
+    right: 2px;
+}
+
+/* Quand une pastille de couleur est en cours de drag (classe ajoutée par SortableJS) */
+.color-swatch-draggable.sortable-ghost {
+    opacity: 0.5;
+    background-color: #a0a0a0 !important; /* Rendre le fantôme gris */
+    border: 2px dashed #555;
+}
+.color-swatch-draggable.sortable-drag {
+    opacity: 0.9 !important; /* L'élément qui suit la souris */
+    transform: scale(1.2);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
+}
