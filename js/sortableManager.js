@@ -182,6 +182,9 @@ function handleThumbnailRemoveClickInternal(event) {
         if (!imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`)) {
             const carouselItem = createCarouselItem(originalImageData); // Utilise le createCarouselItem interne
             imageCarousel.appendChild(carouselItem);
+            if (typeof onRefreshIndicatorCallback === 'function') {
+                onRefreshIndicatorCallback(originalImageData.id);
+            }
             console.log(`sortableManager.js: Image ID=${imageId} retournée au carousel.`);
         } else {
             console.log(`sortableManager.js: Image ID=${imageId} déjà présente dans le carousel.`);
