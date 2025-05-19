@@ -381,6 +381,9 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
                                 targetContainer.appendChild(thumbnailWrapper);
                                 if (addedElementInDom.parentElement) addedElementInDom.remove();
                             }
+                            if (typeof onRefreshIndicatorCallback === 'function') {
+                                onRefreshIndicatorCallback(originalImageData.id);
+                            }
                         } else { 
                             console.error(`sortableManager.js [onAdd Main] Données image non trouvées pour ID ${droppedImageId}.`);
                             if(addedElementInDom.parentNode === targetContainer) addedElementInDom.remove();
@@ -428,6 +431,9 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
                             if (originalImageData) {
                                 const thumbnailWrapper = createThumbnail(originalImageData, currentRole);
                                 targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
+                                if (typeof onRefreshIndicatorCallback === 'function') {
+                                    onRefreshIndicatorCallback(originalImageData.id);
+                                }
                             } else { if(addedElementInDom.parentNode === targetContainer) addedElementInDom.remove(); }
                         } else { 
                             const thumbImg = addedElementInDom.querySelector('.img-thumbnail');
@@ -444,6 +450,9 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
                         if (originalImageData) {
                             const thumbnailWrapper = createThumbnail(originalImageData, currentRole);
                             targetContainer.replaceChild(thumbnailWrapper, addedElementInDom);
+                            if (typeof onRefreshIndicatorCallback === 'function') {
+                                onRefreshIndicatorCallback(originalImageData.id);
+                            }
                         } else { if(addedElementInDom.parentNode === targetContainer) addedElementInDom.remove(); }
                     } else { 
                         const thumbImg = addedElementInDom.querySelector('.img-thumbnail');
