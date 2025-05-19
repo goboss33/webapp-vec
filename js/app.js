@@ -113,6 +113,9 @@ const handleSaveChanges = async () => {
     const imageIdsToDelete = allImageData
         .filter(imgData => imgData.markedForDeletion === true)
         .map(imgData => imgData.id);
+
+    const variantColorMappings = variantManager.getVariantColorMappings();
+    
     console.log(`Images marquées pour suppression (IDs): ${imageIdsToDelete.join(', ') || 'Aucune'}`);
     // **** FIN AJOUT ****
     
@@ -122,26 +125,12 @@ const handleSaveChanges = async () => {
         galleryImageIds: galleryImageIds,
         customGalleryImageIds: customGalleryImageIds,
         sizeGuideImageId: sizeGuideImageId, // **** AJOUTER CETTE LIGNE ****
-        imageIdsToDelete: imageIdsToDelete // **** AJOUTER CE CHAMP AU PAYLOAD ****
+        imageIdsToDelete: imageIdsToDelete,
+        variantColorMappings: variantColorMappings // **** AJOUTER CE CHAMP AU PAYLOAD ****
     };
     console.log("Données envoyées à n8n:", payload);
 
     try {
-        //const response = await fetch(N8N_UPDATE_DATA_WEBHOOK_URL, {
-        //    method: 'POST',
-        //    headers: { 'Content-Type': 'application/json' },
-        //    body: JSON.stringify(payload)
-        //});
-        //if (!response.ok) {
-        //    let errorMsg = `Erreur serveur n8n: ${response.status}`;
-        //    try {
-        //        const errorData = await response.json();
-        //        errorMsg = errorData.message || JSON.stringify(errorData);
-        //    } catch (e) { console.warn("Impossible de parser la réponse d'erreur JSON de n8n."); }
-        //   throw new Error(errorMsg);
-        //}
-        //const result = await response.json();
-
         // NOUVELLE LIGNE : Appel à la fonction API
         const result = await saveChangesAPI(payload);
         
