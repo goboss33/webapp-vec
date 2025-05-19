@@ -96,11 +96,11 @@ export function initVariantColorSwatches(variantColorAttributes, allImageData) {
     // 3. Render draggable swatches for available colors
     renderAvailableSwatches();
 
-    // 4. TODO: Configure SortableJS for swatches and image targets (Steps 3.5, 3.6)
-    // This will be done in subsequent steps.
-
+    // 4. Configure SortableJS for swatches and image targets
+    configureSortableForColorSwatches(allImageData); // Pass the allImageData reference
+    
     console.log('[variantManager] initVariantColorSwatches END');
-}
+} // Fin de initVariantColorSwatches
 
 /**
  * Renders the draggable color swatches for unassigned colors.
