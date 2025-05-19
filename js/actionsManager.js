@@ -93,7 +93,7 @@ export async function executeConfirmedAction(
         webhookUrl = N8N_REMOVE_WATERMARK_WEBHOOK_URL;
     } else if (type === 'generateMockup') {
         webhookUrl = N8N_GENERATE_MOCKUP_WEBHOOK_URL;
-    } else if (type === 'replaceBackground') { // << NOUVELLE CONDITION ELSE IF
+    } else if (type === 'replaceBackground') {
         webhookUrl = N8N_REPLACE_BACKGROUND_WEBHOOK_URL;
     } else {
         console.error(`actionsManager.js: Type d'action inconnu lors de l'exécution: ${type}`);
