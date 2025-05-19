@@ -14,6 +14,7 @@ export let editActionConfirmationOverlay, confirmActionReplaceBtn, confirmAction
 export let loadingOverlay;
 export let modalToggleSizeGuideBtn;
 export let variantColorAssignmentContainer, availableColorSwatchesContainer, variantColorAttributeNameElement;
+export let modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameElement, modalDissociateColorBtn;
 
 // Fonction pour initialiser toutes les références DOM
 export function initDomElements() {
@@ -73,5 +74,9 @@ export function initDomElements() {
     availableColorSwatchesContainer = document.getElementById('available-color-swatches');
     variantColorAttributeNameElement = document.getElementById('variant-color-attribute-name');
 
+    modalImageAssignedColorIndicatorElement = document.getElementById('modal-image-assigned-color-indicator');
+    modalImageAssignedColorNameElement = document.getElementById('modal-image-assigned-color-name');
+    modalDissociateColorBtn = document.getElementById('modal-dissociate-color-btn');
+    
     console.log('dom.js: DOM elements initialized.');
 }
