@@ -906,6 +906,56 @@ document.addEventListener('DOMContentLoaded', () => {
             // ou un message bref, mais pour l'instant on empêche juste la fermeture.
         }
     });
+    if (modalDissociateColorBtn) {
+        modalDissociateColorBtn.addEventListener('click', (event) => {
+            const imageId = event.currentTarget.dataset.imageId;
+            const colorSlug = event.currentTarget.dataset.colorSlug;
+    
+            if (!imageId || !colorSlug) {
+                console.error("app.js: Missing imageId or colorSlug on dissociate button.");
+                return;
+            }
+    
+            console.log(`app.js: Clicked dissociate for imageId: ${imageId}, colorSlug: ${colorSlug}`);
+    
+            // Récupérer la référence à productVariantColorData stockée dans variantManager
+            // Cela suppose que variantManager expose ou a stocké cette donnée de manière accessible
+            // ou que app.js la stocke aussi. Pour l'instant, on va la passer.
+            // Il faudrait que variantManager.js stocke productVariantColorData dans une variable de module
+            // et ait un getter ou le passe à dissociateColorFromImage.
+            // La fonction dissociateColorFromImage a été définie pour prendre productVariantDataRef.
+    
+            // Accéder à la variable productVariantColorData de variantManager.
+            // Pour cela, il faudrait que variantManager l'expose ou que app.js la garde.
+            // Simplifions : variantManager.js utilise sa propre variable de module productVariantColorData.
+            const dissociationSuccess = variantManager.dissociateColorFromImage(
+                imageId, 
+                colorSlug, 
+                allImageData, // app.js a la référence à allImageData
+                variantManager.getProductVariantData() // Supposons que variantManager a une fonction pour retourner productVariantColorData
+            );
+    
+            if (dissociationSuccess) {
+                // Rafraîchir l'affichage de la modale pour l'image actuelle
+                // updateModalInfoFromManager prend (index, currentAllImageData)
+                // Nous avons besoin de l'index actuel de la modale. getCurrentModalImage ne donne pas l'index.
+                // modalManager doit exposer son moduleCurrentModalIndex ou une fonction de rafraîchissement direct.
+    
+                // Option 1: Si modalManager expose l'index (pas idéal)
+                // const currentIndex = modalManager.getCurrentModalIndex(); // Fonction hypothétique
+                // if (currentIndex !== null) {
+                // updateModalInfoFromManager(currentIndex, allImageData);
+                // }
+    
+                // Option 2 (préférable): modalManager a une fonction pour rafraîchir sa vue actuelle
+                // ou refreshCurrentModalViewDataFromManager (que nous avons déjà) fait l'affaire.
+                refreshCurrentModalViewDataFromManager(allImageData); 
+                // Cette fonction appelle updateModalInfo avec l'index courant et allImageData.
+                // Elle mettra à jour l'affichage de la couleur (qui devrait être "Aucune" maintenant)
+                // et cachera le bouton de dissociation.
+            }
+        });
+    }
 
     // Bouton Sauver (rôles)
     if (saveChangesButton) saveChangesButton.addEventListener('click', handleSaveChanges);
