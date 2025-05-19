@@ -410,3 +410,11 @@ export function dissociateColorFromImage(imageId, colorSlugToDissociate, allImag
     console.log(`[variantManager] Color '<span class="math-inline">\{colorSlugToDissociate\}' dissociated from image ID '</span>{imageIdStr}'. Mappings:`, currentImageColorMappings, "Available:", availableColorTerms.map(t=>t.value));
     return true; // Succès
 }
+
+/**
+ * Returns the stored productVariantColorData.
+ * @returns {Object|null} The product's main color attribute data.
+ */
+export function getProductVariantData() {
+    return productVariantColorData;
+}
