@@ -88,12 +88,7 @@ function createCarouselItem(image) {
 
     if (sizeGuideIcon) {
         container.appendChild(sizeGuideIcon);
-    }
-
-    if (typeof onRefreshIndicatorCallback === 'function') {
-        onRefreshIndicatorCallback(image.id); // Demander le rafraîchissement
-    }
-    
+    }    
     return container;
 }
 
@@ -138,10 +133,6 @@ function createThumbnail(image, targetRole) {
         icon.title = 'Guide des tailles';
         container.appendChild(icon);
         container.classList.add('has-size-guide-icon');
-    }
-
-    if (typeof onRefreshIndicatorCallback === 'function') {
-        onRefreshIndicatorCallback(image.id); // Demander le rafraîchissement
     }
     return container;
 }
