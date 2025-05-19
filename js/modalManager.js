@@ -3,6 +3,9 @@ import {
     modalOverlay, modalCloseBtn, modalSwiperContainer, modalSwiperWrapper,
     modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalImageInfo,
     modalMarkForDeletionBtn, modalToggleSizeGuideBtn,
+    modalImageAssignedColorIndicatorElement, 
+    modalImageAssignedColorNameElement, 
+    modalDissociateColorBtn,
     dropzoneMain, dropzoneGallery, dropzoneCustom // Pour construire modalImageList
 } from './dom.js';
 import { resetModalToActionView, updateStatus } from './uiUtils.js'; // resetModalToActionView est appelé par openImageModal
@@ -51,6 +54,80 @@ export function updateModalInfo(index, currentAllImageData) {
             };
             img.src = imageData.url;
         }
+
+        // --- DÉBUT DE LA NOUVELLE LOGIQUE POUR LA COULEUR ASSOCIEE ---
+        const imageFullData = currentAllImageData.find(img => img.id === imageData.id);
+        let assignedColorInfo = null;
+
+        if (imageFullData && imageFullData.assigned_variant_color_slug) {
+            // Trouver les détails de la couleur (hex, nom) depuis une source.
+            // Pour l'instant, on suppose que currentImageColorMappings de variantManager est la source de vérité,
+            // mais modalManager ne devrait pas y accéder directement.
+            // On va se baser sur assigned_variant_color_slug et essayer de trouver le terme dans variantColorAttributes
+            // que app.js pourrait nous passer, ou on stocke le hex/nom directement dans allImageData si possible.
+            // Pour l'instant, nous n'avons que le slug dans imageFullData.assigned_variant_color_slug.
+            // Il nous faut un moyen d'obtenir le HEX et le NOM à partir du slug.
+            //
+            // SOLUTION TEMPORAIRE (si app.js peut fournir productVariantColorData, ou si on stocke plus d'infos dans allImageData)
+            // Si vous avez accès à productVariantColorData (la structure complète des attributs couleurs) ici:
+            // const mainColorAttribute = productVariantColorData?.[0]; // Supposons le premier attribut couleur
+            // if (mainColorAttribute && mainColorAttribute.terms) {
+            // const termData = mainColorAttribute.terms.find(t => t.value === imageFullData.assigned_variant_color_slug);
+            // if (termData) {
+            // assignedColorInfo = { name: termData.name, hex: termData.hex, slug: termData.value };
+            // }
+            // }
+            //
+            // Pour l'instant, on va juste afficher le slug et mettre un placeholder pour le hex.
+            // Idéalement, app.js, en appelant updateModalInfo, devrait fournir le nom et le hex de la couleur
+            // en se basant sur currentImageColorMappings de variantManager.
+            //
+            // SIMPLIFICATION POUR L'INSTANT: On suppose qu'on n'a que le slug.
+            // La logique pour obtenir hex/nom sera ajoutée quand app.js orchestrera mieux.
+            // On va juste simuler pour voir les éléments s'afficher/se cacher.
+            // Vous devrez enrichir `imageData` ou `imageFullData` avec le nom et le hex de la couleur associée.
+            // Pour ce test, on va essayer de reconstruire l'info si on a accès à `currentImageColorMappings` via une astuce
+            // (NON RECOMMANDÉ EN PROD, mais pour avancer)
+            // C'est mieux si app.js passe cette info.
+            // ** Pour cette étape, on va supposer que `imageFullData` contient `assigned_color_name` et `assigned_color_hex` **
+            // ** Vous devrez les ajouter dans `variantManager` quand une couleur est assignée/dissociée à `allImageDataRef` **
+
+            assignedColorInfo = {
+                name: imageFullData.assigned_color_name || imageFullData.assigned_variant_color_slug, // Fallback au slug
+                hex: imageFullData.assigned_color_hex || '#ccc', // Fallback gris
+                slug: imageFullData.assigned_variant_color_slug
+            };
+        }
+
+
+        if (assignedColorInfo && assignedColorInfo.slug) {
+            if (modalImageAssignedColorIndicatorElement) {
+                modalImageAssignedColorIndicatorElement.style.backgroundColor = assignedColorInfo.hex;
+                modalImageAssignedColorIndicatorElement.style.display = 'inline-block';
+            }
+            if (modalImageAssignedColorNameElement) {
+                modalImageAssignedColorNameElement.textContent = assignedColorInfo.name;
+            }
+            if (modalDissociateColorBtn) {
+                modalDissociateColorBtn.style.display = 'inline-block';
+                modalDissociateColorBtn.dataset.imageId = imageData.id.toString(); // imageId pour la dissociation
+                modalDissociateColorBtn.dataset.colorSlug = assignedColorInfo.slug; // slug pour la dissociation
+            }
+        } else {
+            if (modalImageAssignedColorIndicatorElement) {
+                modalImageAssignedColorIndicatorElement.style.backgroundColor = 'transparent';
+                modalImageAssignedColorIndicatorElement.style.display = 'none';
+            }
+            if (modalImageAssignedColorNameElement) {
+                modalImageAssignedColorNameElement.textContent = 'Aucune';
+            }
+            if (modalDissociateColorBtn) {
+                modalDissociateColorBtn.style.display = 'none';
+                modalDissociateColorBtn.removeAttribute('data-image-id');
+                modalDissociateColorBtn.removeAttribute('data-color-slug');
+            }
+        }
+        // --- FIN DE LA NOUVELLE LOGIQUE POUR LA COULEUR ASSOCIEE ---
 
         if (modalToggleSizeGuideBtn) {
             const imageInAllData = currentAllImageData.find(imgData => imgData.id === imageData.id);
