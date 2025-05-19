@@ -75,6 +75,9 @@ export function initVariantColorSwatches(variantColorAttributes, allImageData) {
                     termId: term.term_id,
                     termName: term.name
                 });
+                // Enrichir l'objet image dans allImageData pour modalManager
+                image.assigned_color_name = term.name; // << NOUVELLE LIGNE
+                image.assigned_color_hex = term.hex;   // << NOUVELLE LIGNE
                 renderColorSwatchIndicator(image.id, term); // Render on the image
             } else {
                 console.warn(`[variantManager] Image ID ${image.id} is assigned to color slug '${image.assigned_variant_color_slug}', but this term was not found in variantColorAttributes.`);
@@ -326,6 +329,8 @@ function configureSortableForColorSwatches(allImageDataRef) { // allImageDataRef
                 const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
                 if (targetImgInAllData) {
                     targetImgInAllData.assigned_variant_color_slug = newColorData.colorSlug;
+                    targetImgInAllData.assigned_color_name = newColorData.termName; // << NOUVELLE LIGNE
+                    targetImgInAllData.assigned_color_hex = newColorData.colorHex;   // << NOUVELLE LIGNE
                 }
 
                 renderColorSwatchIndicator(targetImageId, newColorData); 
