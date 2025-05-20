@@ -975,3 +975,23 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     background-color: rgba(0, 123, 255, 0.1); /* Léger fond bleu au survol */
 }
 
+.custom-color-swatch-fallback {
+    background-color: rgba(0, 0, 0, 0.5) !important; /* Pour le rendre visible et distinct */
+    opacity: 0.7 !important;
+    border: 2px dashed #fff !important;
+    /* Assurez-vous qu'il a les mêmes dimensions que votre pastille originale */
+    width: 30px !important; /* Adaptez à la taille de vos pastilles */
+    height: 30px !important; /* Adaptez à la taille de vos pastilles */
+    border-radius: 50% !important; /* Si vos pastilles sont rondes */
+    box-sizing: border-box !important;
+    /* On retire les transformations qui pourraient être héritées */
+    transform: none !important; 
+    /* Assurez-vous qu'il est au-dessus des autres éléments */
+    z-index: 999999 !important; 
+}
+
+/* Si vous avez ajouté la classe 'dragging-color-swatch' au body */
+body.dragging-color-swatch {
+    /* Évitez les styles ici qui pourraient affecter le positionnement absolu/fixe du clone */
+    /* Par exemple, évitez 'overflow: hidden' sur le body pendant le drag si possible */
+}
