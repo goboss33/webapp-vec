@@ -3,7 +3,8 @@ import {
     N8N_CROP_IMAGE_WEBHOOK_URL,
     N8N_REMOVE_WATERMARK_WEBHOOK_URL,
     N8N_GENERATE_MOCKUP_WEBHOOK_URL,
-    N8N_REPLACE_BACKGROUND_WEBHOOK_URL
+    N8N_REPLACE_BACKGROUND_WEBHOOK_URL,
+    N8N_UPSCALE_IMAGE_WEBHOOK_URL
 } from './config.js';
 import {
     modalOverlay, // Pour vérifier si la modale est visible (pour addImageToModalSwiper)
@@ -95,6 +96,8 @@ export async function executeConfirmedAction(
         webhookUrl = N8N_GENERATE_MOCKUP_WEBHOOK_URL;
     } else if (type === 'replaceBackground') {
         webhookUrl = N8N_REPLACE_BACKGROUND_WEBHOOK_URL;
+    } else if (type === 'upscaleImage') { // << NOUVELLE CONDITION ELSE IF
+        webhookUrl = N8N_UPSCALE_IMAGE_WEBHOOK_URL; // Utilise la nouvelle constante (qui pointe vers watermark pour l'instant)
     } else {
         console.error(`actionsManager.js: Type d'action inconnu lors de l'exécution: ${type}`);
         // hideLoading() et updateStatus() seront appelés par l'appelant dans le bloc catch/finally.
