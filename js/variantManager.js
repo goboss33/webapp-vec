@@ -247,13 +247,24 @@ function configureSortableForColorSwatches(allImageDataRef) { // allImageDataRef
         sort: false,
         forceFallback: true,
         fallbackOnBody: true,
+        fallbackClass: "custom-color-swatch-fallback",
         filter: '.no-swatches-message',
+        delay: 0,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5,
         
         onStart: function(evt) {
             console.log('[variantManager] Swatch drag started:', evt.item.dataset.colorSlug);
             document.body.classList.add('dragging-color-swatch');
+            // Si le clone est attaché au body, il est possible que la classe 'dragging-color-swatch'
+            // sur le body ne soit plus aussi pertinente pour styler le clone directement.
+            // On va plutôt se fier à la fallbackClass.
+            if (evt.originalEvent.touches) { // S'assurer qu'on est bien sur un événement tactile
+                // Vous pourriez vouloir ajouter des logs ici pour voir la position initiale
+                console.log('[variantManager] Touch Start X:', evt.originalEvent.touches[0].clientX);
+                console.log('[variantManager] Touch Start Y:', evt.originalEvent.touches[0].clientY);
+            }
         },
-
         onEnd: function (/**Event*/evt) {
             document.body.classList.remove('dragging-color-swatch');
             const draggedOriginalSwatchElement = evt.item; // L'élément original dans la liste source
