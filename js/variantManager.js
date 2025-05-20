@@ -245,6 +245,8 @@ function configureSortableForColorSwatches(allImageDataRef) { // allImageDataRef
         },
         animation: 150,
         sort: false,
+        forceFallback: true,
+        fallbackOnBody: true,
         filter: '.no-swatches-message',
         
         onStart: function(evt) {
