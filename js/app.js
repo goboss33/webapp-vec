@@ -523,6 +523,26 @@ async function handleReplaceBackground() {
     await callExecuteConfirmedActionWithUiManagement('new');
 }
 
+async function handleUpscaleImage() {
+    const imageToProcess = getCurrentModalImage(); // Fonction de modalManager.js
+    if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
+        updateStatus("Aucune image sélectionnée pour l'upscale.", "error");
+        console.error("handleUpscaleImage: imageToProcess invalide ou manquante.", imageToProcess);
+        return;
+    }
+
+    console.log(`Préparation pour l'upscale de l'image (ID: ${imageToProcess.id}).`);
+
+    currentEditActionContext = { // currentEditActionContext est global dans app.js
+        type: 'upscaleImage', // Nouveau type d'action
+        imageData: imageToProcess,
+        payloadData: {} 
+    };
+
+    console.log('[APP.JS] handleUpscaleImage - Context DÉFINI:', JSON.parse(JSON.stringify(currentEditActionContext)));
+    await callExecuteConfirmedActionWithUiManagement('new'); // Mode 'new' par défaut
+}
+
 function showEditActionConfirmation() {
     if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'flex';
     // Optionnel: cacher les boutons d'action principaux de la modale pendant ce choix
@@ -1024,6 +1044,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     if (modalGenerateMockupBtn) modalGenerateMockupBtn.addEventListener('click', handleGenerateMockup); // <-- NOUVELLE LIGNE
     if (modalReplaceBackgroundBtn) modalReplaceBackgroundBtn.addEventListener('click', handleReplaceBackground);
+    if (modalUpscaleBtn) modalUpscaleBtn.addEventListener('click', handleUpscaleImage);
     
     if (modalMarkForDeletionBtn) {
         modalMarkForDeletionBtn.addEventListener('click', (event) => {
