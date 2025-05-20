@@ -16,6 +16,7 @@ export let modalToggleSizeGuideBtn;
 export let variantColorAssignmentContainer, availableColorSwatchesContainer, variantColorAttributeNameElement;
 export let modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameElement, modalDissociateColorBtn;
 export let modalReplaceBackgroundBtn;
+export let modalUpscaleBtn;
 
 // Fonction pour initialiser toutes les références DOM
 export function initDomElements() {
@@ -79,6 +80,7 @@ export function initDomElements() {
     modalImageAssignedColorNameElement = document.getElementById('modal-image-assigned-color-name');
     modalDissociateColorBtn = document.getElementById('modal-dissociate-color-btn');
     modalReplaceBackgroundBtn = document.getElementById('modal-replace-background-btn');
+    modalUpscaleBtn = document.getElementById('modal-upscale-btn'); 
     
     console.log('dom.js: DOM elements initialized.');
 }
