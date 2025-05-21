@@ -335,6 +335,7 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    pointer-events: none;
 }
 
 /* Classe pour afficher l'icône */
