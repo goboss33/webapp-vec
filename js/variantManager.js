@@ -245,21 +245,30 @@ function configureSortableForColorSwatches(allImageDataRef) { // allImageDataRef
         },
         animation: 150,
         sort: false,
-        forceFallback: true,
-        fallbackOnBody: true,
-        fallbackClass: "custom-color-swatch-fallback", // Garder cette classe
-        filter: '.no-swatches-message', // Garder si pertinent pour votre structure
-        // delay: 0, // <--- COMMENTER OU RETIRER TEMPORAIREMENT
-        // delayOnTouchOnly: true, // <--- COMMENTER OU RETIRER TEMPORAIREMENT
-        // touchStartThreshold: 5, // <--- COMMENTER OU RETIRER TEMPORAIREMENT
+        forceFallback: true, // DOIT ÊTRE true pour ce test
+        fallbackOnBody: true, // DOIT ÊTRE true pour ce test
+        fallbackClass: "custom-color-swatch-fallback", // Vérifiez bien ce nom
+        filter: '.no-swatches-message',
+        // delay: 0, // Commenté pour l'instant
+        // delayOnTouchOnly: true, // Commenté pour l'instant
+        // touchStartThreshold: 5, // Commenté pour l'instant
     
         onStart: function(evt) {
             console.log('[variantManager] Swatch drag started:', evt.item.dataset.colorSlug);
             document.body.classList.add('dragging-color-swatch');
-            // Optionnel: loggez l'élément clone pour vérifier ses propriétés
-            if (evt.clone) {
-                console.log('[variantManager] Clone element:', evt.clone);
+            if (evt.clone) { // evt.clone est l'élément original cloné
+                console.log('[variantManager] Original item being cloned:', evt.clone);
             }
+            // Essayons de trouver le fallback après un court instant
+            setTimeout(() => {
+                const fallbackElement = document.querySelector('.custom-color-swatch-fallback');
+                if (fallbackElement) {
+                    console.log('[variantManager] Fallback element found in DOM:', fallbackElement);
+                    console.log('[variantManager] Fallback computed style:', window.getComputedStyle(fallbackElement).cssText.substring(0, 500) + "..."); // Log des styles calculés
+                } else {
+                    console.warn('[variantManager] Fallback element NOT found in DOM shortly after start.');
+                }
+            }, 0);
         },
         onEnd: function (/**Event*/evt) {
             document.body.classList.remove('dragging-color-swatch');
