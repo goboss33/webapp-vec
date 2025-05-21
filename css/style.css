@@ -908,10 +908,10 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     align-items: center;
     font-size: 0.7em; /* Pour un éventuel texte/initiale à l'intérieur */
     color: white; /* Couleur du texte, à ajuster si vous mettez du texte */
-    transition: transform 0.1s ease-out;
+    /* transition: transform 0.1s ease-out; */
 }
 .color-swatch-draggable:hover {
-    transform: scale(1.1);
+    /* transform: scale(1.1); */
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
