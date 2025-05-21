@@ -239,53 +239,44 @@ function configureSortableForColorSwatches(allImageDataRef) {
 
     sortableAvailableSwatches = new Sortable(availableColorSwatchesContainer, {
         group: {
-            name: 'color-swatches', // Peut rester le même ou être mis à 'shared' si vous voulez interagir avec d'autres groupes
-            pull: true,  // <--- MODIFICATION PRINCIPALE: Déplacer l'original
-            put: true    // <--- MODIFICATION: Permettre de remettre dans le conteneur source si drop annulé
+            name: 'color-swatches', 
+            pull: true,
+            put: false // <--- MODIFICATION: Mettre à false comme le carrousel d'images
+                       // Cela signifie que d'autres listes ne peuvent pas déposer ici,
+                       // mais SortableJS devrait toujours gérer le retour de l'item à sa source
+                       // s'il est lâché sans cible valide.
         },
         animation: 150,
-        sort: false, // Probablement toujours false, on ne réorganise pas la source
-        // forceFallback: true, // <--- RETIRER
-        // fallbackOnBody: true, // <--- RETIRER
-        // fallbackClass: "custom-color-swatch-fallback", // <--- RETIRER
+        sort: false, 
         filter: '.no-swatches-message', 
     
         onStart: function(evt) {
-            console.log('[variantManager] Swatch drag started (original item):', evt.item.dataset.colorSlug);
+            console.log('[variantManager] Swatch drag started (original item):', evt.item.dataset.colorSlug, evt.item);
+            // On s'attend à ce que evt.item soit l'élément .color-swatch-draggable
+            // et qu'il disparaisse de availableColorSwatchesContainer
             document.body.classList.add('dragging-color-swatch');
-            // Plus de evt.clone ici de la même manière, evt.item EST l'élément déplacé
         },
         onEnd: function (/**Event*/evt) {
             document.body.classList.remove('dragging-color-swatch');
-            const draggedSwatchElement = evt.item; // C'est l'élément original qui a été déplacé
+            const draggedSwatchElement = evt.item; 
+            const fromContainer = evt.from; // Le conteneur d'où vient l'élément
+            const toContainer = evt.to;     // Le conteneur où l'élément a été déposé
 
-            // Si l'élément est retourné à sa source originale par SortableJS
-            // (par exemple, si on le lâche hors d'une zone de dépôt valide et que 'put: true' est sur la source)
-            if (evt.to === availableColorSwatchesContainer) {
-                console.log(`[variantManager] Swatch ${draggedSwatchElement.dataset.colorSlug} returned to source container.`);
-                // Normalement, pas besoin de faire grand-chose ici, SortableJS l'a remis.
-                // La logique de availableColorTerms devrait déjà être correcte (la couleur n'avait pas été assignée).
-                return; 
-            }
-            
-            let actualTargetElement = evt.originalEvent ? evt.originalEvent.target : null;
-            if (!actualTargetElement) {
-                console.log('[variantManager] onEnd: No originalEvent.target found for swatch drop.');
-                // Si l'élément n'a pas été remis dans sa source par SortableJS, et qu'on ne trouve pas de cible,
-                // il faut le remettre manuellement pour éviter qu'il soit perdu.
-                // Cela dépend de la configuration de `put` sur les groupes.
-                // Pour l'instant, on suppose que si on arrive ici sans targetImageElement, le drop était invalide.
-                // Si l'élément n'est plus dans le DOM, on ne peut rien faire. S'il y est, mais orphelin:
-                if (!draggedSwatchElement.parentElement) {
-                     availableColorSwatchesContainer.appendChild(draggedSwatchElement); // Remettre à la source
-                     console.log('[variantManager] Swatch returned to source container due to invalid drop (no parent).');
-                }
-                return;
-            }
+            console.log(`[variantManager] onEnd: Item ${draggedSwatchElement.dataset.colorSlug} moved from`, fromContainer, "to", toContainer);
 
-            let targetImageElement = actualTargetElement.closest('.carousel-image-container, .thumbnail-wrapper');
+            // Vérifier si l'élément a été déposé en dehors d'une zone de dépôt valide et
+            // si SortableJS ne l'a pas automatiquement remis dans sa source.
+            // Si evt.pullMode === 'clone' n'est plus vrai, evt.clone n'existera pas.
+            // Si toContainer est différent de fromContainer ET n'est pas une zone de drop valide pour nous.
+            let targetImageElement = null;
+            if (evt.originalEvent) {
+                const actualTarget = evt.originalEvent.target;
+                targetImageElement = actualTarget ? actualTarget.closest('.carousel-image-container, .thumbnail-wrapper') : null;
+            }
 
             if (targetImageElement && targetImageElement.dataset.imageId) {
+                // ... votre logique d'assignation existante (qui commence ici) ...
+                // Elle devrait être globalement correcte, mais assurez-vous que draggedSwatchElement contient bien les data-attributes.
                 const targetImageId = targetImageElement.dataset.imageId;
                 const newColorData = { 
                     colorSlug: draggedSwatchElement.dataset.colorSlug,
@@ -294,21 +285,26 @@ function configureSortableForColorSwatches(allImageDataRef) {
                     termName: draggedSwatchElement.dataset.termName
                 };
 
-                console.log(`[variantManager] onEnd: Swatch ${newColorData.termName} dropped on image ID ${targetImageId}`);
-
-                // --- Logique d'assignation ---
-                // (Cette logique est largement la même, car elle se basait déjà sur les dataset de l'élément glissé)
-                let oldColorDataForTargetImage = null;
+                console.log(`[variantManager] onEnd (VALID DROP): Swatch ${newColorData.termName} on image ID ${targetImageId}`);
+                // ... (logique d'assignation, gestion des conflits, etc.) ...
+                // Assurez-vous que la pastille (draggedSwatchElement) est bien retirée du DOM si elle a été "consommée"
+                 if (draggedSwatchElement.parentElement && draggedSwatchElement.parentElement !== availableColorSwatchesContainer) {
+                     draggedSwatchElement.remove();
+                 }
+                // ... (le reste de la logique : currentImageColorMappings.set, renderColorSwatchIndicator, availableColorTerms.filter, renderAvailableSwatches)
+                // La fin de votre logique d'assignation existante.
+                // Assurez-vous qu'après une assignation réussie, la pastille est retirée de availableColorTerms
+                // et renderAvailableSwatches() est appelé pour MAJ la source.
+                 let oldColorDataForTargetImage = null;
                 if (currentImageColorMappings.has(targetImageId)) {
                     oldColorDataForTargetImage = currentImageColorMappings.get(targetImageId);
                 }
 
                 if (oldColorDataForTargetImage && oldColorDataForTargetImage.colorSlug === newColorData.colorSlug) {
-                    console.log(`[variantManager] Color ${newColorData.termName} is already assigned to image ${targetImageId}. No change.`);
-                    updateStatus(`La couleur ${newColorData.termName} est déjà sur cette image.`, 'info');
-                    // Remettre la pastille dans la zone source si elle n'y est plus
-                    if (!availableColorSwatchesContainer.contains(draggedSwatchElement)) {
-                        availableColorSwatchesContainer.appendChild(draggedSwatchElement);
+                    // ... (code existant pour couleur déjà assignée) ...
+                    // S'assurer que draggedSwatchElement retourne à la source
+                    if (fromContainer === availableColorSwatchesContainer && !toContainer.contains(draggedSwatchElement)) {
+                         availableColorSwatchesContainer.appendChild(draggedSwatchElement);
                     }
                     return;
                 }
@@ -321,13 +317,10 @@ function configureSortableForColorSwatches(allImageDataRef) {
                     }
                 }
                 
-                // Gérer l'ancienne couleur de l'image cible
                 if (oldColorDataForTargetImage) {
-                    console.log(`[variantManager] Image ${targetImageId} was previously ${oldColorDataForTargetImage.termName}. Returning old color to available.`);
                     const oldTermObject = productVariantColorData.terms.find(t => t.value === oldColorDataForTargetImage.colorSlug);
                     if (oldTermObject && !availableColorTerms.some(t => t.value === oldTermObject.value)) {
                         availableColorTerms.push(oldTermObject);
-                        // Pas besoin de renderAvailableSwatches() ici, on le fait à la fin.
                     }
                      const imgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
                      if (imgInAllData) {
@@ -337,9 +330,7 @@ function configureSortableForColorSwatches(allImageDataRef) {
                     }
                 }
 
-                // Gérer l'ancienne image de la couleur qu'on vient de déposer
                 if (oldImageIdForNewColor && oldImageIdForNewColor !== targetImageId) {
-                    console.log(`[variantManager] Color ${newColorData.termName} was previously on image ${oldImageIdForNewColor}. Dissociating from old image.`);
                     currentImageColorMappings.delete(oldImageIdForNewColor); 
                     removeColorSwatchIndicator(oldImageIdForNewColor); 
                     const oldImgInAllData = allImageDataRef.find(img => img.id.toString() === oldImageIdForNewColor);
@@ -348,11 +339,8 @@ function configureSortableForColorSwatches(allImageDataRef) {
                         delete oldImgInAllData.assigned_color_name;
                         delete oldImgInAllData.assigned_color_hex;
                     }
-                    // La pastille de cette couleur (newColorData.colorSlug) a été prise par l'utilisateur.
-                    // Elle ne doit pas être rajoutée à availableColorTerms ici.
                 }
 
-                // Assigner la nouvelle couleur à l'image cible
                 currentImageColorMappings.set(targetImageId, { ...newColorData });
                 const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
                 if (targetImgInAllData) {
@@ -361,42 +349,45 @@ function configureSortableForColorSwatches(allImageDataRef) {
                     targetImgInAllData.assigned_color_hex = newColorData.colorHex;  
                 }
 
-                renderColorSwatchIndicator(targetImageId, newColorData);
-                // La pastille glissée (draggedSwatchElement) est maintenant "consommée".
-                // Elle ne doit pas être dans availableColorTerms.
+                renderColorSwatchIndicator(targetImageId, newColorData); 
                 availableColorTerms = availableColorTerms.filter(term => term.value !== newColorData.colorSlug);
                 
-                // Si la pastille glissée est toujours dans le DOM (par exemple, si SortableJS l'a mise dans la zone cible),
-                // il faut la retirer car on ne veut que l'indicateur.
-                if (draggedSwatchElement.parentElement && draggedSwatchElement.parentElement !== availableColorSwatchesContainer) {
-                     draggedSwatchElement.remove();
+                // draggedSwatchElement a été "utilisé", donc s'il vient de la source, il ne doit pas y retourner.
+                // Si vous voulez qu'il soit retiré du DOM complètement (car l'indicateur est maintenant sur l'image)
+                if (draggedSwatchElement.parentElement) { // S'il est encore dans le DOM
+                    draggedSwatchElement.remove(); // Le retirer
                 }
                 
-                renderAvailableSwatches(); // Crucial pour MAJ la liste des pastilles sources
+                renderAvailableSwatches(); 
 
                 console.log('[variantManager] Updated currentImageColorMappings:', currentImageColorMappings);
                 console.log('[variantManager] Updated availableColorTerms:', availableColorTerms.map(t => t.value)); 
                 updateStatus(`Couleur ${newColorData.termName} assignée à l'image ID ${targetImageId}.`, 'success');
+
             } else {
-                // Drop invalide (pas sur une image)
-                console.log('[variantManager] onEnd: Swatch dropped, but not on a valid image target.');
-                // S'assurer que la pastille retourne à la source si SortableJS ne l'a pas déjà fait
-                if (!availableColorSwatchesContainer.contains(draggedSwatchElement)) {
-                    // Vérifier si elle est encore dans le DOM pour éviter une erreur si elle a été retirée par une autre logique
-                    if (document.body.contains(draggedSwatchElement)) {
-                       availableColorSwatchesContainer.appendChild(draggedSwatchElement); // La remettre
-                       console.log('[variantManager] Swatch returned to source due to invalid drop.');
-                    } else {
-                       // La pastille n'est plus dans le DOM et n'est pas dans la source.
-                       // Cela peut arriver si le drop a eu lieu sur un élément qui n'est pas un sortable `put:true` valide.
-                       // Il faut la recréer dans availableColorTerms et relancer renderAvailableSwatches.
-                       const termToReAdd = productVariantColorData.terms.find(t => t.value === draggedSwatchElement.dataset.colorSlug);
-                       if (termToReAdd && !availableColorTerms.some(t => t.value === termToReAdd.value)) {
-                           availableColorTerms.push(termToReAdd);
-                           console.log(`[variantManager] Swatch ${termToReAdd.name} re-added to available terms.`);
-                       }
-                       renderAvailableSwatches();
-                    }
+                // Drop invalide ou annulé, l'élément devrait être retourné par SortableJS à evt.from
+                // Surtout si evt.from === availableColorSwatchesContainer
+                console.log(`[variantManager] onEnd (INVALID DROP or CANCELED): Swatch ${draggedSwatchElement.dataset.colorSlug} returned/stayed in original container or dropped elsewhere.`);
+                // Si l'élément n'est pas retourné à sa place (availableColorSwatchesContainer)
+                // et qu'il n'est pas non plus dans une nouvelle zone cible,
+                // et qu'il n'a pas de parent (c-a-d orphelin), alors le remettre.
+                if (fromContainer === availableColorSwatchesContainer && toContainer !== availableColorSwatchesContainer && !draggedSwatchElement.parentElement) {
+                     console.warn(`[variantManager] Swatch ${draggedSwatchElement.dataset.colorSlug} was removed from DOM without valid drop. Re-adding to source.`);
+                     // Il faut s'assurer que l'objet "term" est bien dans availableColorTerms pour qu'il soit re-rendu.
+                     // La pastille elle-même (draggedSwatchElement) peut être perdue ici si elle n'a plus de parent.
+                     // C'est là que la logique de availableColorTerms et renderAvailableSwatches est critique.
+                     const termSlug = draggedSwatchElement.dataset.colorSlug;
+                     const termExistsInAvailable = availableColorTerms.some(term => term.value === termSlug);
+                     if (!termExistsInAvailable) {
+                         const termObject = productVariantColorData.terms.find(t => t.value === termSlug);
+                         if (termObject) {
+                             availableColorTerms.push(termObject);
+                         }
+                     }
+                     renderAvailableSwatches(); // Pour recréer la pastille si elle a été perdue
+                } else if (fromContainer === availableColorSwatchesContainer && toContainer === availableColorSwatchesContainer) {
+                    // L'élément a été explicitement remis dans la source. C'est OK.
+                    // renderAvailableSwatches() n'est pas forcément nécessaire ici si l'élément visuel est juste retourné.
                 }
             }
         } // Fin de onEnd
