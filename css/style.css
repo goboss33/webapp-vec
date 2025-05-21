@@ -954,11 +954,11 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     background-color: #a0a0a0 !important; /* Rendre le fantôme gris */
     border: 2px dashed #555;
 }
-.color-swatch-draggable.sortable-drag {
+/* .color-swatch-draggable.sortable-drag {
     opacity: 0.9 !important; /* L'élément qui suit la souris */
     transform: scale(1.2);
     box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
-}
+} */
 
 /* --- Styles pour le feedback de drag des pastilles de couleur --- */
 body.dragging-color-swatch .carousel-image-container,
