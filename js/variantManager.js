@@ -269,7 +269,7 @@ function configureSortableForColorSwatches(allImageDataRef) { // allImageDataRef
                         console.log(`[VariantManager DEBUG] onAdd fired on image ID: ${targetImageElement.dataset.imageId}. Swatch: ${droppedSwatchElement.dataset.colorSlug}`);
                         
                         // !!!!! TEST VISUEL DIRECT !!!!!
-                        targetImageElement.style.backgroundColor = 'yellow'; // Change le fond de l'image cible
+                        //targetImageElement.style.backgroundColor = 'yellow'; // Change le fond de l'image cible
                         
                         // Empêcher la pastille de rester visible sur l'image
                         if (droppedSwatchElement.parentElement === targetImageElement) {
