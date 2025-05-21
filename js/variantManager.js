@@ -239,30 +239,26 @@ function configureSortableForColorSwatches(allImageDataRef) { // allImageDataRef
 
     sortableAvailableSwatches = new Sortable(availableColorSwatchesContainer, {
         group: {
-            name: 'color-swatches', // Important pour l'identification
+            name: 'color-swatches',
             pull: 'clone',
-            put: false 
+            put: false
         },
         animation: 150,
         sort: false,
         forceFallback: true,
         fallbackOnBody: true,
-        fallbackClass: "custom-color-swatch-fallback",
-        filter: '.no-swatches-message',
-        delay: 0,
-        delayOnTouchOnly: true,
-        touchStartThreshold: 5,
-        
+        fallbackClass: "custom-color-swatch-fallback", // Garder cette classe
+        filter: '.no-swatches-message', // Garder si pertinent pour votre structure
+        // delay: 0, // <--- COMMENTER OU RETIRER TEMPORAIREMENT
+        // delayOnTouchOnly: true, // <--- COMMENTER OU RETIRER TEMPORAIREMENT
+        // touchStartThreshold: 5, // <--- COMMENTER OU RETIRER TEMPORAIREMENT
+    
         onStart: function(evt) {
             console.log('[variantManager] Swatch drag started:', evt.item.dataset.colorSlug);
             document.body.classList.add('dragging-color-swatch');
-            // Si le clone est attaché au body, il est possible que la classe 'dragging-color-swatch'
-            // sur le body ne soit plus aussi pertinente pour styler le clone directement.
-            // On va plutôt se fier à la fallbackClass.
-            if (evt.originalEvent.touches) { // S'assurer qu'on est bien sur un événement tactile
-                // Vous pourriez vouloir ajouter des logs ici pour voir la position initiale
-                console.log('[variantManager] Touch Start X:', evt.originalEvent.touches[0].clientX);
-                console.log('[variantManager] Touch Start Y:', evt.originalEvent.touches[0].clientY);
+            // Optionnel: loggez l'élément clone pour vérifier ses propriétés
+            if (evt.clone) {
+                console.log('[variantManager] Clone element:', evt.clone);
             }
         },
         onEnd: function (/**Event*/evt) {
