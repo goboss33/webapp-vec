@@ -974,3 +974,25 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     outline-style: solid;
     background-color: rgba(0, 123, 255, 0.1); /* Léger fond bleu au survol */
 }
+
+/* Dans css/style.css */
+/* APRÈS la règle existante pour .sortable-drag */
+
+.color-swatch-draggable.sortable-drag {
+    width: 28px !important;  /* Conserve la largeur originale de la pastille */
+    height: 28px !important; /* Conserve la hauteur originale */
+    border-radius: 50% !important; /* Conserve la forme ronde */
+    background-color: inherit !important; /* Hérite la couleur de fond de la pastille originale */
+    border: 2px solid #333 !important; /* Une bordure distincte pour l'état glissé */
+    opacity: 0.75 !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    padding: 0 !important; /* Pas de padding interne qui déformerait */
+    /* S'assurer qu'il n'y a pas d'image ou de texte de la règle .sortable-drag générique */
+    display: block !important; /* Ou flex si vous aviez du contenu interne dans la pastille */
+}
+
+/* Optionnel: Si vous voulez que le "fantôme" (placeholder dans la liste source) soit discret */
+.color-swatch-draggable.sortable-ghost {
+    opacity: 0.3 !important;
+    background-color: #e0e0e0 !important;
+}
