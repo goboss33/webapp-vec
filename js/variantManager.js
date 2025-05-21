@@ -262,6 +262,7 @@ function configureSortableForColorSwatches(allImageDataRef) { // allImageDataRef
                         put: true
                     },
                     animation: 0, 
+                    ghostClass: 'color-drop-target-ghost',
                     onAdd: function(addEvt) { 
                         const targetImageElement = this.el; 
                         const droppedSwatchElement = addEvt.item; 
