@@ -20,6 +20,7 @@ let currentImageColorMappings = new Map(); // Map: imageId => {colorSlug, colorH
 let availableColorTerms = []; // Array of color term objects that are not yet assigned
 let sortableAvailableSwatches = null;
 //const sortableImageTargetElements = []; // Pourrait stocker les instances ou juste les éléments
+let temporaryImageDropZoneInstances = [];
 
 
 /**
