@@ -955,7 +955,7 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     border: 2px dashed #555;
 }
 /* .color-swatch-draggable.sortable-drag {
-    opacity: 0.9 !important; /* L'élément qui suit la souris */
+    opacity: 0.9 !important;
     transform: scale(1.2);
     box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
 } */
