@@ -246,6 +246,9 @@ function configureSortableForColorSwatches(allImageDataRef) {
                        // mais SortableJS devrait toujours gérer le retour de l'item à sa source
                        // s'il est lâché sans cible valide.
         },
+        delay: 50,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 5,
         animation: 150,
         sort: false, 
         filter: '.no-swatches-message', 
