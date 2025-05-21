@@ -961,19 +961,24 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     box-shadow: 0 4px 8px rgba(0,0,0,0.4) !important;
 } */
 
-/* --- Styles pour le feedback de drag des pastilles de couleur --- */
+/* Styles pour le feedback de drag des pastilles de couleur --- */
 body.dragging-color-swatch .carousel-image-container,
 body.dragging-color-swatch .thumbnail-wrapper {
-    outline: 2px dashed var(--tg-theme-button-color, #007bff); /* Surlignage quand on drague une pastille */
+    outline: 2px dashed #FFBF00; /* Optionnel: contour orange/jaune */
     outline-offset: 2px;
-    cursor: grabbing; /* Ou une autre icône indiquant une cible de dépôt */
+    cursor: grabbing; 
+    /* Transition pour un effet plus doux si vous le souhaitez */
+    transition: background-color 0.2s ease-in-out, outline-color 0.2s ease-in-out;
 }
 
-/* Optionnel: Style plus spécifique pour l'élément directement survolé */
+/* Style plus spécifique pour l'élément directement survolé */
 body.dragging-color-swatch .carousel-image-container:hover,
 body.dragging-color-swatch .thumbnail-wrapper:hover {
-    outline-style: solid;
-    background-color: rgba(0, 123, 255, 0.1); /* Léger fond bleu au survol */
+    outline-style: solid; /* Garde l'outline solide pour le feedback */
+    outline-color: #FFA500; /* Orange plus soutenu pour l'outline au survol */
+    background-color: rgba(255, 223, 0, 0.3) !important; /* Fond jaune semi-transparent au survol */
+                                                          /* Utilisation de !important pour s'assurer qu'il prime si nécessaire,
+                                                             mais à utiliser avec prudence. Testez sans d'abord. */
 }
 
 /* Dans css/style.css */
