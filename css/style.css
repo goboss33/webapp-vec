@@ -974,33 +974,3 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     outline-style: solid;
     background-color: rgba(0, 123, 255, 0.1); /* Léger fond bleu au survol */
 }
-
-/* Dans css/style.css */
-
-.custom-color-swatch-fallback {
-    background-color: lime !important;
-    width: 60px !important;
-    height: 60px !important;
-    opacity: 1 !important;
-    z-index: 9999999 !important;
-    position: fixed !important;
-    border: 5px solid magenta !important;
-    
-    /* !! RETIRER OU COMMENTER CES LIGNES !! */
-    /* top: 30px !important; */
-    /* left: 30px !important; */
-    
-    margin: 0 !important;
-    padding: 0 !important;
-    transform: none !important; 
-    
-    pointer-events: none; 
-    
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: black !important;
-    font-size: 10px !important;
-    overflow: hidden !important;
-}
