@@ -259,178 +259,158 @@ function configureSortableForColorSwatches(allImageDataRef) {
             // et qu'il disparaisse de availableColorSwatchesContainer
             document.body.classList.add('dragging-color-swatch');
         },
-        // Dans js/variantManager.js
-// ...dans la fonction configureSortableForColorSwatches, dans l'objet new Sortable(...)
 
+        // Dans js/variantManager.js
+        // ...dans la fonction configureSortableForColorSwatches, dans l'objet new Sortable(...)
+        
         onEnd: function (/**Event*/evt) {
             document.body.classList.remove('dragging-color-swatch');
-            const draggedSwatchElement = evt.item; 
-            const fromContainer = evt.from; 
-            const toContainer = evt.to;     
-
-            console.log(`[variantManager] onEnd: Item ${draggedSwatchElement.dataset.colorSlug} ended drag.`);
-            console.log(`[variantManager] onEnd: evt.from:`, fromContainer);
-            console.log(`[variantManager] onEnd: evt.to:`, toContainer);
-            console.log(`[variantManager] onEnd: evt.item:`, draggedSwatchElement);
-
-            let actualTargetElement = null;
-            let touchEventUsed = false;
-
-            if (evt.originalEvent) {
-                console.log('[variantManager] onEnd: evt.originalEvent exists. Type:', evt.originalEvent.type);
-                actualTargetElement = evt.originalEvent.target;
-                console.log('[variantManager] onEnd: Initial actualTargetElement from evt.originalEvent.target:', actualTargetElement);
-
-                if (evt.originalEvent.type === 'touchend' && evt.originalEvent.changedTouches && evt.originalEvent.changedTouches.length > 0) {
-                    touchEventUsed = true;
-                    const touch = evt.originalEvent.changedTouches[0];
-                    console.log('[variantManager] onEnd: TouchEvent - clientX:', touch.clientX, 'clientY:', touch.clientY);
+            const draggedSwatchElement = evt.item;
+            const fromContainer = evt.from;
+            const toContainer = evt.to;
+        
+            // Mettre la logique de traitement dans une fonction séparée pour la clarté
+            // et pour la gérer après la détermination asynchrone de la cible sur mobile.
+            const processDrop = (finalTargetImageElement) => {
+                if (finalTargetImageElement && finalTargetImageElement.dataset.imageId) {
+                    const targetImageId = finalTargetImageElement.dataset.imageId;
+                    const newColorData = {
+                        colorSlug: draggedSwatchElement.dataset.colorSlug,
+                        colorHex: draggedSwatchElement.dataset.colorHex,
+                        termId: draggedSwatchElement.dataset.termId,
+                        termName: draggedSwatchElement.dataset.termName
+                    };
+        
+                    // --- DEBUT LOGIQUE D'ASSIGNATION (EXISTANTE) ---
+                    console.log(`[variantManager] processDrop: Swatch ${newColorData.termName} on image ID ${targetImageId}`);
+                    let oldColorDataForTargetImage = null;
+                    if (currentImageColorMappings.has(targetImageId)) {
+                        oldColorDataForTargetImage = currentImageColorMappings.get(targetImageId);
+                    }
+        
+                    if (oldColorDataForTargetImage && oldColorDataForTargetImage.colorSlug === newColorData.colorSlug) {
+                        console.log(`[variantManager] Color ${newColorData.termName} is already assigned. Swatch returns to source.`);
+                        updateStatus(`La couleur ${newColorData.termName} est déjà sur cette image.`, 'info');
+                        if (fromContainer === availableColorSwatchesContainer && !availableColorSwatchesContainer.contains(draggedSwatchElement)) {
+                             availableColorSwatchesContainer.appendChild(draggedSwatchElement);
+                        }
+                        return; 
+                    }
                     
-                    // Masquer temporairement l'élément glissé pour elementFromPoint
-                    // Ceci est crucial car sinon elementFromPoint pourrait retourner l'élément glissé lui-même.
-                    draggedSwatchElement.style.display = 'none'; 
-                    const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
-                    draggedSwatchElement.style.display = ''; // Rétablir l'affichage rapidement
-
-                    console.log('[variantManager] onEnd: Element at touchend point (document.elementFromPoint after hiding dragged):', elementAtPoint);
-                    if (elementAtPoint) {
-                        actualTargetElement = elementAtPoint; // Donner la priorité à elementFromPoint pour le tactile
-                        console.log('[variantManager] onEnd: actualTargetElement updated by elementFromPoint for touch.', actualTargetElement);
-                    } else {
-                        console.warn('[variantManager] onEnd: document.elementFromPoint returned null for touch.');
-                    }
-                }
-            } else {
-                console.log('[variantManager] onEnd: evt.originalEvent is NULL.');
-            }
-
-            let targetImageElement = null;
-            if (actualTargetElement) {
-                targetImageElement = actualTargetElement.closest('.carousel-image-container, .thumbnail-wrapper');
-                console.log('[variantManager] onEnd: targetImageElement based on actualTargetElement:', targetImageElement);
-            } else {
-                 console.log('[variantManager] onEnd: actualTargetElement was null, cannot find targetImageElement.');
-            }
-
-            if (targetImageElement && targetImageElement.dataset.imageId) {
-                const targetImageId = targetImageElement.dataset.imageId;
-                const newColorData = { 
-                    colorSlug: draggedSwatchElement.dataset.colorSlug,
-                    colorHex: draggedSwatchElement.dataset.colorHex,
-                    termId: draggedSwatchElement.dataset.termId,
-                    termName: draggedSwatchElement.dataset.termName
-                };
-
-                console.log(`[variantManager] onEnd (VALID DROP): Swatch ${newColorData.termName} on image ID ${targetImageId}`);
-                
-                let oldColorDataForTargetImage = null;
-                if (currentImageColorMappings.has(targetImageId)) {
-                    oldColorDataForTargetImage = currentImageColorMappings.get(targetImageId);
-                }
-
-                if (oldColorDataForTargetImage && oldColorDataForTargetImage.colorSlug === newColorData.colorSlug) {
-                    console.log(`[variantManager] Color ${newColorData.termName} is already assigned. Swatch returns to source.`);
-                    updateStatus(`La couleur ${newColorData.termName} est déjà sur cette image.`, 'info');
-                    if (fromContainer === availableColorSwatchesContainer && !availableColorSwatchesContainer.contains(draggedSwatchElement)) {
-                         availableColorSwatchesContainer.appendChild(draggedSwatchElement);
-                    }
-                    return;
-                }
-                
-                let oldImageIdForNewColor = null;
-                for (const [imgId, colorMap] of currentImageColorMappings.entries()) {
-                    if (colorMap.colorSlug === newColorData.colorSlug) {
-                        oldImageIdForNewColor = imgId;
-                        break;
-                    }
-                }
-                
-                if (oldColorDataForTargetImage) {
-                    const oldTermObject = productVariantColorData.terms.find(t => t.value === oldColorDataForTargetImage.colorSlug);
-                    if (oldTermObject && !availableColorTerms.some(t => t.value === oldTermObject.value)) {
-                        availableColorTerms.push(oldTermObject);
-                    }
-                     const imgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
-                     if (imgInAllData) {
-                        imgInAllData.assigned_variant_color_slug = null; 
-                        delete imgInAllData.assigned_color_name;
-                        delete imgInAllData.assigned_color_hex;
-                    }
-                }
-
-                if (oldImageIdForNewColor && oldImageIdForNewColor !== targetImageId) {
-                    currentImageColorMappings.delete(oldImageIdForNewColor); 
-                    removeColorSwatchIndicator(oldImageIdForNewColor); 
-                    const oldImgInAllData = allImageDataRef.find(img => img.id.toString() === oldImageIdForNewColor);
-                    if (oldImgInAllData) {
-                        oldImgInAllData.assigned_variant_color_slug = null;
-                        delete oldImgInAllData.assigned_color_name;
-                        delete oldImgInAllData.assigned_color_hex;
-                    }
-                }
-
-                currentImageColorMappings.set(targetImageId, { ...newColorData });
-                const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
-                if (targetImgInAllData) {
-                    targetImgInAllData.assigned_variant_color_slug = newColorData.colorSlug;
-                    targetImgInAllData.assigned_color_name = newColorData.termName; 
-                    targetImgInAllData.assigned_color_hex = newColorData.colorHex;  
-                }
-
-                renderColorSwatchIndicator(targetImageId, newColorData); 
-                availableColorTerms = availableColorTerms.filter(term => term.value !== newColorData.colorSlug);
-                
-                if (draggedSwatchElement.parentElement) { 
-                    draggedSwatchElement.remove(); 
-                }
-                
-                renderAvailableSwatches(); 
-
-                console.log('[variantManager] Updated currentImageColorMappings:', currentImageColorMappings);
-                console.log('[variantManager] Updated availableColorTerms:', availableColorTerms.map(t => t.value)); 
-                updateStatus(`Couleur ${newColorData.termName} assignée à l'image ID ${targetImageId}.`, 'success');
-
-            } else {
-                console.log(`[variantManager] onEnd (NO VALID TARGET): No targetImageElement found or it's missing imageId. actualTargetElement was:`, actualTargetElement);
-                // Logique pour remettre la pastille dans la source si le drop est invalide.
-                // Si l'élément a été retiré de `fromContainer` et que `toContainer` est le même (ou invalide)
-                // et que la pastille n'a pas de parent (donc n'a pas été déposée dans un conteneur valide)
-                // ou si elle a été déposée en dehors de `availableColorSwatchesContainer`.
-                if (fromContainer === availableColorSwatchesContainer && 
-                    (!draggedSwatchElement.parentElement || draggedSwatchElement.parentElement !== availableColorSwatchesContainer) ) {
-                    
-                    // S'assurer que la pastille n'est pas déjà dans availableColorTerms avant de la rajouter (évite doublons)
-                    const termSlug = draggedSwatchElement.dataset.colorSlug;
-                    if (!availableColorTerms.some(term => term.value === termSlug)) {
-                        const termObject = productVariantColorData.terms.find(t => t.value === termSlug);
-                        if (termObject) {
-                            availableColorTerms.push(termObject);
-                        } else {
-                             // Si on ne trouve pas l'objet terme, il faut au moins retirer la pastille du DOM si elle est orpheline.
-                             if (draggedSwatchElement.parentElement && draggedSwatchElement.parentElement !== availableColorSwatchesContainer) {
-                                 draggedSwatchElement.remove();
-                             }
-                             console.warn(`[variantManager] Impossible de trouver l'objet terme pour ${termSlug} pour le retour à la source.`);
+                    let oldImageIdForNewColor = null;
+                    for (const [imgId, colorMap] of currentImageColorMappings.entries()) {
+                        if (colorMap.colorSlug === newColorData.colorSlug) {
+                            oldImageIdForNewColor = imgId;
+                            break;
                         }
                     }
-                    // Toujours retirer l'élément glissé du DOM s'il n'est pas dans la source et pas assigné.
-                    // La pastille sera recréée par renderAvailableSwatches si elle est dans availableColorTerms.
-                    if (draggedSwatchElement.parentElement && draggedSwatchElement.parentElement !== availableColorSwatchesContainer) {
-                         draggedSwatchElement.remove();
-                    } else if (!draggedSwatchElement.parentElement) {
-                         // S'il n'a plus de parent, il est déjà "retiré".
+                    
+                    if (oldColorDataForTargetImage) {
+                        const oldTermObject = productVariantColorData.terms.find(t => t.value === oldColorDataForTargetImage.colorSlug);
+                        if (oldTermObject && !availableColorTerms.some(t => t.value === oldTermObject.value)) {
+                            availableColorTerms.push(oldTermObject);
+                        }
+                         const imgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
+                         if (imgInAllData) {
+                            imgInAllData.assigned_variant_color_slug = null; 
+                            delete imgInAllData.assigned_color_name;
+                            delete imgInAllData.assigned_color_hex;
+                        }
                     }
-
-                    console.log(`[variantManager] Swatch ${draggedSwatchElement.dataset.colorSlug} to be re-rendered in source.`);
-                    renderAvailableSwatches();
-                } else if (fromContainer === availableColorSwatchesContainer && toContainer === availableColorSwatchesContainer) {
-                     console.log(`[variantManager] Swatch ${draggedSwatchElement.dataset.colorSlug} returned to source container by Sortable.`);
-                     // Il se peut que renderAvailableSwatches soit quand même utile si l'état interne de availableColorTerms
-                     // a été modifié prématurément. Par sécurité :
-                     renderAvailableSwatches();
+        
+                    if (oldImageIdForNewColor && oldImageIdForNewColor !== targetImageId) {
+                        currentImageColorMappings.delete(oldImageIdForNewColor); 
+                        removeColorSwatchIndicator(oldImageIdForNewColor); 
+                        const oldImgInAllData = allImageDataRef.find(img => img.id.toString() === oldImageIdForNewColor);
+                        if (oldImgInAllData) {
+                            oldImgInAllData.assigned_variant_color_slug = null;
+                            delete oldImgInAllData.assigned_color_name;
+                            delete oldImgInAllData.assigned_color_hex;
+                        }
+                    }
+        
+                    currentImageColorMappings.set(targetImageId, { ...newColorData });
+                    const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
+                    if (targetImgInAllData) {
+                        targetImgInAllData.assigned_variant_color_slug = newColorData.colorSlug;
+                        targetImgInAllData.assigned_color_name = newColorData.termName; 
+                        targetImgInAllData.assigned_color_hex = newColorData.colorHex;  
+                    }
+        
+                    renderColorSwatchIndicator(targetImageId, newColorData); 
+                    availableColorTerms = availableColorTerms.filter(term => term.value !== newColorData.colorSlug);
+                    
+                    if (draggedSwatchElement.parentElement) { 
+                        draggedSwatchElement.remove(); 
+                    }
+                    
+                    renderAvailableSwatches(); 
+        
+                    console.log('[variantManager] Updated currentImageColorMappings:', currentImageColorMappings);
+                    console.log('[variantManager] Updated availableColorTerms:', availableColorTerms.map(t => t.value)); 
+                    updateStatus(`Couleur ${newColorData.termName} assignée à l'image ID ${targetImageId}.`, 'success');
+                    // --- FIN LOGIQUE D'ASSIGNATION ---
+                } else {
+                    // --- DEBUT LOGIQUE RETOUR A LA SOURCE (EXISTANTE) ---
+                    console.log(`[variantManager] processDrop (NO VALID TARGET): No finalTargetImageElement found. Element from event was:`, finalTargetImageElement === null ? "null (initial)" : finalTargetImageElement);
+                    if (fromContainer === availableColorSwatchesContainer && 
+                        (!draggedSwatchElement.parentElement || draggedSwatchElement.parentElement !== availableColorSwatchesContainer) ) {
+                        
+                        const termSlug = draggedSwatchElement.dataset.colorSlug;
+                        if (!availableColorTerms.some(term => term.value === termSlug)) {
+                            const termObject = productVariantColorData.terms.find(t => t.value === termSlug);
+                            if (termObject) {
+                                availableColorTerms.push(termObject);
+                            } else {
+                                 if (draggedSwatchElement.parentElement && draggedSwatchElement.parentElement !== availableColorSwatchesContainer) {
+                                     draggedSwatchElement.remove();
+                                 }
+                                 console.warn(`[variantManager] Impossible de trouver l'objet terme pour ${termSlug} pour le retour à la source.`);
+                            }
+                        }
+                        if (draggedSwatchElement.parentElement && draggedSwatchElement.parentElement !== availableColorSwatchesContainer) {
+                             draggedSwatchElement.remove();
+                        } else if (!draggedSwatchElement.parentElement) {
+                            // déjà retiré
+                        }
+                        console.log(`[variantManager] Swatch ${draggedSwatchElement.dataset.colorSlug} to be re-rendered in source.`);
+                        renderAvailableSwatches();
+                    } else if (fromContainer === availableColorSwatchesContainer && toContainer === availableColorSwatchesContainer) {
+                         console.log(`[variantManager] Swatch ${draggedSwatchElement.dataset.colorSlug} returned to source container by Sortable.`);
+                         renderAvailableSwatches(); // Par sécurité pour la cohérence de l'affichage
+                    }
+                    // --- FIN LOGIQUE RETOUR A LA SOURCE ---
                 }
+            }; // Fin de la fonction processDrop
+        
+            // Déterminer la cible
+            if (evt.originalEvent) {
+                let eventTargetElement = evt.originalEvent.target;
+        
+                if (evt.originalEvent.type === 'touchend' && evt.originalEvent.changedTouches && evt.originalEvent.changedTouches.length > 0) {
+                    const touch = evt.originalEvent.changedTouches[0];
+                    const originalVisibility = draggedSwatchElement.style.visibility;
+                    draggedSwatchElement.style.visibility = 'hidden';
+        
+                    requestAnimationFrame(() => {
+                        const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+                        draggedSwatchElement.style.visibility = originalVisibility; // Rétablir la visibilité
+        
+                        let determinedTarget = elementAtPoint || eventTargetElement; // Priorité à elementFromPoint si dispo
+                        let finalImageElement = determinedTarget ? determinedTarget.closest('.carousel-image-container, .thumbnail-wrapper') : null;
+                        console.log(`[variantManager] onEnd (Mobile Path): elementFromPoint=${elementAtPoint}, initial eventTarget=${eventTargetElement}, finalImageElement=${finalImageElement}`);
+                        processDrop(finalImageElement);
+                    });
+                } else { // Pour les événements souris (desktop) ou si touchend n'a pas changedTouches
+                    let finalImageElement = eventTargetElement ? eventTargetElement.closest('.carousel-image-container, .thumbnail-wrapper') : null;
+                    console.log(`[variantManager] onEnd (Desktop Path): eventTarget=${eventTargetElement}, finalImageElement=${finalImageElement}`);
+                    processDrop(finalImageElement);
+                }
+            } else { // Pas d'événement original (ne devrait pas arriver avec SortableJS)
+                console.warn('[variantManager] onEnd: No originalEvent. Processing drop with null target.');
+                processDrop(null);
             }
-        } // Fin de onEnd
+        } // Fin de onEnd        
     }); // Fin de new Sortable
     console.log('[variantManager] SortableJS initialized for SWATCH SOURCE CONTAINER (pull: true).');
 }
