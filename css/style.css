@@ -975,17 +975,39 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     background-color: rgba(0, 123, 255, 0.1); /* Léger fond bleu au survol */
 }
 
+/* Dans css/style.css (à la fin du fichier ou en remplacement de la règle existante) */
+
 .custom-color-swatch-fallback {
-    background: red !important; /* Très visible */
-    width: 50px !important;     /* Taille fixe pour test */
-    height: 50px !important;    /* Taille fixe pour test */
-    border-radius: 0 !important; /* Carré pour simplicité de test */
-    opacity: 0.8 !important;
-    z-index: 999999 !important;
-    position: fixed !important; /* Important pour le positionnement avec fallbackOnBody */
-    /* Retirez tout autre style comme transform, margin, etc. pour ce test */
+    background-color: lime !important; /* Couleur très vive */
+    width: 60px !important;             /* Taille claire */
+    height: 60px !important;            /* Taille claire */
+    opacity: 1 !important;              /* Pleinement opaque */
+    z-index: 9999999 !important;        /* Au-dessus de tout */
+    position: fixed !important;         /* Positionnement fixe par rapport à la fenêtre */
+    border: 5px solid magenta !important;/* Bordure très vive */
+    
+    /* !! TEST DE POSITION STATIQUE !! */
+    top: 30px !important;               /* Position fixe en haut */
+    left: 30px !important;              /* Position fixe à gauche */
+    
+    margin: 0 !important;               /* Pas de marges */
+    padding: 0 !important;              /* Pas de padding */
+    transform: none !important;         /* Annuler toute transformation héritée ou appliquée par erreur */
+    
+    pointer-events: none; /* Pour que le clone ne capture pas les événements de souris à la place de SortableJS */
+    
+    /* Pour afficher du contenu de débogage à l'intérieur */
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: black !important;
+    font-size: 10px !important;
+    overflow: hidden !important; /* S'assurer que le contenu ne dépasse pas */
 }
 
-body.dragging-color-swatch {
-    /* Pour l'instant, ne mettez rien ici qui pourrait interférer */
-}
+/* Optionnel: ajouter du contenu via pseudo-élément pour le débogage */
+/* .custom-color-swatch-fallback::before {
+    content: "FALLBACK" !important;
+    font-weight: bold;
+} */
