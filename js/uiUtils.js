@@ -17,7 +17,9 @@ import {
     modalCropBtn, // Needed for resetModalToActionView
     modalRemoveWatermarkBtn, // Needed for resetModalToActionView
     modalGenerateMockupBtn, // Needed for resetModalToActionView
-    modalToggleSizeGuideBtn
+    modalToggleSizeGuideBtn,
+    modalReplaceBackgroundBtn,
+    modalUpscaleBtn         
     // Ajoutez d'autres éléments DOM importés ici si resetModalToActionView en a besoin de plus
 } from './dom.js';
 
@@ -100,6 +102,14 @@ export function resetModalToActionView() {
     if (modalToggleSizeGuideBtn) { // <<<< AJOUTER CE BLOC
         modalToggleSizeGuideBtn.style.display = 'inline-block'; // ou 'block' selon son style d'origine
         modalToggleSizeGuideBtn.disabled = false;
+    }
+    if (modalReplaceBackgroundBtn) { // <-- NOUVELLE SECTION
+        modalReplaceBackgroundBtn.style.display = 'inline-block';
+        modalReplaceBackgroundBtn.disabled = false;
+    }
+    if (modalUpscaleBtn) {           // <-- NOUVELLE SECTION
+        modalUpscaleBtn.style.display = 'inline-block';
+        modalUpscaleBtn.disabled = false;
     }
 
     // Note: D'autres boutons comme modalMarkForDeletionBtn, modalToggleSizeGuideBtn
