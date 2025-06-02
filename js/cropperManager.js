@@ -6,7 +6,9 @@ import {
     modalCropperContainer, imageToCropElement,
     modalCropValidateBtn, modalCropCancelBtn,
     cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight,
-    cropperAspectRatioButtonsContainer
+    cropperAspectRatioButtonsContainer,
+    modalReplaceBackgroundBtn, 
+    modalUpscaleBtn            
 } from './dom.js';
 import { updateStatus } from './uiUtils.js';
 // getCurrentModalImage sera importé par app.js et passé à startCropping si nécessaire
@@ -83,6 +85,8 @@ export function startCropper(imageToEdit, validationCb, cancellationCb) {
     if (modalGenerateMockupBtn) modalGenerateMockupBtn.style.display = 'none';
     if (modalMarkForDeletionBtn) modalMarkForDeletionBtn.style.display = 'none';
     if (modalToggleSizeGuideBtn) modalToggleSizeGuideBtn.style.display = 'none';
+    if (modalReplaceBackgroundBtn) modalReplaceBackgroundBtn.style.display = 'none'; 
+    if (modalUpscaleBtn) modalUpscaleBtn.style.display = 'none';
 
     // Préparer l'image et le conteneur pour Cropper
     if (modalCropperContainer && imageToCropElement) {
