@@ -811,7 +811,6 @@ async function callExecuteConfirmedActionWithUiManagement(editMode) {
 }
 
 // --- Récupération Initiale des Données ---
-// --- Récupération Initiale des Données ---
 const fetchProductData = async () => {
     updateStatus("Récupération des données produit...", 'info');
     if (productNameElement) productNameElement.textContent = 'Chargement...';
@@ -843,7 +842,7 @@ const fetchProductData = async () => {
                 const status = data.image_processing_status || 0; 
                 productStatusToggleBtn.dataset.status = status.toString(); // Doit être une chaîne dans dataset
     
-                if (status === 1) { // Traitement terminé
+                if (parseInt(status) === 1) { // Traitement terminé
                     productStatusToggleBtn.textContent = '✅';
                     productStatusToggleBtn.classList.remove('status-inactive');
                     productStatusToggleBtn.classList.add('status-active');
