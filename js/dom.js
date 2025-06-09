@@ -82,6 +82,8 @@ export function initDomElements() {
     modalDissociateColorBtn = document.getElementById('modal-dissociate-color-btn');
     modalReplaceBackgroundBtn = document.getElementById('modal-replace-background-btn');
     modalUpscaleBtn = document.getElementById('modal-upscale-btn'); 
+
+    productStatusToggleBtn = document.getElementById('product-status-toggle');
     
     console.log('dom.js: DOM elements initialized.');
 }
