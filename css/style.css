@@ -37,6 +37,37 @@ h2 {
     font-weight: normal;
 }
 
+/* Style pour l'en-tête d'infos produit avec le toggle */
+.product-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: -10px; /* Réduit l'espace avant le nom du produit */
+}
+
+/* Style de base pour le bouton toggle */
+.status-toggle-btn {
+    padding: 5px 10px;
+    font-size: 1.2em;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    background-color: #f0f0f0;
+}
+
+/* Style pour l'état actif (✅, statut = 1) */
+.status-toggle-btn.status-active {
+    background-color: #e8f5e9; /* Vert clair */
+    border-color: #4caf50; /* Vert */
+}
+
+/* Style pour l'état inactif (❌, statut = 0) */
+.status-toggle-btn.status-inactive {
+    background-color: #ffebee; /* Rouge clair */
+    border-color: #f44336; /* Rouge */
+}
+
 /* Section Assignation des Rôles */
 h3 { /* Titres de section (Assigner les Rôles, Images Disponibles) */
     margin-top: 15px; /* Ajout espace au dessus */
