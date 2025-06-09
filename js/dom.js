@@ -17,6 +17,7 @@ export let variantColorAssignmentContainer, availableColorSwatchesContainer, var
 export let modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameElement, modalDissociateColorBtn;
 export let modalReplaceBackgroundBtn;
 export let modalUpscaleBtn;
+export let productStatusToggleBtn;
 
 // Fonction pour initialiser toutes les références DOM
 export function initDomElements() {
