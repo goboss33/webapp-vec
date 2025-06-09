@@ -832,6 +832,24 @@ const fetchProductData = async () => {
         if (data.images && Array.isArray(data.images)) {
             allImageData = data.images; // Stocker
 
+            // --- MISE A JOUR DU BOUTON STATUT TRAITEMENT IMAGES ---
+            if (productStatusToggleBtn) {
+                // On attend une valeur numérique 0 ou 1. Par défaut, 0 (non terminé).
+                const status = data.image_processing_status || 0; 
+                productStatusToggleBtn.dataset.status = status.toString(); // Doit être une chaîne dans dataset
+    
+                if (status === 1) { // Traitement terminé
+                    productStatusToggleBtn.textContent = '✅';
+                    productStatusToggleBtn.classList.remove('status-inactive');
+                    productStatusToggleBtn.classList.add('status-active');
+                } else { // Traitement non terminé ou en cours
+                    productStatusToggleBtn.textContent = '❌';
+                    productStatusToggleBtn.classList.remove('status-active');
+                    productStatusToggleBtn.classList.add('status-inactive');
+                }
+            }
+            // --- FIN MISE A JOUR ---
+            
             // Préparer les données pour variantManager
             let parsedVariantColorAttributes = [];
             if (data.variantColorAttributes) {
