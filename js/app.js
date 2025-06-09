@@ -109,14 +109,19 @@ const handleSaveChanges = async () => {
     const imageIdsToDelete = allImageData
         .filter(imgData => imgData.markedForDeletion === true)
         .map(imgData => imgData.id);
-
+    
     const variantColorMappings = variantManager.getVariantColorMappings();
+
+    // **** AJOUT : Récupérer le statut de traitement (0 ou 1) ****
+    const processingStatusString = productStatusToggleBtn ? productStatusToggleBtn.dataset.status : '0';
+    const imageProcessingStatus = parseInt(processingStatusString, 10); // Convertit '0'/'1' en nombre 0/1
     
     console.log(`Images marquées pour suppression (IDs): ${imageIdsToDelete.join(', ') || 'Aucune'}`);
     // **** FIN AJOUT ****
     
     const payload = {
         productId: currentProductId,
+        image_processing_status: imageProcessingStatus,
         mainImageId: mainImageId,
         galleryImageIds: galleryImageIds,
         customGalleryImageIds: customGalleryImageIds,
