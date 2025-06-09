@@ -1076,6 +1076,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Écouteur pour le bouton de statut de traitement des images
+    if (productStatusToggleBtn) {
+        productStatusToggleBtn.addEventListener('click', () => {
+            const currentStatus = productStatusToggleBtn.dataset.status; // Sera '0' ou '1'
+            const newStatus = currentStatus === '1' ? '0' : '1';
+            
+            productStatusToggleBtn.dataset.status = newStatus;
+            
+            if (newStatus === '1') {
+                productStatusToggleBtn.textContent = '✅';
+                productStatusToggleBtn.classList.remove('status-inactive');
+                productStatusToggleBtn.classList.add('status-active');
+                updateStatus("Statut du traitement des images : Terminé. Enregistrez pour appliquer.", 'info');
+            } else {
+                productStatusToggleBtn.textContent = '❌';
+                productStatusToggleBtn.classList.remove('status-active');
+                productStatusToggleBtn.classList.add('status-inactive');
+                updateStatus("Statut du traitement des images : Non Terminé. Enregistrez pour appliquer.", 'info');
+            }
+        });
+    }
     
     // Récupérer les données initiales
     fetchProductData();
