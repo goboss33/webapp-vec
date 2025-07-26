@@ -20,8 +20,9 @@ export let modalUpscaleBtn;
 export let productStatusToggleBtn;
 
 // NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
-export let mannequinChoiceBtn;
-export let mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn;
+export let mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn;
+// NOUVEAUX ÉLÉMENTS DOM POUR L'AFFICHAGE DANS LE BOUTON PRINCIPAL
+export let mannequinDisplayPortrait, mannequinDisplayName;
 
 
 // Fonction pour initialiser toutes les références DOM
@@ -100,6 +101,10 @@ export function initDomElements() {
     mannequinListContainer = document.getElementById('mannequin-list-container');
     mannequinSelectBtn = document.getElementById('mannequin-select-btn');
     mannequinCancelBtn = document.getElementById('mannequin-cancel-btn');
+
+    // NOUVELLES INITIALISATIONS POUR L'AFFICHAGE DANS LE BOUTON PRINCIPAL
+    mannequinDisplayPortrait = document.getElementById('mannequin-display-portrait');
+    mannequinDisplayName = document.getElementById('mannequin-display-name');
     
     console.log('dom.js: DOM elements initialized.');
 }

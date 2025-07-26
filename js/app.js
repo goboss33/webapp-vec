@@ -12,7 +12,9 @@ console.log('app.js main script loaded, N8N URLs imported.');
 
 import { initDomElements, productIdElement, productNameElement, saveChangesButton, statusElement, dropzoneMain, dropzoneGallery, dropzoneCustom, imageCarouselContainer, imageCarousel, modalOverlay, modalCloseBtn, /* modalImageContainer, */ modalSwiperContainer, modalSwiperWrapper, modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo, modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn, cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer, modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn, editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn, modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameElement, modalDissociateColorBtn, modalReplaceBackgroundBtn, modalUpscaleBtn, productStatusToggleBtn,
     // NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
-    mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn
+    mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn,
+    // NOUVEAUX ÉLÉMENTS DOM POUR L'AFFICHAGE DANS LE BOUTON PRINCIPAL
+    mannequinDisplayPortrait, mannequinDisplayName
 } from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
 
@@ -626,7 +628,8 @@ async function callExecuteConfirmedActionWithUiManagement(editMode) {
             allImageData,
             updateImageAfterCrop
         );
-    } catch (error) {
+    } // ... (suite du try...catch...finally)
+    catch (error) {
         console.error(`app.js: Erreur retournée par actionsManager.executeConfirmedAction. Mode '${editMode}'. Type d'action: '${contextePourCetteAction?.type || 'inconnu'}'. Erreur:`, error);
         updateStatus(`Erreur (action ${contextePourCetteAction?.type || 'inconnue'}, mode ${editMode}): ${error.message}`, 'error');
         
@@ -723,8 +726,8 @@ function closeMannequinSelectionModal() {
         if (mannequinFilterAll) mannequinFilterAll.classList.add('active-filter');
         if (mannequinFilterHomme) mannequinFilterHomme.classList.remove('active-filter');
         if (mannequinFilterFemme) mannequinFilterFemme.classList.remove('active-filter');
-        // Optionally clear the list to show loading message next time, or keep for faster re-open
-        // mannequinListContainer.innerHTML = '<p>Chargement des mannequins...</p>';
+        // Call to update the main button display when modal closes
+        updateMannequinButtonDisplay(); 
     }
 }
 
@@ -807,6 +810,38 @@ function renderMannequinList(mannequins, filterGender = 'all') {
     }
 }
 
+// --- NOUVELLE FONCTION : Met à jour l'affichage du bouton "Mannequin" sur la page principale ---
+function updateMannequinButtonDisplay() {
+    console.log('app.js: updateMannequinButtonDisplay called.');
+    if (!mannequinChoiceBtn || !mannequinDisplayPortrait || !mannequinDisplayName) {
+        console.warn('app.js: Mannequin display button elements not found.');
+        return;
+    }
+
+    if (selectedMannequinId === null || selectedMannequinId === 0) {
+        console.log('app.js: No mannequin selected. Displaying "Aucun mannequin".');
+        mannequinChoiceBtn.classList.add('no-mannequin');
+        mannequinDisplayPortrait.style.display = 'none'; // Hide image
+        mannequinDisplayPortrait.src = ''; // Clear image source
+        mannequinDisplayName.textContent = 'Aucun mannequin';
+    } else {
+        const selectedMannequin = allMannequinsData.find(m => m.id === selectedMannequinId);
+        if (selectedMannequin) {
+            console.log(`app.js: Mannequin ID ${selectedMannequinId} selected. Displaying portrait and name.`);
+            mannequinChoiceBtn.classList.remove('no-mannequin');
+            mannequinDisplayPortrait.src = selectedMannequin.portrait_url || 'https://via.placeholder.com/30?text=NA';
+            mannequinDisplayPortrait.style.display = 'inline-block'; // Show image
+            mannequinDisplayName.textContent = selectedMannequin.full_name || `${selectedMannequin.first_name} ${selectedMannequin.last_name}`;
+        } else {
+            console.warn(`app.js: Selected Mannequin ID ${selectedMannequinId} not found in allMannequinsData. Displaying "Chargement..." or "Inconnu".`);
+            mannequinChoiceBtn.classList.add('no-mannequin');
+            mannequinDisplayPortrait.style.display = 'none';
+            mannequinDisplayPortrait.src = '';
+            mannequinDisplayName.textContent = 'Mannequin inconnu'; // Fallback if data not found
+        }
+    }
+}
+
 
 // --- Récupération Initiale des Données ---
 const fetchProductData = async () => {
@@ -836,6 +871,24 @@ const fetchProductData = async () => {
         selectedMannequinId = data.linked_mannequin_id ? parseInt(data.linked_mannequin_id, 10) : null;
         if (selectedMannequinId === 0) selectedMannequinId = null; // Treat 0 as no selection
         console.log(`app.js: Initial linked_mannequin_id from product data: ${selectedMannequinId}`);
+
+        // IMPORTANT : Fetch ALL mannequins data HERE so updateMannequinButtonDisplay can use it immediately.
+        // We do this here as well so the main button can render on initial load.
+        try {
+            let fetchedMannequins = await fetchMannequinsAPI();
+            if (!Array.isArray(fetchedMannequins)) {
+                console.warn('app.js: Fetched mannequin data (initial load) is not an array, wrapping it.', fetchedMannequins);
+                fetchedMannequins = [fetchedMannequins];
+            }
+            allMannequinsData = fetchedMannequins; // Store all mannequins globally
+            console.log('app.js: All mannequins fetched and stored for button display:', allMannequinsData);
+        } catch (mannequinError) {
+            console.error('app.js: Error fetching all mannequins for initial button display:', mannequinError);
+            allMannequinsData = []; // Ensure it's an empty array on error
+        }
+        
+        // Update the main button display immediately after selectedMannequinId and allMannequinsData are set
+        updateMannequinButtonDisplay();
 
 
         if (data.images && Array.isArray(data.images)) {
@@ -1145,7 +1198,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('app.js: No mannequin selected. Clearing linked mannequin ID. Closing modal.');
                 updateStatus('Mannequin dissocié. Enregistrez pour appliquer.', 'info');
             }
-            closeMannequinSelectionModal();
+            closeMannequinSelectionModal(); // This will also call updateMannequinButtonDisplay
         });
         console.log('app.js: Mannequin Select button event listener attached.');
     }
