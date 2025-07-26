@@ -19,6 +19,11 @@ export let modalReplaceBackgroundBtn;
 export let modalUpscaleBtn;
 export let productStatusToggleBtn;
 
+// NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
+export let mannequinChoiceBtn;
+export let mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn;
+
+
 // Fonction pour initialiser toutes les références DOM
 export function initDomElements() {
     console.log('dom.js: Initializing DOM elements...');
@@ -84,6 +89,17 @@ export function initDomElements() {
     modalUpscaleBtn = document.getElementById('modal-upscale-btn'); 
 
     productStatusToggleBtn = document.getElementById('product-status-toggle');
+
+    // Initialisation des nouveaux éléments DOM pour la sélection des mannequins
+    mannequinChoiceBtn = document.getElementById('mannequin-choice-btn');
+    mannequinSelectionModal = document.getElementById('mannequin-selection-modal');
+    mannequinModalCloseBtn = document.getElementById('mannequin-modal-close-btn');
+    mannequinFilterAll = document.getElementById('mannequin-filter-all');
+    mannequinFilterHomme = document.getElementById('mannequin-filter-homme');
+    mannequinFilterFemme = document.getElementById('mannequin-filter-femme');
+    mannequinListContainer = document.getElementById('mannequin-list-container');
+    mannequinSelectBtn = document.getElementById('mannequin-select-btn');
+    mannequinCancelBtn = document.getElementById('mannequin-cancel-btn');
     
     console.log('dom.js: DOM elements initialized.');
 }

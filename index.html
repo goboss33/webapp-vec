@@ -21,6 +21,7 @@
 
     <h2>Infos Produit</h2> <p>Nom: <strong id="productName">Chargement...</strong></p>
     <button id="product-status-toggle" class="status-toggle-btn status-inactive" data-status="0" title="Statut du traitement des images">❌</button>
+    <button id="mannequin-choice-btn" class="action-btn" title="Choisir un mannequin">Mannequin</button>
     <hr>
     <div id="variant-color-assignment-container">
         <h3>Couleurs des Variantes : <span id="variant-color-attribute-name"></span></h3>
@@ -50,7 +51,7 @@
                  </div>
         </div>
 
-    </div
+    </div>
 
     <h3>Images Disponibles</h3>
     <div id="image-carousel-container">
@@ -124,6 +125,28 @@
                 
                 <button id="modal-crop-validate-btn" class="action-btn success-btn" style="display: none;">Valider Recadrage</button>
                 <button id="modal-crop-cancel-btn" class="action-btn cancel-btn" style="display: none;">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mannequin-selection-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <button id="mannequin-modal-close-btn" class="modal-close">&times;</button>
+            <h2>Choisir un Mannequin</h2>
+
+            <div class="mannequin-filters">
+                <button id="mannequin-filter-all" class="action-btn active-filter" data-gender="all">Tous</button>
+                <button id="mannequin-filter-homme" class="action-btn" data-gender="homme">Homme</button>
+                <button id="mannequin-filter-femme" class="action-btn" data-gender="femme">Femme</button>
+            </div>
+
+            <div id="mannequin-list-container">
+                <p>Chargement des mannequins...</p>
+                </div>
+
+            <div class="mannequin-modal-actions">
+                <button id="mannequin-select-btn" class="action-btn success-btn" disabled>Valider la sélection</button>
+                <button id="mannequin-cancel-btn" class="action-btn cancel-btn">Annuler</button>
             </div>
         </div>
     </div>

@@ -1048,3 +1048,96 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     overflow: hidden !important;
     */
 }
+
+
+/* NOUVEAUX STYLES POUR LA MODAL DE SÉLECTION DES MANNEQUINS */
+#mannequin-selection-modal .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.mannequin-filters {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.mannequin-filters .action-btn {
+    padding: 8px 15px;
+    font-size: 0.9em;
+}
+
+.mannequin-filters .action-btn.active-filter {
+    background-color: var(--tg-theme-button-color, #007bff);
+    color: var(--tg-theme-button-text-color, #fff);
+}
+
+#mannequin-list-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    padding: 10px;
+    max-height: 50vh; /* Permet le défilement si beaucoup de mannequins */
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    background-color: var(--tg-theme-secondary-bg-color, #f8f8f8);
+}
+
+.mannequin-item {
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    background-color: var(--tg-theme-bg-color, #fff);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.2s ease-in-out;
+    width: 120px; /* Taille fixe pour chaque élément */
+    flex-shrink: 0;
+}
+
+.mannequin-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+}
+
+.mannequin-item.selected {
+    border-color: var(--tg-theme-link-color, #007bff);
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.mannequin-item img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 5px;
+    border: 1px solid #eee;
+}
+
+.mannequin-item p {
+    margin: 0;
+    font-size: 0.9em;
+    color: var(--tg-theme-text-color, #333);
+}
+
+.mannequin-item .name {
+    font-weight: bold;
+}
+
+.mannequin-item .gender {
+    font-size: 0.8em;
+    color: var(--tg-theme-hint-color, #777);
+}
+
+.mannequin-modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
