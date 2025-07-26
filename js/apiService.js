@@ -1,7 +1,8 @@
 // js/apiService.js
 import {
     N8N_GET_DATA_WEBHOOK_URL,
-    N8N_UPDATE_DATA_WEBHOOK_URL
+    N8N_UPDATE_DATA_WEBHOOK_URL,
+    N8N_GET_MANNEQUINS_WEBHOOK_URL // Importer la nouvelle URL
     // N8N_CROP_IMAGE_WEBHOOK_URL, // Sera utilisé par une fonction d'action spécifique
     // N8N_REMOVE_WATERMARK_WEBHOOK_URL,
     // N8N_GENERATE_MOCKUP_WEBHOOK_URL
@@ -88,7 +89,27 @@ export async function executeImageActionAPI(webhookUrl, payload) {
             errorMsg = errorData.message || (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
         } catch (e) {
              // Si le corps de la réponse d'erreur n'est pas du JSON valide ou est vide
-            console.warn(`apiService.js: Impossible de parser la réponse d'erreur JSON de n8n pour <span class="math-inline">\{webhookUrl\} \(</span>{response.status}).`);
+            console.warn(`apiService.js: Impossible de parser la réponse d'erreur JSON de n8n pour ${webhookUrl} (${response.status}).`);
+        }
+        throw new Error(errorMsg);
+    }
+    return response.json();
+}
+
+/**
+ * Récupère la liste de tous les mannequins disponibles.
+ * @returns {Promise<Array<Object>>} La promesse résolue avec la liste des mannequins ou rejetée avec une erreur.
+ */
+export async function fetchMannequinsAPI() {
+    console.log('apiService.js: Attempting to fetch mannequins from:', N8N_GET_MANNEQUINS_WEBHOOK_URL);
+    const response = await fetch(N8N_GET_MANNEQUINS_WEBHOOK_URL);
+    if (!response.ok) {
+        let errorMsg = `Erreur serveur N8N (fetchMannequinsAPI): ${response.status} ${response.statusText}`;
+        try {
+            const errorData = await response.json();
+            errorMsg = errorData.message || JSON.stringify(errorData);
+        } catch (e) {
+            console.warn(`apiService.js: Impossible de parser la réponse d'erreur JSON de n8n pour les mannequins (${response.status}).`);
         }
         throw new Error(errorMsg);
     }

@@ -9,13 +9,16 @@ import {
 } from './config.js';
 console.log('app.js main script loaded, N8N URLs imported.');
 
-import { initDomElements, productIdElement, productNameElement, saveChangesButton, statusElement, dropzoneMain, dropzoneGallery, dropzoneCustom, imageCarouselContainer, imageCarousel, modalOverlay, modalCloseBtn, /* modalImageContainer, */ modalSwiperContainer, modalSwiperWrapper, modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo, modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn, cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer, modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn, editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn, modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameElement, modalDissociateColorBtn, modalReplaceBackgroundBtn, modalUpscaleBtn, productStatusToggleBtn } from './dom.js';
+import { initDomElements, productIdElement, productNameElement, saveChangesButton, statusElement, dropzoneMain, dropzoneGallery, dropzoneCustom, imageCarouselContainer, imageCarousel, modalOverlay, modalCloseBtn, /* modalImageContainer, */ modalSwiperContainer, modalSwiperWrapper, modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo, modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn, cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer, modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn, editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn, modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameElement, modalDissociateColorBtn, modalReplaceBackgroundBtn, modalUpscaleBtn, productStatusToggleBtn,
+    // NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
+    mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn
+} from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
 
 import { updateStatus, showLoading, hideLoading, resetModalToActionView } from './uiUtils.js';
 console.log('app.js: UI utility functions imported.');
 
-import { fetchProductDataAPI, saveChangesAPI, executeImageActionAPI } from './apiService.js';
+import { fetchProductDataAPI, saveChangesAPI, executeImageActionAPI, fetchMannequinsAPI } from './apiService.js'; // Importer fetchMannequinsAPI
 console.log('app.js: API service functions imported.');
 
 import { initializeSortableManager, addGalleryImageToDOM } from './sortableManager.js';
@@ -38,11 +41,14 @@ let currentProductId = null;
 let allImageData = [];
 let currentEditActionContext = null;
 let currentSystemColorAttributeSlug = null;
+let allMannequinsData = []; // Nouvelle variable globale pour stocker les mannequins
+let selectedMannequinId = null; // Nouvelle variable globale pour le mannequin sélectionné
 
 // --- Fonctions Utilitaires ---
 
 // Met à jour l'affichage de l'icône Guide des Tailles sur une miniature ou un item de carrousel
 function updateSizeGuideIcon(imageId, isSizeGuide) {
+    console.log(`app.js: updateSizeGuideIcon called for ID ${imageId}, isSizeGuide: ${isSizeGuide}`);
     // Chercher l'élément dans le carrousel principal
     const carouselItem = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`);
     if (carouselItem) {
@@ -81,29 +87,33 @@ function updateSizeGuideIcon(imageId, isSizeGuide) {
             if (existingIcon) existingIcon.remove();
         }
     });
-    console.log(`Icône Guide des Tailles mise à jour pour ID ${imageId}: ${isSizeGuide}`);
+    console.log(`app.js: Icône Guide des Tailles mise à jour pour ID ${imageId}: ${isSizeGuide}`);
 }
 
 // --- Enregistrement des Modifications ---
 // Elle collecte toujours les IDs depuis les .thumbnail-wrapper présents dans les zones au moment du clic.
 const handleSaveChanges = async () => {
+    console.log('app.js: handleSaveChanges started.');
     showLoading("Sauvegarde des rôles...");
     updateStatus("Enregistrement des modifications...", 'info');
     if(saveChangesButton) saveChangesButton.disabled = true;
 
     const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
     const mainImageId = mainImageThumb ? mainImageThumb.dataset.imageId : null;
+    console.log('app.js: Main Image ID:', mainImageId);
 
     const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
     const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
+    console.log('app.js: Gallery Image IDs:', galleryImageIds);
 
     const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper') : [];
     const customGalleryImageIds = Array.from(customGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
+    console.log('app.js: Custom Gallery Image IDs:', customGalleryImageIds);
 
     // Trouver l'ID de l'image désignée comme guide des tailles (ou null)
     const sizeGuideEntry = allImageData.find(imgData => imgData.uses && imgData.uses.includes('size_guide'));
     const sizeGuideImageId = sizeGuideEntry ? sizeGuideEntry.id : null;
-    console.log(`Image Guide des Tailles sélectionnée pour sauvegarde: ID ${sizeGuideImageId}`);
+    console.log(`app.js: Image Guide des Tailles sélectionnée pour sauvegarde: ID ${sizeGuideImageId}`);
 
     // **** AJOUT : Collecter les IDs des images marquées pour suppression ****
     const imageIdsToDelete = allImageData
@@ -116,8 +126,8 @@ const handleSaveChanges = async () => {
     const processingStatusString = productStatusToggleBtn ? productStatusToggleBtn.dataset.status : '0';
     const imageProcessingStatus = parseInt(processingStatusString, 10); // Convertit '0'/'1' en nombre 0/1
     
-    console.log(`Images marquées pour suppression (IDs): ${imageIdsToDelete.join(', ') || 'Aucune'}`);
-    // **** FIN AJOUT ****
+    console.log(`app.js: Images marquées pour suppression (IDs): ${imageIdsToDelete.join(', ') || 'Aucune'}`);
+    console.log(`app.js: Mannequin sélectionné pour sauvegarde (ID): ${selectedMannequinId}`);
     
     const payload = {
         productId: currentProductId,
@@ -128,15 +138,16 @@ const handleSaveChanges = async () => {
         sizeGuideImageId: sizeGuideImageId, // **** AJOUTER CETTE LIGNE ****
         imageIdsToDelete: imageIdsToDelete,
         variantColorMappings: variantColorMappings, // **** AJOUTER CE CHAMP AU PAYLOAD ****
-        colorAttributeSlug: currentSystemColorAttributeSlug
+        colorAttributeSlug: currentSystemColorAttributeSlug,
+        linked_mannequin_id: selectedMannequinId // Ajouter le mannequin sélectionné
     };
-    console.log("Données envoyées à n8n:", payload);
+    console.log("app.js: Données envoyées à n8n:", payload);
 
     try {
         // NOUVELLE LIGNE : Appel à la fonction API
         const result = await saveChangesAPI(payload);
         
-        console.log("Réponse de n8n (Mise à jour):", result);
+        console.log("app.js: Réponse de n8n (Mise à jour):", result);
         updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
 
         // ** NOUVEAU : Retirer les images supprimées de l'UI **
@@ -161,11 +172,12 @@ const handleSaveChanges = async () => {
             }
         }
     } catch (error) {
-        console.error("Erreur lors de l'enregistrement via n8n:", error);
+        console.error("app.js: Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
     } finally {
         if(saveChangesButton) saveChangesButton.disabled = false;
         hideLoading();
+        console.log('app.js: handleSaveChanges finished.');
     }
 };
 
@@ -174,6 +186,7 @@ const handleSaveChanges = async () => {
 
 // Dans app.js
 function closeModal() {
+    console.log('app.js: closeModal called.');
     closeModalFromManager(); // Pour overlay et Swiper
 
     // Si un recadrage était en cours, il faut aussi l'annuler proprement via le manager
@@ -196,11 +209,12 @@ function handleSettingsClick(event) {
 
 // Gère le clic sur le bouton "Guide des tailles" dans la modale
 function handleSizeGuideToggle(event) { // L'événement vient maintenant du bouton
+    console.log('app.js: handleSizeGuideToggle called.');
     const button = event.currentTarget;
     const imageId = button.dataset.currentImageId;
 
     if (!imageId) {
-        console.error("Impossible de trouver l'ID de l'image associée au bouton Guide des tailles.");
+        console.error("app.js: Impossible de trouver l'ID de l'image associée au bouton Guide des tailles.");
         return;
     }
     const imageIdNum = parseInt(imageId, 10);
@@ -209,7 +223,7 @@ function handleSizeGuideToggle(event) { // L'événement vient maintenant du bou
     const wasActive = button.classList.contains('active-size-guide');
     const newActiveState = !wasActive;
 
-    console.log(`Toggle Guide des Tailles pour ID ${imageIdNum}. Nouveau statut actif: ${newActiveState}`);
+    console.log(`app.js: Toggle Guide des Tailles pour ID ${imageIdNum}. Nouveau statut actif: ${newActiveState}`);
 
     // Mettre à jour allImageData (logique pour UN SEUL guide des tailles)
     let previousSizeGuideId = null;
@@ -258,6 +272,7 @@ function handleSizeGuideToggle(event) { // L'événement vient maintenant du bou
 
 // Gère le clic sur le bouton "DEL" dans le carrousel OU l'appel direct depuis la modale
 function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
+    console.log('app.js: handleMarkForDeletionClick called.');
     let imageId;
     let container; // Conteneur de l'image dans le carrousel
 
@@ -274,7 +289,7 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
     }
 
     if (!imageId) {
-        console.error("Impossible de trouver l'ID pour marquer pour suppression.");
+        console.error("app.js: Impossible de trouver l'ID pour marquer pour suppression.");
         return;
     }
 
@@ -282,14 +297,14 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
     const imageIndex = allImageData.findIndex(img => img.id === imageIdNum);
 
     if (imageIndex === -1) {
-        console.error(`Image ID ${imageIdNum} non trouvée dans allImageData.`);
+        console.error(`app.js: Image ID ${imageIdNum} non trouvée dans allImageData.`);
         return;
     }
 
     allImageData[imageIndex].markedForDeletion = !allImageData[imageIndex].markedForDeletion;
     const isMarked = allImageData[imageIndex].markedForDeletion;
 
-    console.log(`Image ID ${imageIdNum} marquée pour suppression: ${isMarked}`);
+    console.log(`app.js: Image ID ${imageIdNum} marquée pour suppression: ${isMarked}`);
 
     // Mettre à jour l'apparence visuelle du carrousel SI l'élément y est
     if (container) {
@@ -302,7 +317,7 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
             if (delButtonInCarousel) delButtonInCarousel.title = 'Marquer pour suppression définitive';
         }
     } else if (directImageId) {
-        console.log(`Image ${directImageId} (appel direct) marquée/démarquée. Pas de conteneur carrousel trouvé pour màj visuelle immédiate.`);
+        console.log(`app.js: Image ${directImageId} (appel direct) marquée/démarquée. Pas de conteneur carrousel trouvé pour màj visuelle immédiate.`);
     }
 
     // Mettre à jour l'apparence du bouton dans la modale si elle est ouverte et concerne cette image
@@ -316,33 +331,7 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
             modalMarkForDeletionBtn.textContent = 'DEL';
             modalMarkForDeletionBtn.classList.remove('marked');
         }
-        // Appel explicite pour rafraîchir toute la modale si l'image active est modifiée
-        // Cela s'assurera que updateModalInfo dans modalManager met à jour le slide également.
-        // On doit trouver l'index actuel de l'image dans la liste utilisée par la modale.
-        // Pour l'instant, on se fie au fait que si le bouton est mis à jour, c'est suffisant,
-        // et updateModalInfo sera appelé par Swiper lors du prochain changement de slide.
-        // Pour un rafraîchissement immédiat du slide, il faudrait que modalManager.js expose
-        // soit l'index actuel, soit une fonction pour rafraîchir la vue active.
-        // La fonction updateModalInfoFromManager(index, allImageData) pourrait être appelée si on connait l'index.
-        // Pour l'instant, laissons comme ça, la fonction updateModalInfo de modalManager
-        // s'occupe de la classe du slide lorsqu'elle est appelée.
     }
-
-    // La partie suivante qui mettait à jour currentSlideElementInModal est supprimée car:
-    // 1. currentModalIndex et modalSwiperInstance ne sont plus directement accessibles ici.
-    // 2. La logique de mise à jour du slide (.classList.add/remove('marked-for-deletion-slide'))
-    //    est DÉJÀ PRÉSENTE dans la fonction updateModalInfo de modalManager.js.
-    //    Cette fonction updateModalInfo est appelée par Swiper quand le slide change
-    //    ou quand la modale est initialisée/ouverte.
-    //
-    // const currentSlideElementInModal = modalSwiperInstance?.slides[currentModalIndex]; // SUPPRIMÉ
-    // if (currentSlideElementInModal && modalImageList[currentModalIndex]?.id === imageIdNum) { // SUPPRIMÉ
-    //     if (isMarked) { // SUPPRIMÉ
-    //         currentSlideElementInModal.classList.add('marked-for-deletion-slide'); // SUPPRIMÉ
-    //     } else { // SUPPRIMÉ
-    //         currentSlideElementInModal.classList.remove('marked-for-deletion-slide'); // SUPPRIMÉ
-    //     } // SUPPRIMÉ
-    // } // SUPPRIMÉ
 
     if (modalOverlay.style.display === 'flex') {
         refreshCurrentModalViewDataFromManager(allImageData);
@@ -354,6 +343,7 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
 // --- NOUVELLE Logique de Recadrage (Cropper.js) ---
 
 function startCropping() { // Cette fonction reste dans app.js pour orchestrer
+    console.log('app.js: startCropping called.');
     const imageToEdit = getCurrentModalImage(); // Utilise la fonction de modalManager
     if (!imageToEdit) {
         updateStatus("Aucune image sélectionnée pour le recadrage.", "error");
@@ -439,6 +429,7 @@ function updateImageAfterCrop(imageIdStr, newImageUrl) { // Notez imageIdStr
 
 // Valide le recadrage : stocke le contexte, puis affiche la confirmation.
 async function validateCropping() { // Cette fonction reste dans app.js pour l'instant
+    console.log('app.js: validateCropping called.');
     if (!isCropperActive()) { // Utilise la fonction de cropperManager
          console.error("app.js: validateCropping - Aucune instance Cropper active.");
          updateStatus("Erreur : Aucune image ou recadrage actif pour valider.", "error");
@@ -452,6 +443,7 @@ async function validateCropping() { // Cette fonction reste dans app.js pour l'i
 
 // Gère la demande de retrait de watermark : stocke le contexte, puis affiche la confirmation.
 async function handleRemoveWatermark() {
+    console.log('app.js: handleRemoveWatermark called.');
     // Déterminer l'image à traiter : celle du mode recadrage (currentCroppingImage)
     // ou, si pas en mode recadrage, celle actuellement affichée dans la modale Swiper (modalImageList[currentModalIndex]).
     // const imageToProcess = cropperInstance ? currentCroppingImage : modalImageList[currentModalIndex]; // ANCIENNE LIGNE
@@ -460,11 +452,11 @@ async function handleRemoveWatermark() {
 
     if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
         updateStatus("Données de l'image invalides ou aucune image sélectionnée pour retirer le watermark.", "error");
-        console.error("handleRemoveWatermark: imageToProcess invalide ou manquante.", imageToProcess);
+        console.error("app.js: handleRemoveWatermark: imageToProcess invalide ou manquante.", imageToProcess);
         return;
     }
 
-    console.log(`Préparation pour retrait du watermark (ID: ${imageToProcess.id}). Affichage confirmation...`);
+    console.log(`app.js: Préparation pour retrait du watermark (ID: ${imageToProcess.id}). Affichage confirmation...`);
 
     // Stocker le contexte de l'action
     currentEditActionContext = {
@@ -482,19 +474,15 @@ async function handleRemoveWatermark() {
 
 // Gère le clic sur le bouton "Générer Mockup"
 async function handleGenerateMockup() {
-    //const imageToProcess = isCropperActive() ? null : getCurrentModalImage(); // Simplifié: si crop actif, pas d'image de base pour mockup simple
-                                                                          // currentCroppingImage n'est plus global.
-                                                                          // On pourrait passer l'image du cropper si c'est un cas d'usage.
-                                                                          // Pour l'instant, mockup depuis image non recadrée.
-
+    console.log('app.js: handleGenerateMockup called.');
     const imageToProcess = getCurrentModalImage();
     if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
         updateStatus("Aucune image sélectionnée pour générer le mockup (ou recadrage en cours).", "error");
-        console.error("handleGenerateMockup: imageToProcess invalide ou manquante.", imageToProcess);
+        console.error("app.js: handleGenerateMockup: imageToProcess invalide ou manquante.", imageToProcess);
         return;
     }
 
-    console.log(`Préparation pour la génération du mockup (ID Image Produit: ${imageToProcess.id}).`);
+    console.log(`app.js: Préparation pour la génération du mockup (ID Image Produit: ${imageToProcess.id}).`);
 
     currentEditActionContext = { // currentEditActionContext est toujours dans app.js
         type: 'generateMockup',
@@ -508,14 +496,15 @@ async function handleGenerateMockup() {
 }
 
 async function handleReplaceBackground() {
+    console.log('app.js: handleReplaceBackground called.');
     const imageToProcess = getCurrentModalImage(); // Fonction de modalManager.js
     if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
         updateStatus("Aucune image sélectionnée pour remplacer le fond.", "error");
-        console.error("handleReplaceBackground: imageToProcess invalide ou manquante.", imageToProcess);
+        console.error("app.js: handleReplaceBackground: imageToProcess invalide ou manquante.", imageToProcess);
         return;
     }
 
-    console.log(`Préparation pour le remplacement du fond (ID Image Produit: ${imageToProcess.id}).`);
+    console.log(`app.js: Préparation pour le remplacement du fond (ID Image Produit: ${imageToProcess.id}).`);
 
     currentEditActionContext = { // currentEditActionContext est global dans app.js
         type: 'replaceBackground', // Nouveau type d'action
@@ -529,14 +518,15 @@ async function handleReplaceBackground() {
 }
 
 async function handleUpscaleImage() {
+    console.log('app.js: handleUpscaleImage called.');
     const imageToProcess = getCurrentModalImage(); // Fonction de modalManager.js
     if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
         updateStatus("Aucune image sélectionnée pour l'upscale.", "error");
-        console.error("handleUpscaleImage: imageToProcess invalide ou manquante.", imageToProcess);
+        console.error("app.js: handleUpscaleImage: imageToProcess invalide ou manquante.", imageToProcess);
         return;
     }
 
-    console.log(`Préparation pour l'upscale de l'image (ID: ${imageToProcess.id}).`);
+    console.log(`app.js: Préparation pour l'upscale de l'image (ID: ${imageToProcess.id}).`);
 
     currentEditActionContext = { // currentEditActionContext est global dans app.js
         type: 'upscaleImage', // Nouveau type d'action
@@ -549,6 +539,7 @@ async function handleUpscaleImage() {
 }
 
 function showEditActionConfirmation() {
+    console.log('app.js: showEditActionConfirmation called.');
     if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'flex';
     // Optionnel: cacher les boutons d'action principaux de la modale pendant ce choix
     if (modalActions) modalActions.style.display = 'none';
@@ -560,6 +551,7 @@ function showEditActionConfirmation() {
 
 // Dans app.js
 function hideEditActionConfirmation() {
+    console.log('app.js: hideEditActionConfirmation called.');
     if (editActionConfirmationOverlay) editActionConfirmationOverlay.style.display = 'none';
     currentEditActionContext = null; // Réinitialiser le contexte
 
@@ -574,138 +566,6 @@ function hideEditActionConfirmation() {
         if (modalActions) modalActions.style.display = 'flex'; 
     }
 }
-
-// Nouvelle fonction pour exécuter l'action après confirmation (remplacer ou nouvelle image)
-/*
-async function executeConfirmedAction(editMode) { // editMode sera 'replace' ou 'new'
-    if (!currentEditActionContext) {
-        console.error("Aucun contexte d'action d'édition trouvé pour exécuter.");
-        updateStatus("Erreur : Contexte d'action manquant.", "error");
-        hideEditActionConfirmation(); // S'assurer de cacher la sous-modale
-        // Restaurer l'état de la modale principale
-        if (isCropperActive()) { 
-            cancelCropperFromManager(); 
-        } else { 
-            resetModalToActionView();
-        }
-        return;
-    }
-
-    const { type, imageData, payloadData } = currentEditActionContext;
-    let webhookUrl = ''; // <<< CETTE PARTIE RESTE INCHANGÉE
-    const basePayload = {
-        productId: currentProductId,
-        imageId: imageData.id, 
-        imageUrl: imageData.url.split('?')[0], 
-        editMode: editMode 
-    };
-
-    if (editMode === 'new') {
-        const currentGalleryThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
-        const currentGalleryImageIds = Array.from(currentGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
-        basePayload.currentGalleryImageIds = currentGalleryImageIds; 
-    }
-
-    const finalPayload = { ...basePayload, ...payloadData };
-
-    // --- La détermination de webhookUrl RESTE ICI dans app.js ---
-    if (type === 'crop') {
-        webhookUrl = N8N_CROP_IMAGE_WEBHOOK_URL;
-    } else if (type === 'removeWatermark') {
-        webhookUrl = N8N_REMOVE_WATERMARK_WEBHOOK_URL;
-    } else if (type === 'generateMockup') { 
-        webhookUrl = N8N_GENERATE_MOCKUP_WEBHOOK_URL; 
-    } else {
-        console.error(`Type d'action inconnu lors de l'exécution: ${type}`);
-        hideLoading();
-        updateStatus(`Erreur: Type d'action inconnu '${type}'.`, 'error');
-        if (cropperInstance) cancelCropping(); else resetModalToActionView();
-        return;
-    }
-    // --- Fin de la détermination de webhookUrl ---
-
-    // Ces lignes restent également ici
-    console.log(`Exécution de l'action: ${type}, Mode: ${editMode}, Webhook: ${webhookUrl}, Payload:`, finalPayload);
-    showLoading(`Traitement de l'image (${type}, Mode: ${editMode})...`);
-    updateStatus(`Traitement (${type}, Mode: ${editMode}) en cours...`, 'info');
-    hideEditActionConfirmation(); 
-
-    // --- C'est le bloc try...catch...finally suivant que nous allons modifier ---
-    try {
-        // ANCIEN CODE (celui que vous avez actuellement) :
-        // const response = await fetch(webhookUrl, {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(finalPayload)
-        // });
-        // 
-        // // Gestion complète de l'erreur HTTP
-        // if (!response.ok) {
-        //     let errorMsg = `Erreur serveur n8n (${type}, ${editMode}): ${response.status} ${response.statusText}`;
-        //     try {
-        //         const errorData = await response.json();
-        //         errorMsg = errorData.message || (typeof errorData === 'string' ? errorData : JSON.stringify(errorData));
-        //     } catch (e) {
-        //         console.warn(`Impossible de parser la réponse d'erreur JSON de n8n pour ${type} (${response.status}). Corps de la réponse:`, await response.text().catch(() => '[corps illisible]'));
-        //     }
-        //     throw new Error(errorMsg); 
-        // }
-        // const result = await response.json();
-
-        // NOUVEAU CODE à mettre à la place du bloc fetch ci-dessus :
-        const result = await executeImageActionAPI(webhookUrl, finalPayload);
-        // Le reste de la fonction (après la récupération de 'result') est identique
-
-        console.log(`Réponse du workflow n8n (${type}, ${editMode}):`, result);
-
-        if (!result || result.status !== 'success' || !result.newImageUrl) {
-            throw new Error(result.message || `Réponse invalide du workflow n8n pour '${type}' en mode '${editMode}'. 'newImageUrl' manquant ou statut incorrect.`);
-        }
-
-        if (editMode === 'replace') {
-            updateImageAfterCrop(imageData.id.toString(), result.newImageUrl);
-            updateStatus(`Image (ID: ${imageData.id}) remplacée avec succès via '${type}' !`, 'success');
-        } else { // editMode === 'new'
-            if (!result.newImageId) {
-                throw new Error("L'ID de la nouvelle image ('newImageId') est manquant dans la réponse n8n pour le mode 'new'.");
-            }
-            const newImageObject = {
-                id: result.newImageId,
-                url: result.newImageUrl,
-                status: 'current',
-                uses: ['gallery'] 
-            };
-            allImageData.push(newImageObject);
-
-            addGalleryImageToDOM(newImageObject);
-
-            if (modalOverlay && modalOverlay.style.display === 'flex') { // Vérifie si la modale est visible
-                addImageToModalSwiper(newImageObject); // Appel à la fonction du manager
-            }
-            updateStatus(`Nouvelle image (ID: ${newImageObject.id}) ajoutée à la galerie via '${type}' !`, 'success');
-        }
-
-        if (type === 'crop' && isCropperActive()) { // Utilise la fonction de cropperManager
-        //    cancelCropping(); // ANCIEN APPEL, cancelCropping est dans app.js et appelle le manager
-            cancelCropperFromManager(); // APPEL DIRECT au manager pour être sûr
-        } else if (type === 'removeWatermark' || (type === 'generateMockup' && !isCropperActive()) ) { 
-            resetModalToActionView(); 
-        }
-
-    } catch (error) {
-        console.error(`Échec de l'action '${type}' en mode '${editMode}':`, error);
-        updateStatus(`Erreur (${type}, ${editMode}): ${error.message}`, 'error');
-        if (isCropperActive()) { // Utilise la fonction de cropperManager
-            cancelCropperFromManager();
-        } else { 
-            resetModalToActionView();
-        }
-    } finally {
-        hideLoading(); 
-        console.log(`Fin du traitement pour action '${type}', mode '${editMode}'.`);
-    }
-}
-*/
 
 /**
  * Appelle actionsManager.executeConfirmedAction et gère l'UI (loading, status, reset view).
@@ -810,6 +670,108 @@ async function callExecuteConfirmedActionWithUiManagement(editMode) {
     }
 }
 
+// --- Mannequin Selection Modal Logic ---
+async function openMannequinSelectionModal() {
+    console.log('app.js: openMannequinSelectionModal called.');
+    if (mannequinSelectionModal) {
+        mannequinSelectionModal.style.display = 'flex';
+        updateStatus('Chargement des mannequins...', 'info');
+        showLoading('Chargement des mannequins...');
+
+        try {
+            allMannequinsData = await fetchMannequinsAPI();
+            console.log('app.js: Mannequins fetched:', allMannequinsData);
+            renderMannequinList(allMannequinsData); // A définir dans la prochaine itération
+            updateStatus('Mannequins chargés.', 'success');
+        } catch (error) {
+            console.error('app.js: Failed to fetch mannequins:', error);
+            updateStatus(`Erreur chargement mannequins: ${error.message}`, 'error');
+            if (mannequinListContainer) {
+                mannequinListContainer.innerHTML = '<p>Erreur lors du chargement des mannequins.</p>';
+            }
+        } finally {
+            hideLoading();
+        }
+    }
+}
+
+function closeMannequinSelectionModal() {
+    console.log('app.js: closeMannequinSelectionModal called.');
+    if (mannequinSelectionModal) {
+        mannequinSelectionModal.style.display = 'none';
+        // Reset selected mannequin and disable select button
+        selectedMannequinId = null;
+        if (mannequinSelectBtn) mannequinSelectBtn.disabled = true;
+        // Optionally clear the list or reset filters
+        if (mannequinListContainer) mannequinListContainer.innerHTML = '<p>Chargement des mannequins...</p>';
+        if (mannequinFilterAll) mannequinFilterAll.classList.add('active-filter');
+        if (mannequinFilterHomme) mannequinFilterHomme.classList.remove('active-filter');
+        if (mannequinFilterFemme) mannequinFilterFemme.classList.remove('active-filter');
+    }
+}
+
+// Dummy function for now, will be implemented in the next iteration
+function renderMannequinList(mannequins, filterGender = 'all') {
+    console.log(`app.js: renderMannequinList called with filter: ${filterGender}. Mannequin count: ${mannequins.length}`);
+    if (!mannequinListContainer) return;
+
+    mannequinListContainer.innerHTML = '';
+    const filteredMannequins = filterGender === 'all'
+        ? mannequins
+        : mannequins.filter(m => m.gender === filterGender);
+
+    if (filteredMannequins.length === 0) {
+        mannequinListContainer.innerHTML = '<p>Aucun mannequin trouvé pour ce filtre.</p>';
+        return;
+    }
+
+    filteredMannequins.forEach(mannequin => {
+        const mannequinItem = document.createElement('div');
+        mannequinItem.className = 'mannequin-item';
+        mannequinItem.dataset.mannequinId = mannequin.id;
+
+        const img = document.createElement('img');
+        img.src = mannequin.portrait_url || 'https://via.placeholder.com/80?text=Mannequin'; // Placeholder if no image
+        img.alt = mannequin.full_name;
+        mannequinItem.appendChild(img);
+
+        const name = document.createElement('p');
+        name.className = 'name';
+        name.textContent = mannequin.full_name;
+        mannequinItem.appendChild(name);
+
+        const gender = document.createElement('p');
+        gender.className = 'gender';
+        gender.textContent = mannequin.gender === 'homme' ? 'Homme' : 'Femme';
+        mannequinItem.appendChild(gender);
+
+        mannequinItem.addEventListener('click', () => {
+            console.log(`app.js: Mannequin ID ${mannequin.id} selected.`);
+            // Remove 'selected' class from all other items
+            document.querySelectorAll('.mannequin-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            // Add 'selected' class to the clicked item
+            mannequinItem.classList.add('selected');
+            selectedMannequinId = mannequin.id;
+            if (mannequinSelectBtn) mannequinSelectBtn.disabled = false;
+        });
+
+        mannequinListContainer.appendChild(mannequinItem);
+    });
+    console.log(`app.js: ${filteredMannequins.length} mannequins rendered.`);
+
+    // If a mannequin was already selected (e.g., from previous save or product data), highlight it
+    if (selectedMannequinId) {
+        const previouslySelectedItem = mannequinListContainer.querySelector(`.mannequin-item[data-mannequin-id="${selectedMannequinId}"]`);
+        if (previouslySelectedItem) {
+            previouslySelectedItem.classList.add('selected');
+            if (mannequinSelectBtn) mannequinSelectBtn.disabled = false;
+        }
+    }
+}
+
+
 // --- Récupération Initiale des Données ---
 const fetchProductData = async () => {
     updateStatus("Récupération des données produit...", 'info');
@@ -828,10 +790,15 @@ const fetchProductData = async () => {
     try {
         const data = await fetchProductDataAPI(currentProductId); 
         
-        console.log('Parsed JSON data:', data);
+        console.log('app.js: Parsed JSON data:', data);
         updateStatus("Données reçues. Affichage...", 'info');
 
         if (productNameElement) productNameElement.textContent = data.productName || 'Non trouvé';
+
+        // Set selectedMannequinId from product data if available
+        selectedMannequinId = data.linked_mannequin_id || null;
+        console.log(`app.js: Initial linked_mannequin_id from product data: ${selectedMannequinId}`);
+
 
         if (data.images && Array.isArray(data.images)) {
             allImageData = data.images; // Stocker
@@ -910,14 +877,14 @@ const fetchProductData = async () => {
 
             updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
         } else { // Ce else est pour if (data.images && Array.isArray(data.images))
-            console.error("Format de données invalide : 'images' manquant ou n'est pas un tableau.");
+            console.error("app.js: Format de données invalide : 'images' manquant ou n'est pas un tableau.");
             if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur format données.</p>';
             updateStatus("Erreur format données images.", 'error');
             // S'assurer qu'on essaie quand même d'initialiser Sortable pour avoir une base, même vide.
-            initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick);
+            initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick); 
         }
     } catch (error) {
-        console.error("Erreur fetchProductData:", error);
+        console.error("app.js: Erreur fetchProductData:", error);
         updateStatus(`Erreur chargement: ${error.message}`, 'error');
         if (productNameElement) productNameElement.textContent = 'Erreur';
         if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur chargement.</p>';
@@ -928,15 +895,16 @@ const fetchProductData = async () => {
 
 // --- Initialisation de l'application ---
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('app.js: DOMContentLoaded event fired.');
     // Initialise le SDK Telegram SI il est disponible
     if (window.Telegram && window.Telegram.WebApp) {
-        console.log("SDK Telegram WebApp détecté. Initialisation...");
+        console.log("app.js: SDK Telegram WebApp détecté. Initialisation...");
         Telegram.WebApp.ready(); // Indique à Telegram que la WebApp est chargée et prête
         Telegram.WebApp.expand(); // Demande à la WebApp de s'agrandir à sa hauteur maximale
         // Optionnel : Activer la confirmation avant de fermer la WebApp
         // Telegram.WebApp.enableClosingConfirmation();
     } else {
-        console.warn("SDK Telegram WebApp non détecté. Fonctionnement hors Telegram?");
+        console.warn("app.js: SDK Telegram WebApp non détecté. Fonctionnement hors Telegram?");
     }
 
     //Initialiser les éléments DOM via le module dom.js
@@ -946,8 +914,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
     currentProductId = urlParams.get('productId');
-     if (!currentProductId) { /* ... gestion erreur ... */ return; }
+     if (!currentProductId) { 
+        console.error('app.js: Product ID not found in URL. Cannot proceed.');
+        updateStatus("Erreur: ID produit manquant dans l'URL.", "error");
+        return; 
+    }
     if (productIdElement) productIdElement.textContent = currentProductId;
+    console.log('app.js: currentProductId set to:', currentProductId);
+
 
     // --- Attacher les écouteurs d'événements ---
     // Modal Fermer
@@ -959,13 +933,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === modalOverlay && !isCropperActive()) {
             closeModal();
         } else if (event.target === modalOverlay && isCropperActive()) {
-            console.log("Clic extérieur détecté pendant le recadrage, fermeture de la modale empêchée.");
+            console.log("app.js: Clic extérieur détecté pendant le recadrage, fermeture de la modale empêchée.");
             // Optionnel: donner un feedback visuel à l'utilisateur, comme un léger "shake" de la modale
             // ou un message bref, mais pour l'instant on empêche juste la fermeture.
         }
     });
     if (modalDissociateColorBtn) {
         modalDissociateColorBtn.addEventListener('click', (event) => {
+            console.log('app.js: Dissociate Color button clicked.');
             const imageId = event.currentTarget.dataset.imageId;
             const colorSlug = event.currentTarget.dataset.colorSlug;
     
@@ -1084,6 +1059,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Écouteur pour le bouton de statut de traitement des images
     if (productStatusToggleBtn) {
         productStatusToggleBtn.addEventListener('click', () => {
+            console.log('app.js: productStatusToggleBtn clicked.');
             const currentStatus = productStatusToggleBtn.dataset.status; // Sera '0' ou '1'
             const newStatus = currentStatus === '1' ? '0' : '1';
             
@@ -1102,8 +1078,61 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
+
+    // --- NOUVEAUX ÉCOUTEURS D'ÉVÉNEMENTS POUR LA SÉLECTION DES MANNEQUINS ---
+    if (mannequinChoiceBtn) {
+        mannequinChoiceBtn.addEventListener('click', openMannequinSelectionModal);
+        console.log('app.js: Mannequin Choice button event listener attached.');
+    }
+    if (mannequinModalCloseBtn) {
+        mannequinModalCloseBtn.addEventListener('click', closeMannequinSelectionModal);
+        console.log('app.js: Mannequin Modal Close button event listener attached.');
+    }
+    if (mannequinCancelBtn) {
+        mannequinCancelBtn.addEventListener('click', closeMannequinSelectionModal);
+        console.log('app.js: Mannequin Modal Cancel button event listener attached.');
+    }
+    if (mannequinSelectBtn) {
+        mannequinSelectBtn.addEventListener('click', () => {
+            // Logic to confirm selection will go here
+            console.log(`app.js: Mannequin selected with ID: ${selectedMannequinId}. Closing modal.`);
+            updateStatus(`Mannequin ID ${selectedMannequinId} sélectionné. Enregistrez pour appliquer.`, 'success');
+            closeMannequinSelectionModal();
+        });
+        console.log('app.js: Mannequin Select button event listener attached.');
+    }
+    // Filter buttons event listeners (will be implemented fully in next iteration)
+    if (mannequinFilterAll) {
+        mannequinFilterAll.addEventListener('click', () => {
+            console.log('app.js: Mannequin Filter All clicked.');
+            renderMannequinList(allMannequinsData, 'all');
+            mannequinFilterAll.classList.add('active-filter');
+            mannequinFilterHomme.classList.remove('active-filter');
+            mannequinFilterFemme.classList.remove('active-filter');
+        });
+    }
+    if (mannequinFilterHomme) {
+        mannequinFilterHomme.addEventListener('click', () => {
+            console.log('app.js: Mannequin Filter Homme clicked.');
+            renderMannequinList(allMannequinsData, 'homme');
+            mannequinFilterHomme.classList.add('active-filter');
+            mannequinFilterAll.classList.remove('active-filter');
+            mannequinFilterFemme.classList.remove('active-filter');
+        });
+    }
+    if (mannequinFilterFemme) {
+        mannequinFilterFemme.addEventListener('click', () => {
+            console.log('app.js: Mannequin Filter Femme clicked.');
+            renderMannequinList(allMannequinsData, 'femme');
+            mannequinFilterFemme.classList.add('active-filter');
+            mannequinFilterAll.classList.remove('active-filter');
+            mannequinFilterHomme.classList.remove('active-filter');
+        });
+    }
+
+
     // Récupérer les données initiales
     fetchProductData();
+    console.log('app.js: fetchProductData() called.');
 
 }); // Fin de DOMContentLoaded
