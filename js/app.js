@@ -10,11 +10,24 @@ import {
 } from './config.js';
 console.log('app.js main script loaded, N8N URLs imported.');
 
-import { initDomElements, productIdElement, productNameElement, saveChangesButton, statusElement, dropzoneMain, dropzoneGallery, dropzoneCustom, imageCarouselContainer, imageCarousel, modalOverlay, modalCloseBtn, /* modalImageContainer, */ modalSwiperContainer, modalSwiperWrapper, modalImageId, modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo, modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, modalCropCancelBtn, cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, cropperAspectRatioButtonsContainer, modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletionBtn, editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn, modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameElement, modalDissociateColorBtn, modalReplaceBackgroundBtn, modalUpscaleBtn, productStatusToggleBtn,
-    // NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
-    mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn,
-    // NOUVEAUX ÉLÉMENTS DOM POUR L'AFFICHAGE DANS LE BOUTON PRINCIPAL
-    mannequinDisplayPortrait, mannequinDisplayName
+import { 
+    initDomElements, productIdElement, productNameElement, saveChangesButton, statusElement, 
+    dropzoneMain, dropzoneGallery, dropzoneCustom, imageCarouselContainer, imageCarousel, 
+    modalOverlay, modalCloseBtn, modalSwiperContainer, modalSwiperWrapper, modalImageId, 
+    modalImageDimensions, modalPrevBtn, modalNextBtn, modalActions, modalImageInfo, 
+    modalCropperContainer, imageToCropElement, modalCropBtn, modalCropValidateBtn, 
+    modalCropCancelBtn, cropperDataDisplay, cropDataX, cropDataY, cropDataWidth, cropDataHeight, 
+    cropperAspectRatioButtonsContainer, modalRemoveWatermarkBtn, modalGenerateMockupBtn, 
+    modalMarkForDeletionBtn, editActionConfirmationOverlay, confirmActionReplaceBtn, 
+    confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn, 
+    modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameElement, 
+    modalDissociateColorBtn, modalReplaceBackgroundBtn, modalUpscaleBtn, productStatusToggleBtn,
+    mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, 
+    mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn,
+    mannequinDisplayPortrait, mannequinDisplayName,
+    // LIGNES À VÉRIFIER / AJOUTER CI-DESSOUS :
+    mannequinImageSelectionModal, mannequinImageSwiperWrapper, mannequinImageModalCloseBtn, 
+    mannequinImageValidateBtn, mannequinImageCancelBtn 
 } from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
 
