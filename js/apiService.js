@@ -2,7 +2,7 @@
 import {
     N8N_GET_DATA_WEBHOOK_URL,
     N8N_UPDATE_DATA_WEBHOOK_URL,
-    N8N_GET_MANNEQUINS_WEBHOOK_URL // Importer la nouvelle URL
+    N8N_GET_MANNEQUINS_WEBHOOK_URL
     // N8N_CROP_IMAGE_WEBHOOK_URL, // Sera utilisé par une fonction d'action spécifique
     // N8N_REMOVE_WATERMARK_WEBHOOK_URL,
     // N8N_GENERATE_MOCKUP_WEBHOOK_URL
@@ -113,5 +113,12 @@ export async function fetchMannequinsAPI() {
         }
         throw new Error(errorMsg);
     }
-    return response.json();
+    // MODIFICATION ICI: N8N renvoie parfois un tableau d'objets, où le VRAI JSON est dans une propriété `json`.
+    // Si la réponse est directement le tableau que vous avez montré, cela fonctionnera tel quel.
+    // Si N8N l'encapsule (ex: `[{"json": [...]}]`), il faudra extraire.
+    // Pour l'instant, nous faisons confiance à la réponse que vous avez montrée (tableau direct).
+    // Si ça échoue, on peut ajouter une logique d'extraction plus robuste ici.
+    const data = await response.json();
+    console.log('apiService.js: Raw data received from fetchMannequinsAPI:', data);
+    return data; // Retourne les données telles qu'elles sont (normalement un tableau)
 }
