@@ -488,10 +488,12 @@ async function handleGenerateMockup() {
     console.log(`app.js: Préparation pour la génération du mockup (ID Image Produit: ${imageToProcess.id}).`);
 
     currentEditActionContext = { // currentEditActionContext est toujours dans app.js
-        type: 'generateMockup',
-        imageData: imageToProcess,
-        payloadData: {}
-    };
+		type: 'generateMockup',
+		imageData: imageToProcess,
+		payloadData: {
+			linked_mannequin_id: selectedMannequinId // On ajoute l'ID du mannequin ici
+		}
+	};
 
     console.log('[APP.JS] handleGenerateMockup - Context DÉFINI:', JSON.parse(JSON.stringify(currentEditActionContext))); // AJOUTER CETTE LIGNE
     // Appel direct à la version orchestrée avec gestion UI
