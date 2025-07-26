@@ -1,3 +1,4 @@
+// js/app.js
 import {
     N8N_GET_DATA_WEBHOOK_URL,
     N8N_UPDATE_DATA_WEBHOOK_URL,
@@ -681,7 +682,11 @@ async function openMannequinSelectionModal() {
         try {
             allMannequinsData = await fetchMannequinsAPI();
             console.log('app.js: Mannequins fetched:', allMannequinsData);
-            renderMannequinList(allMannequinsData); // A définir dans la prochaine itération
+            renderMannequinList(allMannequinsData, 'all'); // Initial filter to 'all'
+            // Ensure filter buttons are reset visually
+            mannequinFilterAll.classList.add('active-filter');
+            mannequinFilterHomme.classList.remove('active-filter');
+            mannequinFilterFemme.classList.remove('active-filter');
             updateStatus('Mannequins chargés.', 'success');
         } catch (error) {
             console.error('app.js: Failed to fetch mannequins:', error);
@@ -699,30 +704,45 @@ function closeMannequinSelectionModal() {
     console.log('app.js: closeMannequinSelectionModal called.');
     if (mannequinSelectionModal) {
         mannequinSelectionModal.style.display = 'none';
-        // Reset selected mannequin and disable select button
-        selectedMannequinId = null;
+        // Reset selected mannequin in the modal UI
+        const currentlySelectedItem = mannequinListContainer.querySelector('.mannequin-item.selected');
+        if (currentlySelectedItem) {
+            currentlySelectedItem.classList.remove('selected');
+        }
+        // Do NOT reset selectedMannequinId here, it holds the product's assigned mannequin.
+        // It only gets updated when user clicks 'Valider la sélection'.
+
         if (mannequinSelectBtn) mannequinSelectBtn.disabled = true;
-        // Optionally clear the list or reset filters
-        if (mannequinListContainer) mannequinListContainer.innerHTML = '<p>Chargement des mannequins...</p>';
+        // Reset filter active states
         if (mannequinFilterAll) mannequinFilterAll.classList.add('active-filter');
         if (mannequinFilterHomme) mannequinFilterHomme.classList.remove('active-filter');
         if (mannequinFilterFemme) mannequinFilterFemme.classList.remove('active-filter');
+        // Optionally clear the list to show loading message next time, or keep for faster re-open
+        // mannequinListContainer.innerHTML = '<p>Chargement des mannequins...</p>';
     }
 }
 
-// Dummy function for now, will be implemented in the next iteration
+// This function will render the list of mannequins based on filters and pre-select if applicable
 function renderMannequinList(mannequins, filterGender = 'all') {
     console.log(`app.js: renderMannequinList called with filter: ${filterGender}. Mannequin count: ${mannequins.length}`);
     if (!mannequinListContainer) return;
 
-    mannequinListContainer.innerHTML = '';
-    const filteredMannequins = filterGender === 'all'
-        ? mannequins
-        : mannequins.filter(m => m.gender === filterGender);
+    mannequinListContainer.innerHTML = ''; // Clear previous content
+    let filteredMannequins = mannequins;
+
+    if (filterGender !== 'all') {
+        filteredMannequins = mannequins.filter(m => m.gender === filterGender);
+    }
 
     if (filteredMannequins.length === 0) {
         mannequinListContainer.innerHTML = '<p>Aucun mannequin trouvé pour ce filtre.</p>';
+        if (mannequinSelectBtn) mannequinSelectBtn.disabled = true; // Disable if no mannequins to select
         return;
+    }
+
+    // Reset select button state
+    if (mannequinSelectBtn) {
+        mannequinSelectBtn.disabled = true;
     }
 
     filteredMannequins.forEach(mannequin => {
@@ -732,28 +752,29 @@ function renderMannequinList(mannequins, filterGender = 'all') {
 
         const img = document.createElement('img');
         img.src = mannequin.portrait_url || 'https://via.placeholder.com/80?text=Mannequin'; // Placeholder if no image
-        img.alt = mannequin.full_name;
+        img.alt = mannequin.full_name || 'Mannequin'; // Fallback for alt text
         mannequinItem.appendChild(img);
 
         const name = document.createElement('p');
         name.className = 'name';
-        name.textContent = mannequin.full_name;
+        name.textContent = mannequin.full_name || 'Nom Inconnu';
         mannequinItem.appendChild(name);
 
         const gender = document.createElement('p');
         gender.className = 'gender';
-        gender.textContent = mannequin.gender === 'homme' ? 'Homme' : 'Femme';
+        gender.textContent = mannequin.gender === 'homme' ? 'Homme' : (mannequin.gender === 'femme' ? 'Femme' : 'Non spécifié');
         mannequinItem.appendChild(gender);
 
+        // Add click event listener for selection
         mannequinItem.addEventListener('click', () => {
-            console.log(`app.js: Mannequin ID ${mannequin.id} selected.`);
+            console.log(`app.js: Mannequin ID ${mannequin.id} clicked for selection.`);
             // Remove 'selected' class from all other items
-            document.querySelectorAll('.mannequin-item').forEach(item => {
+            document.querySelectorAll('#mannequin-list-container .mannequin-item').forEach(item => {
                 item.classList.remove('selected');
             });
             // Add 'selected' class to the clicked item
             mannequinItem.classList.add('selected');
-            selectedMannequinId = mannequin.id;
+            // Enable the validation button and store the ID for the temporary selection
             if (mannequinSelectBtn) mannequinSelectBtn.disabled = false;
         });
 
@@ -761,12 +782,12 @@ function renderMannequinList(mannequins, filterGender = 'all') {
     });
     console.log(`app.js: ${filteredMannequins.length} mannequins rendered.`);
 
-    // If a mannequin was already selected (e.g., from previous save or product data), highlight it
-    if (selectedMannequinId) {
-        const previouslySelectedItem = mannequinListContainer.querySelector(`.mannequin-item[data-mannequin-id="${selectedMannequinId}"]`);
-        if (previouslySelectedItem) {
-            previouslySelectedItem.classList.add('selected');
-            if (mannequinSelectBtn) mannequinSelectBtn.disabled = false;
+    // After rendering all items, apply the 'selected' class if selectedMannequinId matches
+    if (selectedMannequinId !== null) {
+        const preSelectedMannequinItem = mannequinListContainer.querySelector(`.mannequin-item[data-mannequin-id="${selectedMannequinId}"]`);
+        if (preSelectedMannequinItem) {
+            preSelectedMannequinItem.classList.add('selected');
+            if (mannequinSelectBtn) mannequinSelectBtn.disabled = false; // Enable button if there's a pre-selection
         }
     }
 }
@@ -796,7 +817,9 @@ const fetchProductData = async () => {
         if (productNameElement) productNameElement.textContent = data.productName || 'Non trouvé';
 
         // Set selectedMannequinId from product data if available
-        selectedMannequinId = data.linked_mannequin_id || null;
+        // Make sure to parse to int, or set to null if 0 or empty string
+        selectedMannequinId = data.linked_mannequin_id ? parseInt(data.linked_mannequin_id, 10) : null;
+        if (selectedMannequinId === 0) selectedMannequinId = null; // Treat 0 as no selection
         console.log(`app.js: Initial linked_mannequin_id from product data: ${selectedMannequinId}`);
 
 
@@ -1094,14 +1117,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (mannequinSelectBtn) {
         mannequinSelectBtn.addEventListener('click', () => {
-            // Logic to confirm selection will go here
-            console.log(`app.js: Mannequin selected with ID: ${selectedMannequinId}. Closing modal.`);
-            updateStatus(`Mannequin ID ${selectedMannequinId} sélectionné. Enregistrez pour appliquer.`, 'success');
+            // Get the ID of the currently selected mannequin in the modal
+            const currentlySelectedItem = mannequinListContainer.querySelector('.mannequin-item.selected');
+            if (currentlySelectedItem) {
+                selectedMannequinId = parseInt(currentlySelectedItem.dataset.mannequinId, 10);
+                console.log(`app.js: Mannequin selected with ID: ${selectedMannequinId}. Closing modal.`);
+                updateStatus(`Mannequin ID ${selectedMannequinId} sélectionné. Enregistrez pour appliquer.`, 'success');
+            } else {
+                // If no item is selected but user clicks validate (e.g., they unselected something)
+                // We should clear the linked mannequin ID
+                selectedMannequinId = null;
+                console.log('app.js: No mannequin selected. Clearing linked mannequin ID. Closing modal.');
+                updateStatus('Mannequin dissocié. Enregistrez pour appliquer.', 'info');
+            }
             closeMannequinSelectionModal();
         });
         console.log('app.js: Mannequin Select button event listener attached.');
     }
-    // Filter buttons event listeners (will be implemented fully in next iteration)
+    // Filter buttons event listeners
     if (mannequinFilterAll) {
         mannequinFilterAll.addEventListener('click', () => {
             console.log('app.js: Mannequin Filter All clicked.');

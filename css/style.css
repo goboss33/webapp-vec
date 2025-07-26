@@ -656,8 +656,7 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     background-color: rgba(0, 123, 255, 0.1); /* Léger fond au survol */
 }
 .action-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .success-btn {
@@ -797,7 +796,8 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     cursor: pointer;
     font-size: 10px; /* Petite police */
     font-weight: bold;
-    line-height: 16px; /* Ajuster pour centrer */
+    line-height: 16px;
+    padding: 0;
     z-index: 10;
     box-shadow: 0 1px 2px rgba(0,0,0,0.4);
     display: inline-block; /* Affiché par défaut sur les items du carrousel */
