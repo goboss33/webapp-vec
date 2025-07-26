@@ -680,8 +680,14 @@ async function openMannequinSelectionModal() {
         showLoading('Chargement des mannequins...');
 
         try {
-            allMannequinsData = await fetchMannequinsAPI();
-            console.log('app.js: Mannequins fetched:', allMannequinsData);
+            let fetchedData = await fetchMannequinsAPI();
+            // NOUVELLE LOGIQUE : Assurez-vous que fetchedData est un tableau
+            if (!Array.isArray(fetchedData)) {
+                console.warn('app.js: Fetched mannequin data is not an array, wrapping it in an array.', fetchedData);
+                fetchedData = [fetchedData]; // Wrap single object in an array
+            }
+            allMannequinsData = fetchedData;
+            console.log('app.js: Mannequins fetched (processed to array):', allMannequinsData);
             renderMannequinList(allMannequinsData, 'all'); // Initial filter to 'all'
             // Ensure filter buttons are reset visually
             mannequinFilterAll.classList.add('active-filter');
@@ -733,6 +739,15 @@ function renderMannequinList(mannequins, filterGender = 'all') {
     if (filterGender !== 'all') {
         filteredMannequins = mannequins.filter(m => m.gender === filterGender);
     }
+
+    // IMPORTANT: Ensure filteredMannequins is truly an array before calling forEach
+    if (!Array.isArray(filteredMannequins)) {
+        console.error('app.js: filteredMannequins is not an array, cannot render list.', filteredMannequins);
+        mannequinListContainer.innerHTML = '<p>Erreur: Format de données de mannequins invalide.</p>';
+        if (mannequinSelectBtn) mannequinSelectBtn.disabled = true;
+        return;
+    }
+
 
     if (filteredMannequins.length === 0) {
         mannequinListContainer.innerHTML = '<p>Aucun mannequin trouvé pour ce filtre.</p>';
