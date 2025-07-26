@@ -104,28 +104,35 @@ export async function executeImageActionAPI(webhookUrl, payload) {
 export async function fetchMannequinsAPI(mannequinId = null) {
     let urlToFetch = N8N_GET_MANNEQUINS_WEBHOOK_URL;
 
-    // Si un ID de mannequin est fourni, on l'ajoute comme paramètre à l'URL
     if (mannequinId) {
         urlToFetch += `?id=${mannequinId}`;
-        console.log(`apiService.js: Attempting to fetch a single mannequin with ID: ${mannequinId}`);
+        console.log(`apiService.js: Tentative de récupération d'un seul mannequin avec ID: ${mannequinId}`);
     } else {
-        console.log('apiService.js: Attempting to fetch all mannequins.');
+        console.log(`apiService.js: Tentative de récupération de tous les mannequins depuis: ${urlToFetch}`);
     }
 
     const response = await fetch(urlToFetch);
 
     if (!response.ok) {
+        // ... (gestion des erreurs inchangée)
         let errorMsg = `Erreur serveur N8N (fetchMannequinsAPI): ${response.status} ${response.statusText}`;
         try {
             const errorData = await response.json();
             errorMsg = errorData.message || JSON.stringify(errorData);
-        } catch (e) {
-            // Ignorer si la réponse d'erreur n'est pas du JSON
-        }
+        } catch (e) { /* Ignorer */ }
         throw new Error(errorMsg);
     }
     
     const data = await response.json();
-    console.log('apiService.js: Raw data received from fetchMannequinsAPI:', data);
+    console.log('apiService.js: Données brutes reçues de n8n:', data);
+
+    // --- LOGIQUE DE CORRECTION ---
+    // Gère le cas où n8n enveloppe le tableau dans un objet { "json": [...] }
+    if (Array.isArray(data) && data.length > 0 && data[0].json && Array.isArray(data[0].json)) {
+        console.log('apiService.js: Structure de données encapsulée détectée. Extraction du tableau "json".');
+        return data[0].json;
+    }
+
+    // Si les données sont déjà au bon format (un simple tableau), on les retourne directement.
     return data;
 }
