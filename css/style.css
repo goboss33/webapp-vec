@@ -1194,3 +1194,31 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     padding-top: 15px;
     border-top: 1px solid #eee;
 }
+
+/* --- STYLES POUR LA SOUS-MODALE DE SÉLECTION D'IMAGE MANNEQUIN --- */
+#mannequin-image-selection-modal .modal-content {
+    /* Légèrement plus petite que la modale principale */
+    max-width: 500px; 
+}
+
+#mannequin-image-selection-modal .modal-image-container {
+    height: 55vh; /* Donner une hauteur fixe au conteneur du swiper */
+}
+
+.mannequin-image-swiper {
+    width: 100%;
+    height: 100%;
+}
+
+.mannequin-image-swiper .swiper-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* S'assurer que toute l'image est visible */
+}
+
+/* Style pour les flèches de navigation du swiper mannequin */
+.mannequin-image-swiper .swiper-button-next,
+.mannequin-image-swiper .swiper-button-prev {
+    color: var(--tg-theme-button-color, #007bff);
+}

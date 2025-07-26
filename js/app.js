@@ -46,6 +46,7 @@ let currentEditActionContext = null;
 let currentSystemColorAttributeSlug = null;
 let allMannequinsData = []; // Nouvelle variable globale pour stocker les mannequins
 let selectedMannequinId = null; // Nouvelle variable globale pour le mannequin sélectionné
+let mannequinImageSwiperInstance = null; // <-- NOUVELLE LIGNE
 
 // --- Fonctions Utilitaires ---
 
@@ -475,29 +476,62 @@ async function handleRemoveWatermark() {
     // sera déplacé dans la nouvelle fonction executeConfirmedAction().
 }
 
-// Gère le clic sur le bouton "Générer Mockup"
+// Remplacez l'ancienne fonction handleGenerateMockup par celle-ci
 async function handleGenerateMockup() {
-    console.log('app.js: handleGenerateMockup called.');
-    const imageToProcess = getCurrentModalImage();
-    if (!imageToProcess || !imageToProcess.id || !imageToProcess.url) {
-        updateStatus("Aucune image sélectionnée pour générer le mockup (ou recadrage en cours).", "error");
-        console.error("app.js: handleGenerateMockup: imageToProcess invalide ou manquante.", imageToProcess);
+    console.log('app.js: handleGenerateMockup called, preparing to open image selection.');
+    
+    if (!selectedMannequinId) {
+        updateStatus("Aucun mannequin n'est associé à ce produit.", "error");
         return;
     }
 
-    console.log(`app.js: Préparation pour la génération du mockup (ID Image Produit: ${imageToProcess.id}).`);
+    showLoading("Chargement des images du mannequin...");
 
-    currentEditActionContext = { // currentEditActionContext est toujours dans app.js
-		type: 'generateMockup',
-		imageData: imageToProcess,
-		payloadData: {
-			linked_mannequin_id: selectedMannequinId // On ajoute l'ID du mannequin ici
-		}
-	};
+    try {
+        // Fetcher les données du mannequin spécifique
+        const mannequinDataArray = await fetchMannequinsAPI(selectedMannequinId);
+        const mannequinData = mannequinDataArray[0]; // L'API renvoie un tableau même pour un seul ID
 
-    console.log('[APP.JS] handleGenerateMockup - Context DÉFINI:', JSON.parse(JSON.stringify(currentEditActionContext))); // AJOUTER CETTE LIGNE
-    // Appel direct à la version orchestrée avec gestion UI
-    await callExecuteConfirmedActionWithUiManagement('new');
+        if (!mannequinData || !mannequinData.gallery_urls || mannequinData.gallery_urls.length === 0) {
+            updateStatus("Aucune image de galerie trouvée pour ce mannequin.", "error");
+            hideLoading();
+            return;
+        }
+        
+        // Vider le conteneur du swiper
+        mannequinImageSwiperWrapper.innerHTML = '';
+        
+        // Peupler le swiper avec les images de la galerie
+        mannequinData.gallery_urls.forEach(url => {
+            const slide = document.createElement('div');
+            slide.className = 'swiper-slide';
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = "Image du mannequin";
+            slide.appendChild(img);
+            mannequinImageSwiperWrapper.appendChild(slide);
+        });
+
+        // Initialiser ou mettre à jour Swiper pour la sous-modale
+        if (mannequinImageSwiperInstance) {
+            mannequinImageSwiperInstance.destroy(true, true);
+        }
+        mannequinImageSwiperInstance = new Swiper('.mannequin-image-swiper', {
+            loop: mannequinData.gallery_urls.length > 1,
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+        });
+
+        // Afficher la sous-modale
+        mannequinImageSelectionModal.style.display = 'flex';
+        
+    } catch (error) {
+        updateStatus(`Erreur: ${error.message}`, 'error');
+    } finally {
+        hideLoading();
+    }
 }
 
 async function handleReplaceBackground() {
@@ -1230,6 +1264,49 @@ document.addEventListener('DOMContentLoaded', () => {
             mannequinFilterFemme.classList.add('active-filter');
             mannequinFilterAll.classList.remove('active-filter');
             mannequinFilterHomme.classList.remove('active-filter');
+        });
+    }
+	
+	// --- NOUVEAUX ÉCOUTEURS POUR LA SOUS-MODALE D'IMAGE MANNEQUIN ---
+    if (mannequinImageModalCloseBtn) {
+        mannequinImageModalCloseBtn.addEventListener('click', () => {
+            mannequinImageSelectionModal.style.display = 'none';
+        });
+    }
+
+    if (mannequinImageCancelBtn) {
+        mannequinImageCancelBtn.addEventListener('click', () => {
+            mannequinImageSelectionModal.style.display = 'none';
+        });
+    }
+
+    if (mannequinImageValidateBtn) {
+        mannequinImageValidateBtn.addEventListener('click', () => {
+            console.log("Validation de l'image mannequin cliquée.");
+            // Récupérer l'image source du slide actif dans le swiper
+            const activeSlide = mannequinImageSwiperInstance.slides[mannequinImageSwiperInstance.activeIndex];
+            const selectedMannequinImageUrl = activeSlide.querySelector('img').src;
+
+            if (!selectedMannequinImageUrl) {
+                updateStatus("Erreur: Impossible de récupérer l'URL de l'image sélectionnée.", "error");
+                return;
+            }
+
+            mannequinImageSelectionModal.style.display = 'none';
+            
+            // Préparer le contexte pour actionsManager, comme avant
+            const imageToProcess = getCurrentModalImage(); // Image du produit, de la modale principale
+            currentEditActionContext = {
+                type: 'generateMockup',
+                imageData: imageToProcess,
+                payloadData: {
+                    linked_mannequin_id: selectedMannequinId,
+                    mannequinImageUrl: selectedMannequinImageUrl // <-- On ajoute l'URL de l'image choisie
+                }
+            };
+            
+            // Lancer l'action
+            callExecuteConfirmedActionWithUiManagement('new');
         });
     }
 

@@ -18,6 +18,7 @@ export let modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameE
 export let modalReplaceBackgroundBtn;
 export let modalUpscaleBtn;
 export let productStatusToggleBtn;
+export let mannequinImageSelectionModal, mannequinImageSwiperWrapper, mannequinImageModalCloseBtn, mannequinImageValidateBtn, mannequinImageCancelBtn;
 
 // NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
 export let mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn;
@@ -101,10 +102,17 @@ export function initDomElements() {
     mannequinListContainer = document.getElementById('mannequin-list-container');
     mannequinSelectBtn = document.getElementById('mannequin-select-btn');
     mannequinCancelBtn = document.getElementById('mannequin-cancel-btn');
-
+	
     // NOUVELLES INITIALISATIONS POUR L'AFFICHAGE DANS LE BOUTON PRINCIPAL
     mannequinDisplayPortrait = document.getElementById('mannequin-display-portrait');
     mannequinDisplayName = document.getElementById('mannequin-display-name');
     
-    console.log('dom.js: DOM elements initialized.');
+    // NOUVELLES INITIALISATIONS POUR LA SOUS-MODALE D'IMAGE MANNEQUIN
+	mannequinImageSelectionModal = document.getElementById('mannequin-image-selection-modal');
+	mannequinImageSwiperWrapper = document.getElementById('mannequin-image-swiper-wrapper');
+	mannequinImageModalCloseBtn = document.getElementById('mannequin-image-modal-close-btn');
+	mannequinImageValidateBtn = document.getElementById('mannequin-image-validate-btn');
+	mannequinImageCancelBtn = document.getElementById('mannequin-image-cancel-btn');
+
+	console.log('dom.js: Mannequin image selection modal elements initialized.');
 }
