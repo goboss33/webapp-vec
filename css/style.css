@@ -37,12 +37,13 @@ h2 {
     font-weight: normal;
 }
 
-/* Style pour l'en-tête d'infos produit avec le toggle */
-.product-info-header {
+/* Conteneur pour les boutons du haut (Statut, Mannequin) */
+.product-header-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: -10px; /* Réduit l'espace avant le nom du produit */
+    margin-bottom: 15px; /* Ajuster l'espacement */
+    gap: 10px; /* Espace entre les boutons */
 }
 
 /* Style de base pour le bouton toggle */
@@ -67,6 +68,58 @@ h2 {
     background-color: #ffebee; /* Rouge clair */
     border-color: #f44336; /* Rouge */
 }
+
+/* Styles pour le nouveau bouton d'affichage du mannequin */
+.mannequin-display-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Centre le contenu horizontalement */
+    padding: 5px 10px;
+    font-size: 1em;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    transition: background-color 0.2s, border-color 0.2s;
+    min-width: 150px; /* Largeur minimale pour contenir l'image et le texte */
+    height: 40px; /* Hauteur fixe pour alignement avec le bouton status */
+}
+
+.mannequin-display-btn:hover {
+    background-color: #e0e0e0;
+    border-color: #aaa;
+}
+
+.mannequin-portrait-thumb {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%; /* Image ronde */
+    object-fit: cover;
+    margin-right: 8px; /* Espacement entre l'image et le texte */
+    border: 1px solid #ddd;
+}
+
+.mannequin-name-text {
+    font-weight: bold;
+    color: var(--tg-theme-text-color);
+    white-space: nowrap; /* Empêche le texte de passer à la ligne */
+    overflow: hidden; /* Cache le texte qui dépasse */
+    text-overflow: ellipsis; /* Ajoute des points de suspension si le texte est trop long */
+}
+
+/* Styles pour l'état "aucun mannequin" */
+.mannequin-display-btn.no-mannequin {
+    color: #dc3545; /* Texte rouge */
+    border-color: #dc3545; /* Bordure rouge */
+    background-color: #ffebee; /* Fond rouge très clair */
+}
+
+.mannequin-display-btn.no-mannequin .mannequin-name-text::before {
+    content: '❌ '; /* Ajoute l'emoji croix */
+    font-size: 1.2em; /* Taille de l'emoji */
+    vertical-align: middle;
+}
+
 
 /* Section Assignation des Rôles */
 h3 { /* Titres de section (Assigner les Rôles, Images Disponibles) */
