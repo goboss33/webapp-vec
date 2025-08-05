@@ -1222,3 +1222,49 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 .mannequin-image-swiper .swiper-button-prev {
     color: var(--tg-theme-button-color, #007bff);
 }
+
+/* --- NOUVEAUX STYLES POUR L'INDICATEUR D'UTILISATION --- */
+.usage-indicator {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 24px;
+    height: 24px;
+    background-color: white;
+    border-radius: 50%;
+    border: 3px solid black; /* Couleur par défaut */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    color: #333;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.usage-indicator.tier-green {
+    border-color: #28a745; /* Vert */
+}
+.usage-indicator.tier-orange {
+    border-color: #fd7e14; /* Orange */
+}
+.usage-indicator.tier-red {
+    border-color: #dc3545; /* Rouge */
+}
+
+/* Ajustement de la position du mannequin-item pour que l'indicateur ne soit pas coupé */
+.mannequin-item {
+    position: relative;
+}
+
+/* Styles pour les nouveaux boutons de filtre par couleur */
+.tier-filter-btn {
+    padding: 6px 10px;
+    font-size: 1.2em; /* Pour que les emojis soient bien visibles */
+    border: 2px solid transparent;
+}
+.tier-filter-btn.active-filter {
+    border-color: var(--tg-theme-button-color, #007bff);
+    background-color: rgba(0, 123, 255, 0.1);
+}

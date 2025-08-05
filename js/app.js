@@ -24,6 +24,7 @@ import {
     modalDissociateColorBtn, modalReplaceBackgroundBtn, modalUpscaleBtn, productStatusToggleBtn,
     mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, 
     mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn,
+	mannequinFilterGreen, mannequinFilterOrange, mannequinFilterRed,
     mannequinDisplayPortrait, mannequinDisplayName,
     // LIGNES À VÉRIFIER / AJOUTER CI-DESSOUS :
     mannequinImageSelectionModal, mannequinImageSwiperWrapper, mannequinImageModalCloseBtn, 
@@ -723,6 +724,42 @@ async function callExecuteConfirmedActionWithUiManagement(editMode) {
     }
 }
 
+/**
+ * Calcule et assigne un tier d'utilisation (vert, orange, rouge) aux mannequins
+ * en se basant sur leur product_count, séparément pour les hommes et les femmes.
+ * @param {Array<Object>} mannequins - La liste complète des mannequins.
+ * @returns {Array<Object>} La liste des mannequins enrichie avec la propriété `usage_tier`.
+ */
+function calculateUsageTiers(mannequins) {
+    const setTiers = (arr) => {
+        if (arr.length === 0) return;
+
+        // Trier par nombre de produits, du plus petit au plus grand
+        arr.sort((a, b) => a.product_count - b.product_count);
+
+        const third = Math.ceil(arr.length / 3);
+        const twoThirds = Math.ceil(arr.length * 2 / 3);
+
+        arr.forEach((m, index) => {
+            if (index < third) {
+                m.usage_tier = 'green';
+            } else if (index < twoThirds) {
+                m.usage_tier = 'orange';
+            } else {
+                m.usage_tier = 'red';
+            }
+        });
+    };
+
+    const hommes = mannequins.filter(m => m.gender === 'homme');
+    const femmes = mannequins.filter(m => m.gender === 'femme');
+
+    setTiers(hommes);
+    setTiers(femmes);
+
+    return [...hommes, ...femmes];
+}
+
 // --- Mannequin Selection Modal Logic ---
 async function openMannequinSelectionModal() {
     console.log('app.js: openMannequinSelectionModal called.');
@@ -738,7 +775,7 @@ async function openMannequinSelectionModal() {
                 console.warn('app.js: Fetched mannequin data is not an array, wrapping it in an array.', fetchedData);
                 fetchedData = [fetchedData]; // Wrap single object in an array
             }
-            allMannequinsData = fetchedData;
+            allMannequinsData = calculateUsageTiers(fetchedData);
             console.log('app.js: Mannequins fetched (processed to array):', allMannequinsData);
             renderMannequinList(allMannequinsData, 'all'); // Initial filter to 'all'
             // Ensure filter buttons are reset visually
@@ -781,33 +818,30 @@ function closeMannequinSelectionModal() {
 }
 
 // This function will render the list of mannequins based on filters and pre-select if applicable
-function renderMannequinList(mannequins, filterGender = 'all') {
-    console.log(`app.js: renderMannequinList called with filter: ${filterGender}. Mannequin count: ${mannequins.length}`);
+function renderMannequinList(mannequins, filterGender = 'all', filterTier = 'all') {
+    console.log(`app.js: renderMannequinList called with filterGender: ${filterGender}, filterTier: ${filterTier}.`);
     if (!mannequinListContainer) return;
 
-    mannequinListContainer.innerHTML = ''; // Clear previous content
+    mannequinListContainer.innerHTML = ''; 
+
     let filteredMannequins = mannequins;
 
+    // Étape 1: Filtrer par genre
     if (filterGender !== 'all') {
-        filteredMannequins = mannequins.filter(m => m.gender === filterGender);
+        filteredMannequins = filteredMannequins.filter(m => m.gender === filterGender);
     }
 
-    // IMPORTANT: Ensure filteredMannequins is truly an array before calling forEach
-    if (!Array.isArray(filteredMannequins)) {
-        console.error('app.js: filteredMannequins is not an array, cannot render list.', filteredMannequins);
-        mannequinListContainer.innerHTML = '<p>Erreur: Format de données de mannequins invalide.</p>';
+    // Étape 2: Filtrer par tier d'utilisation
+    if (filterTier !== 'all') {
+        filteredMannequins = filteredMannequins.filter(m => m.usage_tier === filterTier);
+    }
+
+    if (!Array.isArray(filteredMannequins) || filteredMannequins.length === 0) {
+        mannequinListContainer.innerHTML = '<p>Aucun mannequin trouvé pour ces filtres.</p>';
         if (mannequinSelectBtn) mannequinSelectBtn.disabled = true;
         return;
     }
 
-
-    if (filteredMannequins.length === 0) {
-        mannequinListContainer.innerHTML = '<p>Aucun mannequin trouvé pour ce filtre.</p>';
-        if (mannequinSelectBtn) mannequinSelectBtn.disabled = true; // Disable if no mannequins to select
-        return;
-    }
-
-    // Reset select button state
     if (mannequinSelectBtn) {
         mannequinSelectBtn.disabled = true;
     }
@@ -817,9 +851,17 @@ function renderMannequinList(mannequins, filterGender = 'all') {
         mannequinItem.className = 'mannequin-item';
         mannequinItem.dataset.mannequinId = mannequin.id;
 
+        // NOUVEAU : Création de l'indicateur d'utilisation
+        const usageIndicator = document.createElement('div');
+        usageIndicator.className = `usage-indicator tier-${mannequin.usage_tier}`;
+        usageIndicator.textContent = mannequin.product_count;
+        usageIndicator.title = `${mannequin.product_count} produits associés`;
+        mannequinItem.appendChild(usageIndicator);
+        // FIN NOUVEAU
+
         const img = document.createElement('img');
-        img.src = mannequin.portrait_url || 'https://via.placeholder.com/80?text=Mannequin'; // Placeholder if no image
-        img.alt = mannequin.full_name || 'Mannequin'; // Fallback for alt text
+        img.src = mannequin.portrait_url || 'https://via.placeholder.com/80?text=Mannequin';
+        img.alt = mannequin.full_name || 'Mannequin';
         mannequinItem.appendChild(img);
 
         const name = document.createElement('p');
@@ -832,29 +874,25 @@ function renderMannequinList(mannequins, filterGender = 'all') {
         gender.textContent = mannequin.gender === 'homme' ? 'Homme' : (mannequin.gender === 'femme' ? 'Femme' : 'Non spécifié');
         mannequinItem.appendChild(gender);
 
-        // Add click event listener for selection
         mannequinItem.addEventListener('click', () => {
             console.log(`app.js: Mannequin ID ${mannequin.id} clicked for selection.`);
-            // Remove 'selected' class from all other items
             document.querySelectorAll('#mannequin-list-container .mannequin-item').forEach(item => {
                 item.classList.remove('selected');
             });
-            // Add 'selected' class to the clicked item
             mannequinItem.classList.add('selected');
-            // Enable the validation button and store the ID for the temporary selection
             if (mannequinSelectBtn) mannequinSelectBtn.disabled = false;
         });
 
         mannequinListContainer.appendChild(mannequinItem);
     });
+
     console.log(`app.js: ${filteredMannequins.length} mannequins rendered.`);
 
-    // After rendering all items, apply the 'selected' class if selectedMannequinId matches
     if (selectedMannequinId !== null) {
         const preSelectedMannequinItem = mannequinListContainer.querySelector(`.mannequin-item[data-mannequin-id="${selectedMannequinId}"]`);
         if (preSelectedMannequinItem) {
             preSelectedMannequinItem.classList.add('selected');
-            if (mannequinSelectBtn) mannequinSelectBtn.disabled = false; // Enable button if there's a pre-selection
+            if (mannequinSelectBtn) mannequinSelectBtn.disabled = false;
         }
     }
 }
@@ -1251,34 +1289,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         console.log('app.js: Mannequin Select button event listener attached.');
     }
-    // Filter buttons event listeners
-    if (mannequinFilterAll) {
-        mannequinFilterAll.addEventListener('click', () => {
-            console.log('app.js: Mannequin Filter All clicked.');
-            renderMannequinList(allMannequinsData, 'all');
-            mannequinFilterAll.classList.add('active-filter');
-            mannequinFilterHomme.classList.remove('active-filter');
-            mannequinFilterFemme.classList.remove('active-filter');
-        });
-    }
-    if (mannequinFilterHomme) {
-        mannequinFilterHomme.addEventListener('click', () => {
-            console.log('app.js: Mannequin Filter Homme clicked.');
-            renderMannequinList(allMannequinsData, 'homme');
-            mannequinFilterHomme.classList.add('active-filter');
-            mannequinFilterAll.classList.remove('active-filter');
-            mannequinFilterFemme.classList.remove('active-filter');
-        });
-    }
-    if (mannequinFilterFemme) {
-        mannequinFilterFemme.addEventListener('click', () => {
-            console.log('app.js: Mannequin Filter Femme clicked.');
-            renderMannequinList(allMannequinsData, 'femme');
-            mannequinFilterFemme.classList.add('active-filter');
-            mannequinFilterAll.classList.remove('active-filter');
-            mannequinFilterHomme.classList.remove('active-filter');
-        });
-    }
+    // --- Gestion des filtres de la modale mannequin ---
+    const updateFilters = () => {
+        // Trouve quel filtre de genre est actif
+        const activeGenderFilter = document.querySelector('.mannequin-filters .action-btn[data-gender].active-filter');
+        // Trouve quel filtre de couleur est actif (s'il y en a un)
+        const activeTierFilter = document.querySelector('.mannequin-filters .tier-filter-btn.active-filter');
+
+        // Récupère les valeurs des filtres actifs, ou 'all' par défaut
+        const gender = activeGenderFilter ? activeGenderFilter.dataset.gender : 'all';
+        const tier = activeTierFilter ? activeTierFilter.dataset.tier : 'all';
+        
+        // Appelle la fonction de rendu avec les deux filtres
+        renderMannequinList(allMannequinsData, gender, tier);
+    };
+
+    const handleGenderFilterClick = (event) => {
+        // Gère le clic sur les filtres de genre (Tous, Homme, Femme)
+        document.querySelectorAll('.mannequin-filters .action-btn[data-gender]').forEach(btn => btn.classList.remove('active-filter'));
+        event.currentTarget.classList.add('active-filter');
+        updateFilters(); // Met à jour la liste
+    };
+
+    const handleTierFilterClick = (event) => {
+        // Gère le clic sur les filtres de couleur (vert, orange, rouge)
+        const clickedButton = event.currentTarget;
+        
+        // Si on clique sur un bouton déjà actif, on le désactive (revient à 'tous')
+        if (clickedButton.classList.contains('active-filter')) {
+            clickedButton.classList.remove('active-filter');
+        } else {
+            // Sinon, on active le bouton cliqué et on désactive les autres filtres de couleur
+            document.querySelectorAll('.mannequin-filters .tier-filter-btn').forEach(btn => btn.classList.remove('active-filter'));
+            clickedButton.classList.add('active-filter');
+        }
+        updateFilters(); // Met à jour la liste
+    };
+    
+    // On attache les bonnes fonctions aux bons boutons
+    if (mannequinFilterAll) mannequinFilterAll.addEventListener('click', handleGenderFilterClick);
+    if (mannequinFilterHomme) mannequinFilterHomme.addEventListener('click', handleGenderFilterClick);
+    if (mannequinFilterFemme) mannequinFilterFemme.addEventListener('click', handleGenderFilterClick);
+    
+    if (mannequinFilterGreen) mannequinFilterGreen.addEventListener('click', handleTierFilterClick);
+    if (mannequinFilterOrange) mannequinFilterOrange.addEventListener('click', handleTierFilterClick);
+    if (mannequinFilterRed) mannequinFilterRed.addEventListener('click', handleTierFilterClick);
 	
 	// --- NOUVEAUX ÉCOUTEURS POUR LA SOUS-MODALE D'IMAGE MANNEQUIN ---
     if (mannequinImageModalCloseBtn) {
