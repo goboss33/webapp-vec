@@ -818,83 +818,93 @@ function closeMannequinSelectionModal() {
 }
 
 // This function will render the list of mannequins based on filters and pre-select if applicable
+// REMPLACEZ L'ANCIENNE FONCTION renderMannequinList PAR CELLE-CI :
 function renderMannequinList(mannequins, filterGender = 'all', filterTier = 'all') {
-    console.log(`app.js: renderMannequinList called with filterGender: ${filterGender}, filterTier: ${filterTier}.`);
-    if (!mannequinListContainer) return;
+	console.log(`app.js: renderMannequinList called with filterGender: ${filterGender}, filterTier: ${filterTier}.`);
+	if (!mannequinListContainer) return;
 
-    mannequinListContainer.innerHTML = ''; 
+	mannequinListContainer.innerHTML = ''; 
 
-    let filteredMannequins = mannequins;
+	let filteredMannequins = mannequins;
 
-    // Étape 1: Filtrer par genre
-    if (filterGender !== 'all') {
-        filteredMannequins = filteredMannequins.filter(m => m.gender === filterGender);
-    }
+	// Étape 1: Filtrer par genre
+	if (filterGender !== 'all') {
+		filteredMannequins = filteredMannequins.filter(m => m.gender === filterGender);
+	}
+	
+	// Étape 2: Filtrer par tier d'utilisation
+	if (filterTier !== 'all') {
+		filteredMannequins = filteredMannequins.filter(m => m.usage_tier === filterTier);
+	}
 
-    // Étape 2: Filtrer par tier d'utilisation
-    if (filterTier !== 'all') {
-        filteredMannequins = filteredMannequins.filter(m => m.usage_tier === filterTier);
-    }
+	// NOUVELLE LOGIQUE : Tri et Limitation
+	// Étape 3: Trier la liste filtrée par nombre de produits (croissant)
+	filteredMannequins.sort((a, b) => a.product_count - b.product_count);
 
-    if (!Array.isArray(filteredMannequins) || filteredMannequins.length === 0) {
-        mannequinListContainer.innerHTML = '<p>Aucun mannequin trouvé pour ces filtres.</p>';
-        if (mannequinSelectBtn) mannequinSelectBtn.disabled = true;
-        return;
-    }
+	// Étape 4: Limiter les résultats à 10 SI un filtre de tier est actif
+	if (filterTier !== 'all') {
+		filteredMannequins = filteredMannequins.slice(0, 10);
+		console.log(`app.js: Filtered list limited to 10 mannequins for tier '${filterTier}'.`);
+	}
+	// FIN DE LA NOUVELLE LOGIQUE
 
-    if (mannequinSelectBtn) {
-        mannequinSelectBtn.disabled = true;
-    }
+	if (!Array.isArray(filteredMannequins) || filteredMannequins.length === 0) {
+		mannequinListContainer.innerHTML = '<p>Aucun mannequin trouvé pour ces filtres.</p>';
+		if (mannequinSelectBtn) mannequinSelectBtn.disabled = true;
+		return;
+	}
 
-    filteredMannequins.forEach(mannequin => {
-        const mannequinItem = document.createElement('div');
-        mannequinItem.className = 'mannequin-item';
-        mannequinItem.dataset.mannequinId = mannequin.id;
+	if (mannequinSelectBtn) {
+		mannequinSelectBtn.disabled = true;
+	}
 
-        // NOUVEAU : Création de l'indicateur d'utilisation
-        const usageIndicator = document.createElement('div');
-        usageIndicator.className = `usage-indicator tier-${mannequin.usage_tier}`;
-        usageIndicator.textContent = mannequin.product_count;
-        usageIndicator.title = `${mannequin.product_count} produits associés`;
-        mannequinItem.appendChild(usageIndicator);
-        // FIN NOUVEAU
+	filteredMannequins.forEach(mannequin => {
+		const mannequinItem = document.createElement('div');
+		mannequinItem.className = 'mannequin-item';
+		mannequinItem.dataset.mannequinId = mannequin.id;
 
-        const img = document.createElement('img');
-        img.src = mannequin.portrait_url || 'https://via.placeholder.com/80?text=Mannequin';
-        img.alt = mannequin.full_name || 'Mannequin';
-        mannequinItem.appendChild(img);
+		const usageIndicator = document.createElement('div');
+		usageIndicator.className = `usage-indicator tier-${mannequin.usage_tier}`;
+		usageIndicator.textContent = mannequin.product_count;
+		usageIndicator.title = `${mannequin.product_count} produits associés`;
+		mannequinItem.appendChild(usageIndicator);
 
-        const name = document.createElement('p');
-        name.className = 'name';
-        name.textContent = mannequin.full_name || 'Nom Inconnu';
-        mannequinItem.appendChild(name);
+		const img = document.createElement('img');
+		img.src = mannequin.portrait_url || 'https://via.placeholder.com/80?text=Mannequin';
+		img.alt = mannequin.full_name || 'Mannequin';
+		mannequinItem.appendChild(img);
 
-        const gender = document.createElement('p');
-        gender.className = 'gender';
-        gender.textContent = mannequin.gender === 'homme' ? 'Homme' : (mannequin.gender === 'femme' ? 'Femme' : 'Non spécifié');
-        mannequinItem.appendChild(gender);
+		const name = document.createElement('p');
+		name.className = 'name';
+		name.textContent = mannequin.full_name || 'Nom Inconnu';
+		mannequinItem.appendChild(name);
 
-        mannequinItem.addEventListener('click', () => {
-            console.log(`app.js: Mannequin ID ${mannequin.id} clicked for selection.`);
-            document.querySelectorAll('#mannequin-list-container .mannequin-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-            mannequinItem.classList.add('selected');
-            if (mannequinSelectBtn) mannequinSelectBtn.disabled = false;
-        });
+		const gender = document.createElement('p');
+		gender.className = 'gender';
+		gender.textContent = mannequin.gender === 'homme' ? 'Homme' : (mannequin.gender === 'femme' ? 'Femme' : 'Non spécifié');
+		mannequinItem.appendChild(gender);
 
-        mannequinListContainer.appendChild(mannequinItem);
-    });
+		mannequinItem.addEventListener('click', () => {
+			console.log(`app.js: Mannequin ID ${mannequin.id} clicked for selection.`);
+			document.querySelectorAll('#mannequin-list-container .mannequin-item').forEach(item => {
+				item.classList.remove('selected');
+			});
+			mannequinItem.classList.add('selected');
+			if (mannequinSelectBtn) mannequinSelectBtn.disabled = false;
+		});
 
-    console.log(`app.js: ${filteredMannequins.length} mannequins rendered.`);
+		mannequinListContainer.appendChild(mannequinItem);
+	});
+	
+	console.log(`app.js: ${filteredMannequins.length} mannequins rendered.`);
 
-    if (selectedMannequinId !== null) {
-        const preSelectedMannequinItem = mannequinListContainer.querySelector(`.mannequin-item[data-mannequin-id="${selectedMannequinId}"]`);
-        if (preSelectedMannequinItem) {
-            preSelectedMannequinItem.classList.add('selected');
-            if (mannequinSelectBtn) mannequinSelectBtn.disabled = false;
-        }
-    }
+	if (selectedMannequinId !== null) {
+		const preSelectedMannequinItem = mannequinListContainer.querySelector(`.mannequin-item[data-mannequin-id="${selectedMannequinId}"]`);
+		if (preSelectedMannequinItem) {
+			preSelectedMannequinItem.classList.add('selected');
+			if (mannequinSelectBtn) mannequinSelectBtn.disabled = false;
+		}
+	}
 }
 
 // --- NOUVELLE FONCTION : Met à jour l'affichage du bouton "Mannequin" sur la page principale ---
