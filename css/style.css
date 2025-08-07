@@ -1471,3 +1471,8 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     word-break: break-all;
 }
 
+.term-draggable.sortable-drag {
+    display: block !important;
+    justify-content: initial !important; /* Annule les styles flexbox hérités */
+    align-items: initial !important;    /* Annule les styles flexbox hérités */
+}
