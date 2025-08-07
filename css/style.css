@@ -1389,21 +1389,27 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     text-transform: uppercase;
 }
 
-/* --- STYLES DÉFINITIFS POUR LE DRAG&DROP MOBILE --- */
+/* --- STYLES DÉFINITIFS POUR LE DRAG&DROP (MOBILE & DESKTOP) --- */
 
 /* On retire les transformations complexes de l'ancienne classe .sortable-drag */
 .sortable-drag {
     opacity: 0.9 !important;
 }
 
-/* NOUVELLE CLASSE POUR LE CLONE (FALLBACK) */
-/* Ce style est simple et léger, optimisé pour les performances mobiles */
+/* CLASSE POUR LE CLONE (FALLBACK) */
 .sortable-fallback {
+    /* Style de positionnement - crucial pour corriger le décalage */
+    position: absolute !important; 
+    z-index: 9999 !important; /* Pour être au-dessus de tout */
+    margin: 0 !important; /* Empêche les marges de causer un décalage */
+    pointer-events: none; /* L'élément cloné ne doit pas intercepter les clics */
+
+    /* Style visuel (léger pour la performance) */
     opacity: 0.8 !important;
-    background-color: #a0d8ff !important; /* Un bleu clair pour le feedback */
+    background-color: #a0d8ff !important;
     border: 1px solid #007bff !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
-    transform: scale(1.05); /* Juste une légère mise à l'échelle */
+    transform: scale(1.05);
 }
 
 /* On s'assure que le contenu du clone garde une taille et une apparence simple */

@@ -263,12 +263,13 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         animation: 150,
         sort: false,
         
-        // --- DÉBUT DE LA CORRECTION DÉFINITIVE POUR MOBILE ---
-        forceFallback: true,      // Force l'utilisation du clone, ignore le HTML5 natif
-        delay: 50,                // Délai en ms avant le début du drag (évite les drags accidentels)
-        touchStartThreshold: 8,   // L'utilisateur doit bouger le doigt de 8px pour démarrer le drag
-        fallbackClass: "sortable-fallback", // On utilise une classe CSS personnalisée et simple
-        // --- FIN DE LA CORRECTION ---
+        // --- CONFIGURATION DÉFINITIVE POUR MOBILE & DESKTOP ---
+        forceFallback: true,
+        fallbackOnBody: true, // Force le clone à être ajouté au body (corrige les décalages)
+        delay: 50,
+        touchStartThreshold: 8,
+        fallbackClass: "sortable-fallback",
+        // --- FIN DE LA CONFIGURATION ---
 
         onStart: function(evt) {
             document.body.classList.add('dragging-color-swatch');
