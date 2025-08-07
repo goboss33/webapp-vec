@@ -20,20 +20,19 @@ import {
     cropperAspectRatioButtonsContainer, modalRemoveWatermarkBtn, modalGenerateMockupBtn, 
     modalMarkForDeletionBtn, editActionConfirmationOverlay, confirmActionReplaceBtn, 
     confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn, 
-    
-    // --- LIGNES CORRIGÉES ---
-    modalImageAssignedTermIndicatorElement,
-    modalImageAssignedTermNameElement,
-    modalDissociateTermBtn,
-    // --- FIN DES LIGNES CORRIGÉES ---
-
+    modalImageAssignedTermIndicatorElement, modalImageAssignedTermNameElement, modalDissociateTermBtn,
     modalReplaceBackgroundBtn, modalUpscaleBtn, productStatusToggleBtn,
     mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, 
     mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn,
 	mannequinFilterGreen, mannequinFilterOrange, mannequinFilterRed,
     mannequinDisplayPortrait, mannequinDisplayName,
     mannequinImageSelectionModal, mannequinImageSwiperWrapper, mannequinImageModalCloseBtn, 
-    mannequinImageValidateBtn, mannequinImageCancelBtn 
+    mannequinImageValidateBtn, mannequinImageCancelBtn,
+
+    // --- AJOUTEZ CES DEUX VARIABLES À LA LISTE ---
+    resetVariantsBtn,
+    noVariantsMessage
+    
 } from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
 
