@@ -252,7 +252,7 @@ export function refreshIndicatorForImage(imageId) {
     }
 }
 
-// REMPLACEZ LA FONCTION configureSortableForTerms DANS variantAttributeManager.js PAR CELLE-CI
+// REMPLACEZ la fonction configureSortableForTerms existante par celle-ci
 
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
     if (!availableTermsContainer) return;
@@ -262,6 +262,11 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         group: { name: 'terms-shared', pull: true, put: true },
         animation: 150,
         sort: false,
+        
+        // --- DÉBUT DE LA CORRECTION POUR MOBILE ---
+        forceFallback: true, // Force l'utilisation du clone, ignore le HTML5 natif
+        // --- FIN DE LA CORRECTION ---
+
         onStart: function(evt) {
             document.body.classList.add('dragging-color-swatch');
             temporaryImageDropZoneInstances.forEach(instance => instance.destroy());
@@ -302,7 +307,7 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                         currentImageTermMappings.forEach((map, imgId) => {
                             if (map.termSlug === newTermData.termSlug && imgId !== targetImageId) {
                                 currentImageTermMappings.delete(imgId);
-                                onRefreshIndicatorCallback(imgId); // Pour retirer l'ancien indicateur
+                                onRefreshIndicatorCallback(imgId);
                                 const oldImgInAllData = allImageDataRef.find(i => i.id.toString() === imgId);
                                 if (oldImgInAllData) {
                                     delete oldImgInAllData.assigned_term_slug;
@@ -316,9 +321,7 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                         
                         const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
                         if (targetImgInAllData) {
-                            // --- DÉBUT DE LA CORRECTION ---
                             targetImgInAllData.assigned_term_slug = newTermData.termSlug;
-                            // --- FIN DE LA CORRECTION ---
                             targetImgInAllData.assigned_term_name = newTermData.termName;
                             targetImgInAllData.assigned_term_hex = newTermData.hex;
                         }
