@@ -1336,3 +1336,55 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     border-radius: 3px;
     background-color: #e9ecef;
 }
+
+/* --- Styles pour les actions des variantes --- */
+.variant-actions {
+    margin-bottom: 10px;
+    text-align: right;
+}
+
+#reset-variants-btn {
+    padding: 5px 10px;
+    font-size: 0.8em;
+}
+
+#no-variants-message {
+    font-style: italic;
+    color: var(--tg-theme-hint-color, #777);
+    margin: 0;
+    padding: 5px;
+}
+
+/* --- AMÉLIORATION DU DESIGN DES INDICATEURS SUR LES MINIATURES --- */
+.image-color-indicator-placeholder {
+    position: absolute;
+    bottom: 3px; /* Positionné en bas */
+    left: 3px;   /* à gauche */
+    min-width: 20px; /* Largeur minimale */
+    height: 20px;
+    border-radius: 4px; /* Coins arrondis */
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+    display: flex; /* Pour centrer le contenu */
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px; /* Un peu d'espace horizontal pour le texte */
+}
+
+/* Style pour l'indicateur de couleur */
+.image-color-indicator-placeholder.is-color-indicator {
+    /* La couleur de fond est gérée par JS */
+}
+
+/* Style pour l'indicateur de bouton (texte) */
+.image-color-indicator-placeholder.is-button-indicator {
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}

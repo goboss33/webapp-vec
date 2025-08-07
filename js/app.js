@@ -935,18 +935,19 @@ const fetchProductData = async () => {
 
             // L'API renvoie maintenant directement l'objet `variantAttribute`
             if (data.variantAttribute && data.variantAttribute.attribute_slug) {
-                currentAttributeSlug = data.variantAttribute.attribute_slug; // Stocker le slug générique
-                // Initialiser le nouveau gestionnaire de variantes
-                variantAttributeManager.initVariantHandler(
-                    data.variantAttribute, 
-                    allImageData,
-                    variantAttributeManager.refreshIndicatorForImage // Passer le callback
-                );
-            } else {
-                // Cacher la section si aucun attribut de variante n'est trouvé
-                const variantContainer = document.getElementById('variant-assignment-container');
-                if (variantContainer) variantContainer.style.display = 'none';
-            }
+				currentAttributeSlug = data.variantAttribute.attribute_slug;
+				variantAttributeManager.initVariantHandler(data.variantAttribute, allImageData, variantAttributeManager.refreshIndicatorForImage);
+				// Afficher le bouton et cacher le message
+				if(resetVariantsBtn) resetVariantsBtn.style.display = 'inline-block';
+				if(noVariantsMessage) noVariantsMessage.style.display = 'none';
+			} else {
+				// Cacher le bouton et afficher le message
+				const variantContainer = document.getElementById('variant-assignment-container');
+				if(variantContainer) variantContainer.style.display = 'block'; // S'assurer que le conteneur est visible
+				if(resetVariantsBtn) resetVariantsBtn.style.display = 'none';
+				if(noVariantsMessage) noVariantsMessage.style.display = 'block';
+				if(availableTermsContainer) availableTermsContainer.style.display = 'none'; // Cacher la zone des termes
+			}
             // --- FIN DE LA NOUVELLE LOGIQUE ---
 
             updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
@@ -1240,7 +1241,16 @@ document.addEventListener('DOMContentLoaded', () => {
             callExecuteConfirmedActionWithUiManagement('new');
         });
     }
-
+	
+	// AJOUTEZ CET ÉCOUTEUR
+    if (resetVariantsBtn) {
+        resetVariantsBtn.addEventListener('click', () => {
+            // Demande de confirmation
+            if (confirm("Êtes-vous sûr de vouloir réinitialiser TOUTES les associations de variantes ?")) {
+                variantAttributeManager.dissociateAllTerms(allImageData);
+            }
+        });
+    }
 
     // Récupérer les données initiales
     fetchProductData();

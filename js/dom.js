@@ -19,6 +19,7 @@ export let modalReplaceBackgroundBtn;
 export let modalUpscaleBtn;
 export let productStatusToggleBtn;
 export let mannequinImageSelectionModal, mannequinImageSwiperWrapper, mannequinImageModalCloseBtn, mannequinImageValidateBtn, mannequinImageCancelBtn;
+export let resetVariantsBtn, noVariantsMessage;
 
 // NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
 export let mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn, mannequinFilterGreen, mannequinFilterOrange, mannequinFilterRed;
@@ -119,4 +120,8 @@ export function initDomElements() {
 	mannequinFilterRed = document.getElementById('mannequin-filter-red');
 
 	console.log('dom.js: Mannequin image selection modal elements initialized.');
+	
+	// AJOUTEZ CES DEUX LIGNES
+    resetVariantsBtn = document.getElementById('reset-variants-btn');
+    noVariantsMessage = document.getElementById('no-variants-message');
 }

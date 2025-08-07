@@ -132,21 +132,27 @@ function renderAvailableTerms() {
     });
 }
 
+// REMPLACEZ la fonction renderTermIndicator existante par celle-ci
+
 export function renderTermIndicator(imageId, termData) {
     const placeholders = document.querySelectorAll(`.image-color-indicator-placeholder[data-indicator-for-image-id="${imageId}"]`);
     if (!placeholders.length || !termData) return;
 
     placeholders.forEach(placeholder => {
+        // Reset
         placeholder.innerHTML = '';
         placeholder.style.backgroundColor = 'transparent';
+        placeholder.className = 'image-color-indicator-placeholder'; // Reset classes
+
         placeholder.title = `Variante: ${termData.termName}`;
         placeholder.dataset.assignedTermSlug = termData.termSlug;
         
         if (productVariantAttribute.display_type === 'color' && termData.hex) {
+            placeholder.classList.add('is-color-indicator');
             placeholder.style.backgroundColor = termData.hex;
         } else {
-            placeholder.textContent = termData.termName.substring(0, 3).toUpperCase();
-            placeholder.style.cssText += 'font-size: 8px; color: white; background-color: #555; text-align: center; line-height: 16px; border-radius: 3px;';
+            placeholder.classList.add('is-button-indicator');
+            placeholder.textContent = termData.termName;
         }
         placeholder.classList.add('active-indicator');
     });
@@ -188,6 +194,42 @@ export function dissociateTermFromImage(imageId, termSlug, allImageDataRef) {
 
     renderAvailableTerms();
     updateStatus(`Variante '${currentMapping.termName}' dissociée.`, 'info');
+    return true;
+}
+
+/**
+ * Dissocie toutes les variantes de toutes les images.
+ * @param {Array} allImageDataRef - Référence au tableau global d'images.
+ */
+export function dissociateAllTerms(allImageDataRef) {
+    if (currentImageTermMappings.size === 0) {
+        updateStatus("Aucune variation n'est actuellement assignée.", "info");
+        return false;
+    }
+
+    // On remet tous les termes assignés dans la liste des termes disponibles
+    productVariantAttribute.terms.forEach(term => {
+        if (!availableTerms.some(t => t.value === term.value)) {
+            availableTerms.push(term);
+        }
+    });
+
+    // On vide la carte des assignations
+    currentImageTermMappings.clear();
+
+    // On nettoie les données dans allImageData et on retire les indicateurs
+    allImageDataRef.forEach(image => {
+        if (image.assigned_term_slug) {
+            delete image.assigned_term_slug;
+            delete image.assigned_term_name;
+            delete image.assigned_term_hex;
+            removeTermIndicator(image.id);
+        }
+    });
+
+    // On rafraîchit l'affichage des termes disponibles
+    renderAvailableTerms();
+    updateStatus("Toutes les associations de variantes ont été réinitialisées.", "success");
     return true;
 }
 
