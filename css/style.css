@@ -1404,6 +1404,7 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 
 /* Style de l'élément qui suit la souris (géré par l'API native) */
 /* Pour les pastilles */
+/* Pour les pastilles */
 .color-swatch-draggable.sortable-drag {
     width: 28px !important;
     height: 28px !important;
@@ -1412,6 +1413,9 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     border: 2px solid #333 !important;
     opacity: 0.75 !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    
+    /* ▼▼▼ AJOUTEZ CETTE LIGNE ▼▼▼ */
+    display: block !important; 
 }
 /* Pour les boutons */
 .term-button-draggable.sortable-drag {
