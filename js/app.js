@@ -20,13 +20,18 @@ import {
     cropperAspectRatioButtonsContainer, modalRemoveWatermarkBtn, modalGenerateMockupBtn, 
     modalMarkForDeletionBtn, editActionConfirmationOverlay, confirmActionReplaceBtn, 
     confirmActionNewBtn, confirmActionCancelBtn, loadingOverlay, modalToggleSizeGuideBtn, 
-    modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameElement, 
-    modalDissociateColorBtn, modalReplaceBackgroundBtn, modalUpscaleBtn, productStatusToggleBtn,
+    
+    // --- LIGNES CORRIGÉES ---
+    modalImageAssignedTermIndicatorElement,
+    modalImageAssignedTermNameElement,
+    modalDissociateTermBtn,
+    // --- FIN DES LIGNES CORRIGÉES ---
+
+    modalReplaceBackgroundBtn, modalUpscaleBtn, productStatusToggleBtn,
     mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, 
     mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn,
 	mannequinFilterGreen, mannequinFilterOrange, mannequinFilterRed,
     mannequinDisplayPortrait, mannequinDisplayName,
-    // LIGNES À VÉRIFIER / AJOUTER CI-DESSOUS :
     mannequinImageSelectionModal, mannequinImageSwiperWrapper, mannequinImageModalCloseBtn, 
     mannequinImageValidateBtn, mannequinImageCancelBtn 
 } from './dom.js';
