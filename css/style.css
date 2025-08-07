@@ -1395,25 +1395,29 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 .term-draggable {
     user-select: none;
     -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
-/* Style de l'élément qui suit la souris (géré par l'API native) */
+/* Style de l'élément qui suit la souris (pas un clone, mais l'élément lui-même) */
 .term-draggable.sortable-drag {
     opacity: 0.75 !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
 }
-/* Style spécifique pour les pastilles pendant le drag */
+
+/* On s'assure que les pastilles et boutons gardent leur taille pendant le drag */
 .color-swatch-draggable.sortable-drag {
-    background-color: inherit !important; /* Garde la couleur originale */
-    border: 2px solid #333 !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
 }
-/* Style spécifique pour les boutons pendant le drag */
 .term-button-draggable.sortable-drag {
-    background-color: #e9e9e9 !important;
-    border: 1px solid #aaa !important;
+    width: auto !important; /* Pour que le bouton garde sa largeur de texte */
+    height: auto !important;
 }
 
-/* LA CLÉ DE LA PERFORMANCE : On cache le "fantôme" (placeholder) */
+/* Style du "fantôme" (le placeholder dans la zone de destination) */
+/* La technique originale consistait à le cacher complètement, ce qui est très performant. */
 .color-drop-target-ghost {
     display: none !important;
 }

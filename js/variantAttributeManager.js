@@ -252,9 +252,9 @@ export function refreshIndicatorForImage(imageId) {
     }
 }
 
-// REMPLACEZ la fonction configureSortableForTerms par cette version finale
 
-// REMPLACEZ la fonction configureSortableForTerms par cette version finale et correcte
+
+// REMPLACEZ la fonction configureSortableForTerms par cette version finale et optimisée
 
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
     if (!availableTermsContainer) return;
@@ -264,13 +264,12 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         group: { name: 'terms-shared', pull: true, put: true },
         animation: 150,
         sort: false,
-        
-        // --- CONFIGURATION FINALE (COMME L'ANCIENNE VERSION) ---
-        // On retire TOUTES les options superflues (forceFallback, etc.)
-        // pour utiliser l'API native du navigateur, qui est plus performante
-        // quand elle est correctement stylée en CSS.
-        // --- FIN DE LA CONFIGURATION ---
 
+        // --- CONFIGURATION FINALE (COMME L'ANCIENNE VERSION) ---
+        // On retire TOUTES les options de fallback (forceFallback, fallbackOnBody, etc.)
+        // pour utiliser l'API native du navigateur, qui est plus performante sur mobile.
+        // --- FIN DE LA CONFIGURATION ---
+        
         onStart: function(evt) {
             document.body.classList.add('dragging-color-swatch');
             temporaryImageDropZoneInstances.forEach(instance => instance.destroy());
@@ -282,7 +281,7 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                 const instance = new Sortable(imgElContainer, {
                     group: { name: 'terms-shared', put: true },
                     animation: 0, 
-                    ghostClass: 'color-drop-target-ghost', // On utilise cette classe pour cacher le fantôme
+                    ghostClass: 'color-drop-target-ghost', // On utilise la classe pour cacher le fantôme
                     onAdd: function(addEvt) {
                         const targetImageElement = this.el;
                         const droppedTermElement = addEvt.item;
