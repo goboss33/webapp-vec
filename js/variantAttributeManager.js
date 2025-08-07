@@ -60,27 +60,39 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
         variantAssignmentContainer.style.display = 'block';
     }
 
+    // Réinitialisation des états
     currentImageTermMappings.clear();
     availableTerms = [];
 
-    allImageData.forEach(image => {
-        // La nouvelle clé générique est `assigned_variant_slug`
-        if (image.assigned_variant_slug) {
-            const term = productVariantAttribute.terms.find(t => t.value === image.assigned_variant_slug);
-            if (term) {
+    // --- CORRECTION MAJEURE : Initialisation de l'état à partir des données de l'API ---
+    // On parcourt les termes reçus pour trouver les associations existantes
+    productVariantAttribute.terms.forEach(term => {
+        // On vérifie si un ID d'image est associé à ce terme
+        if (term.current_image_id) {
+            const imageIdStr = term.current_image_id.toString();
+            
+            // On trouve l'image correspondante dans notre liste globale
+            const imageToUpdate = allImageData.find(img => img.id.toString() === imageIdStr);
+            
+            if (imageToUpdate) {
+                // 1. On enrichit l'objet image dans `allImageData`
+                imageToUpdate.assigned_variant_slug = term.value;
+                imageToUpdate.assigned_term_name = term.name;
+                imageToUpdate.assigned_term_hex = term.hex;
+                
+                // 2. On peuple notre carte de mappings interne
                 const mapping = {
                     termSlug: term.value,
                     termName: term.name,
                     termId: term.term_id,
                     hex: term.hex,
                 };
-                currentImageTermMappings.set(image.id.toString(), mapping);
-                image.assigned_term_name = term.name;
-                image.assigned_term_hex = term.hex;
-                image.assigned_term_slug = term.value;
+                currentImageTermMappings.set(imageIdStr, mapping);
             }
         }
     });
+    // --- FIN DE LA CORRECTION ---
+
 
     const assignedTermSlugs = new Set(Array.from(currentImageTermMappings.values()).map(m => m.termSlug));
     availableTerms = productVariantAttribute.terms.filter(term => !assignedTermSlugs.has(term.value));
@@ -88,15 +100,12 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
     renderAvailableTerms();
     configureSortableForTerms(allImageData, onRefreshIndicatorCallback);
     
-    // --- CORRECTION DE LA LOGIQUE D'AFFICHAGE INITIAL ---
     // On s'assure que les indicateurs sont bien affichés au chargement
-    // en appelant le callback fourni par app.js, qui sait où sont les images.
     allImageData.forEach(image => {
-        if(image.assigned_term_slug) {
+        if(image.assigned_variant_slug) {
             onRefreshIndicatorCallback(image.id);
         }
     });
-    // --- FIN DE LA CORRECTION ---
 
     console.log('[variantAttributeManager] initVariantHandler END');
 }
