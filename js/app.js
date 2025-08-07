@@ -55,7 +55,7 @@ console.log('app.js: Cropper manager functions imported.');
 import * as actionsManager from './actionsManager.js';
 console.log('app.js: Actions manager functions imported.');
 
-import * as variantManager from './variantAttributeManager.js';
+import * as variantAttributeManager from './variantAttributeManager.js';
 console.log('app.js: Variant manager functions imported.');
 
 // --- Variables Globales ---
