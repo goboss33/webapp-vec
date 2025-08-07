@@ -209,7 +209,12 @@ function handleSettingsClick(event) {
     const button = event.currentTarget;
     const imageId = button.dataset.imageId;
     console.log(`app.js: Clic sur Réglages pour Image ID: ${imageId}`);
-    openImageModalFromManager(imageId, allImageData);
+
+    // On récupère les données de la variante depuis notre manager
+    const variantAttributeData = variantAttributeManager.getVariantAttributeData();
+    
+    // On passe ces données à la modale lors de son ouverture
+    openImageModalFromManager(imageId, allImageData, variantAttributeData);
 }
 
 // Gère le clic sur le bouton "Guide des tailles" dans la modale
