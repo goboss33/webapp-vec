@@ -325,7 +325,7 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     width: 60px !important;
     height: 60px !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
-    display: flex !important;
+    /*display: flex !important;*/
     justify-content: center;
     align-items: center;
     overflow: hidden;
