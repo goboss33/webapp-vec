@@ -210,6 +210,8 @@ export function refreshIndicatorForImage(imageId) {
     }
 }
 
+// REMPLACEZ LA FONCTION configureSortableForTerms DANS variantAttributeManager.js PAR CELLE-CI
+
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
     if (!availableTermsContainer) return;
     if (sortableAvailableTerms) sortableAvailableTerms.destroy();
@@ -219,7 +221,7 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         animation: 150,
         sort: false,
         onStart: function(evt) {
-            document.body.classList.add('dragging-color-swatch'); // On garde cette classe pour le style
+            document.body.classList.add('dragging-color-swatch');
             temporaryImageDropZoneInstances.forEach(instance => instance.destroy());
             temporaryImageDropZoneInstances = [];
             const imageElements = document.querySelectorAll('.carousel-image-container, .thumbnail-wrapper');
@@ -258,10 +260,10 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                         currentImageTermMappings.forEach((map, imgId) => {
                             if (map.termSlug === newTermData.termSlug && imgId !== targetImageId) {
                                 currentImageTermMappings.delete(imgId);
-                                removeTermIndicator(imgId);
+                                onRefreshIndicatorCallback(imgId); // Pour retirer l'ancien indicateur
                                 const oldImgInAllData = allImageDataRef.find(i => i.id.toString() === imgId);
                                 if (oldImgInAllData) {
-                                    delete oldImgInAllData.assigned_variant_slug;
+                                    delete oldImgInAllData.assigned_term_slug;
                                     delete oldImgInAllData.assigned_term_name;
                                     delete oldImgInAllData.assigned_term_hex;
                                 }
@@ -272,7 +274,9 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                         
                         const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
                         if (targetImgInAllData) {
-                            targetImgInAllData.assigned_variant_slug = newTermData.termSlug;
+                            // --- DÉBUT DE LA CORRECTION ---
+                            targetImgInAllData.assigned_term_slug = newTermData.termSlug;
+                            // --- FIN DE LA CORRECTION ---
                             targetImgInAllData.assigned_term_name = newTermData.termName;
                             targetImgInAllData.assigned_term_hex = newTermData.hex;
                         }
