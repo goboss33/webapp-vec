@@ -252,7 +252,7 @@ export function refreshIndicatorForImage(imageId) {
     }
 }
 
-// REMPLACEZ la fonction configureSortableForTerms existante par celle-ci
+// REMPLACEZ la fonction configureSortableForTerms par cette version finale
 
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
     if (!availableTermsContainer) return;
@@ -263,12 +263,15 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         animation: 150,
         sort: false,
         
-        // --- CONFIGURATION DÉFINITIVE POUR MOBILE & DESKTOP ---
+        // --- CONFIGURATION FINALE POUR LA SYNCHRONISATION CURSEUR ---
         forceFallback: true,
-        fallbackOnBody: true, // Force le clone à être ajouté au body (corrige les décalages)
-        delay: 50,
-        touchStartThreshold: 8,
         fallbackClass: "sortable-fallback",
+        fallbackTolerance: 3, // Commence le drag après un mouvement de 3px
+        
+        // La clé pour corriger le décalage :
+        // On demande à SortableJS d'ignorer le scroll des parents.
+        scroll: false, 
+        bubbleScroll: false,
         // --- FIN DE LA CONFIGURATION ---
 
         onStart: function(evt) {

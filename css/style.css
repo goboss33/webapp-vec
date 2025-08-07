@@ -1424,3 +1424,13 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     font-size: 0.9em !important;
     border-radius: 4px !important;
 }
+
+/* --- CORRECTIF DÉFINITIF POUR LE DRAG & DROP --- */
+
+/* Empêche le navigateur de "sélectionner" nos pastilles et boutons */
+.term-draggable {
+    user-select: none; /* Standard */
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+}
