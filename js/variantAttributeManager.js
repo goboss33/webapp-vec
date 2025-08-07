@@ -256,8 +256,6 @@ export function refreshIndicatorForImage(imageId) {
 
 // REMPLACEZ la fonction configureSortableForTerms par cette version finale et correcte
 
-// REMPLACEZ la fonction configureSortableForTerms par cette version finale et correcte
-
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
     if (!availableTermsContainer) return;
     if (sortableAvailableTerms) sortableAvailableTerms.destroy();
@@ -291,7 +289,7 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                         const targetImageId = targetImageElement.dataset.imageId;
 
                         if (droppedTermElement.parentElement === targetImageElement) {
-                            droppedTermElement.removeChild(droppedTermElement);
+                            targetImageElement.removeChild(droppedTermElement);
                         }
                         
                         const newTermData = {
