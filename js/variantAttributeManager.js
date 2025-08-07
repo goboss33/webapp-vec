@@ -254,6 +254,19 @@ export function refreshIndicatorForImage(imageId) {
 
 
 
+// --- DÉBUT DU BLOC DE DEBUG ---
+function logToPanel(message) {
+    const panel = document.getElementById('debug-log-panel');
+    if (panel) {
+        panel.style.display = 'block';
+        const logEntry = document.createElement('div');
+        const time = new Date().toLocaleTimeString();
+        logEntry.textContent = `[${time}] ${message}`;
+        panel.prepend(logEntry);
+    }
+}
+// --- FIN DU BLOC DE DEBUG ---
+
 // REMPLACEZ la fonction configureSortableForTerms par cette version finale et optimisée
 
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
