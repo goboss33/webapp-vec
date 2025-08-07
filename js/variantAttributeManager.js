@@ -254,6 +254,8 @@ export function refreshIndicatorForImage(imageId) {
 
 // REMPLACEZ la fonction configureSortableForTerms par cette version finale
 
+// REMPLACEZ la fonction configureSortableForTerms par cette version finale et correcte
+
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
     if (!availableTermsContainer) return;
     if (sortableAvailableTerms) sortableAvailableTerms.destroy();
@@ -264,8 +266,8 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         sort: false,
         
         // --- CONFIGURATION FINALE (COMME L'ANCIENNE VERSION) ---
-        // On retire TOUTES les options de fallback (forceFallback, etc.)
-        // pour utiliser l'API native du navigateur, qui est plus performante sur mobile
+        // On retire TOUTES les options superflues (forceFallback, etc.)
+        // pour utiliser l'API native du navigateur, qui est plus performante
         // quand elle est correctement stylée en CSS.
         // --- FIN DE LA CONFIGURATION ---
 
