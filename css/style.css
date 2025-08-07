@@ -1432,3 +1432,30 @@ body.dragging-color-swatch .carousel-image-container:hover,
 body.dragging-color-swatch .thumbnail-wrapper:hover {
     background-color: rgba(255, 223, 0, 0.3);
 }
+
+
+/* AJOUTEZ CE BLOC À LA FIN DE VOTRE FICHIER CSS */
+
+#debug-log-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: #00ff00; /* Vert vif pour la lisibilité */
+    z-index: 9999;
+    padding: 5px;
+    font-family: monospace;
+    font-size: 10px;
+    max-height: 120px;
+    overflow-y: auto;
+    display: none; /* Caché par défaut */
+    box-sizing: border-box;
+}
+
+#debug-log-panel div {
+    border-bottom: 1px solid #555;
+    padding-bottom: 3px;
+    margin-bottom: 3px;
+    word-break: break-all;
+}
