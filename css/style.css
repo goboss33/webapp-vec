@@ -1392,12 +1392,6 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 /* --- STYLES DÉFINITIFS POUR LE DRAG&DROP (BASÉ SUR L'ANCIENNE VERSION) --- */
 
 /* Empêche le navigateur de sélectionner l'élément au lieu de le déplacer */
-.term-draggable {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}
 
 /* Style de l'élément qui suit la souris (pas un clone, mais l'élément lui-même) */
 .term-draggable.sortable-drag {
