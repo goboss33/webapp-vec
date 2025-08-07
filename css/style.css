@@ -1391,7 +1391,7 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 
 /* --- STYLES DÉFINITIFS POUR LE DRAG&DROP (BASÉ SUR L'ANCIENNE VERSION) --- */
 
-/* Empêche le navigateur de sélectionner l'élément */
+/* Empêche le navigateur de sélectionner l'élément au lieu de le déplacer */
 .term-draggable {
     user-select: none;
     -webkit-user-select: none;
