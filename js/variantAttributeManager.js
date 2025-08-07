@@ -64,6 +64,7 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
     availableTerms = [];
 
     allImageData.forEach(image => {
+        // La nouvelle clé générique est `assigned_variant_slug`
         if (image.assigned_variant_slug) {
             const term = productVariantAttribute.terms.find(t => t.value === image.assigned_variant_slug);
             if (term) {
@@ -87,12 +88,16 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
     renderAvailableTerms();
     configureSortableForTerms(allImageData, onRefreshIndicatorCallback);
     
+    // --- CORRECTION DE LA LOGIQUE D'AFFICHAGE INITIAL ---
     // On s'assure que les indicateurs sont bien affichés au chargement
+    // en appelant le callback fourni par app.js, qui sait où sont les images.
     allImageData.forEach(image => {
         if(image.assigned_term_slug) {
             onRefreshIndicatorCallback(image.id);
         }
     });
+    // --- FIN DE LA CORRECTION ---
+
     console.log('[variantAttributeManager] initVariantHandler END');
 }
 
