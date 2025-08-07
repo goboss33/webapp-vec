@@ -1392,10 +1392,10 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 /* --- STYLES DÉFINITIFS POUR LE DRAG&DROP (BASÉ SUR L'ANCIENNE VERSION) --- */
 
 /* Empêche le navigateur de sélectionner l'élément */
-.term-draggable {
+/*.term-draggable {
     user-select: none;
     -webkit-user-select: none;
-}
+}*/
 
 /* Style de l'élément qui suit la souris (géré par l'API native) */
 /* Pour les pastilles */
