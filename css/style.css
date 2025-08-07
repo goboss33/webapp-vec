@@ -1398,22 +1398,26 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 }
 
 /* Style de l'élément qui suit la souris (géré par l'API native) */
-.term-draggable.sortable-drag {
+/* Pour les pastilles */
+.color-swatch-draggable.sortable-drag {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
+    background-color: inherit !important;
+    border: 2px solid #333 !important;
     opacity: 0.75 !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
 }
-/* Style spécifique pour les pastilles pendant le drag */
-.color-swatch-draggable.sortable-drag {
-    background-color: inherit !important; /* Garde la couleur originale */
-    border: 2px solid #333 !important;
-}
-/* Style spécifique pour les boutons pendant le drag */
+/* Pour les boutons */
 .term-button-draggable.sortable-drag {
+    opacity: 0.75 !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
     background-color: #e9e9e9 !important;
     border: 1px solid #aaa !important;
 }
 
 /* LA CLÉ DE LA PERFORMANCE : On cache le "fantôme" (placeholder) */
+/* Cela évite des calculs de mise en page coûteux sur mobile. */
 .color-drop-target-ghost {
     display: none !important;
 }
