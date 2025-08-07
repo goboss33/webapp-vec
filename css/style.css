@@ -1389,48 +1389,46 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     text-transform: uppercase;
 }
 
-/* --- STYLES DÉFINITIFS POUR LE DRAG&DROP (MOBILE & DESKTOP) --- */
+/* --- STYLES DÉFINITIFS POUR LE DRAG&DROP (BASÉ SUR L'ANCIENNE VERSION) --- */
 
-/* On retire les transformations complexes de l'ancienne classe .sortable-drag */
-.sortable-drag {
-    opacity: 0.9 !important;
+/* Empêche le navigateur de sélectionner l'élément au lieu de le déplacer */
+.term-draggable {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
-/* CLASSE POUR LE CLONE (FALLBACK) */
-.sortable-fallback {
-    /* Style de positionnement - crucial pour corriger le décalage */
-    position: absolute !important; 
-    z-index: 9999 !important; /* Pour être au-dessus de tout */
-    margin: 0 !important; /* Empêche les marges de causer un décalage */
-    pointer-events: none; /* L'élément cloné ne doit pas intercepter les clics */
-
-    /* Style visuel (léger pour la performance) */
-    opacity: 0.8 !important;
-    background-color: #a0d8ff !important;
-    border: 1px solid #007bff !important;
+/* Style de l'élément qui suit la souris (pas un clone, mais l'élément lui-même) */
+.term-draggable.sortable-drag {
+    opacity: 0.75 !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
-    transform: scale(1.05);
 }
 
-/* On s'assure que le contenu du clone garde une taille et une apparence simple */
-.sortable-fallback.color-swatch-draggable {
-    width: 32px !important;
-    height: 32px !important;
+/* On s'assure que les pastilles et boutons gardent leur taille pendant le drag */
+.color-swatch-draggable.sortable-drag {
+    width: 28px !important;
+    height: 28px !important;
     border-radius: 50% !important;
 }
-
-.sortable-fallback.term-button-draggable {
-    padding: 5px 10px !important;
-    font-size: 0.9em !important;
-    border-radius: 4px !important;
+.term-button-draggable.sortable-drag {
+    width: auto !important; /* Pour que le bouton garde sa largeur de texte */
+    height: auto !important;
 }
 
-/* --- CORRECTIF DÉFINITIF POUR LE DRAG & DROP --- */
+/* Style du "fantôme" (le placeholder dans la zone de destination) */
+/* La technique originale consistait à le cacher complètement, ce qui est très performant. */
+.color-drop-target-ghost {
+    display: none !important;
+}
 
-/* Empêche le navigateur de "sélectionner" nos pastilles et boutons */
-.term-draggable {
-    user-select: none; /* Standard */
-    -webkit-user-select: none; /* Safari */
-    -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* Internet Explorer/Edge */
+/* Style des zones de dépôt potentielles quand un drag est en cours */
+body.dragging-color-swatch .carousel-image-container,
+body.dragging-color-swatch .thumbnail-wrapper {
+    outline: 2px dashed #FFBF00;
+    outline-offset: 2px;
+}
+body.dragging-color-swatch .carousel-image-container:hover,
+body.dragging-color-swatch .thumbnail-wrapper:hover {
+    background-color: rgba(255, 223, 0, 0.3);
 }

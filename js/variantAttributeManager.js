@@ -263,15 +263,9 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         animation: 150,
         sort: false,
         
-        // --- CONFIGURATION FINALE POUR LA SYNCHRONISATION CURSEUR ---
-        forceFallback: true,
-        fallbackClass: "sortable-fallback",
-        fallbackTolerance: 3, // Commence le drag après un mouvement de 3px
-        
-        // La clé pour corriger le décalage :
-        // On demande à SortableJS d'ignorer le scroll des parents.
-        scroll: false, 
-        bubbleScroll: false,
+        // --- CONFIGURATION FINALE (COMME L'ANCIENNE VERSION) ---
+        // On ne force PAS de fallback. On laisse le navigateur gérer.
+        // Toutes les options comme forceFallback, fallbackOnBody, etc. sont retirées.
         // --- FIN DE LA CONFIGURATION ---
 
         onStart: function(evt) {
@@ -284,8 +278,8 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                 if (!imgElContainer.dataset.imageId) return;
                 const instance = new Sortable(imgElContainer, {
                     group: { name: 'terms-shared', put: true },
-                    animation: 0,
-                    ghostClass: 'color-drop-target-ghost',
+                    animation: 0, 
+                    ghostClass: 'color-drop-target-ghost', // On utilise la classe pour cacher le fantôme
                     onAdd: function(addEvt) {
                         const targetImageElement = this.el;
                         const droppedTermElement = addEvt.item;
