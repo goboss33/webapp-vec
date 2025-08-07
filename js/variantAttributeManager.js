@@ -260,17 +260,18 @@ export function refreshIndicatorForImage(imageId) {
 
 
 
-// REMPLACEZ VOTRE FONCTION configureSortableForTerms PAR CETTE VERSION AMÉLIORÉE
+// REMPLACEZ VOTRE FONCTION configureSortableForTerms DANS variantAttributeManager.js PAR CELLE-CI
 
 // --- DÉBUT DU BLOC DE DEBUG ---
+// Helper pour afficher les logs à l'écran sur mobile
 function logToPanel(message) {
     const panel = document.getElementById('debug-log-panel');
     if (panel) {
-        panel.style.display = 'block';
+        panel.style.display = 'block'; // On le rend visible
         const logEntry = document.createElement('div');
         const time = new Date().toLocaleTimeString();
         logEntry.textContent = `[${time}] ${message}`;
-        panel.prepend(logEntry);
+        panel.prepend(logEntry); // Les nouveaux messages apparaissent en haut
     }
 }
 // --- FIN DU BLOC DE DEBUG ---
@@ -285,22 +286,19 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         sort: false,
         
         onStart: function(evt) {
-            // --- DÉBUT DU DIAGNOSTIC AMÉLIORÉ ---
+            // --- DÉBUT DU DIAGNOSTIC ---
+            // On vérifie si SortableJS a ajouté sa classe de fallback au body.
+            // C'est le moyen le plus fiable de savoir quel mode est utilisé.
             const isFallback = document.body.classList.contains('sortable-drag');
+            
             logToPanel(`Drag Start. Mode Fallback: ${isFallback}`);
             
-            // On récupère l'élément qui est déplacé
-            const draggedItem = evt.item; 
-            // On demande au navigateur ses styles CSS calculés en temps réel
-            const styles = window.getComputedStyle(draggedItem);
-
-            logToPanel(`--- Style de l'élément déplacé ---`);
-            logToPanel(`Display: ${styles.display}`);
-            logToPanel(`Position: ${styles.position}`);
-            logToPanel(`Transform: ${styles.transform}`);
-            logToPanel(`Margin: ${styles.margin}`);
-            logToPanel(`---------------------------------`);
-            // --- FIN DU DIAGNOSTIC AMÉLIORÉ ---
+            if (isFallback) {
+                logToPanel('>>> BUG CONFIRMÉ : Le mode Fallback lent est ACTIF !');
+            } else {
+                logToPanel('>>> OK : Le mode Natif rapide est ACTIF.');
+            }
+            // --- FIN DU DIAGNOSTIC ---
 
             document.body.classList.add('dragging-color-swatch');
             temporaryImageDropZoneInstances.forEach(instance => instance.destroy());
