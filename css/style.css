@@ -1428,11 +1428,13 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 }
 
 /* Style des zones de dépôt potentielles quand un drag est en cours */
+/*
 body.dragging-color-swatch .carousel-image-container,
 body.dragging-color-swatch .thumbnail-wrapper {
     outline: 2px dashed #FFBF00;
     outline-offset: 2px;
 }
+*/
 body.dragging-color-swatch .carousel-image-container:hover,
 body.dragging-color-swatch .thumbnail-wrapper:hover {
     background-color: rgba(255, 223, 0, 0.3);
