@@ -116,6 +116,9 @@ function renderAvailableTerms() {
     availableTerms.forEach(term => {
         const termElement = document.createElement('div');
         termElement.className = 'term-draggable';
+		
+		termElement.draggable = true;
+		
         termElement.title = term.name;
         termElement.dataset.termSlug = term.value;
         termElement.dataset.termName = term.name;
