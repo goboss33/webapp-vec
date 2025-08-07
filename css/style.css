@@ -1393,8 +1393,13 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 
 /* Empêche le navigateur de sélectionner l'élément */
 .term-draggable {
-    user-select: none;
+    /* Indique au navigateur de ne pas gérer le défilement/zoom sur cet élément */
+    touch-action: none;
+
+    /* Empêche la sélection de texte accidentelle pendant le "drag" */
     -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 /* Style de l'élément qui suit la souris (géré par l'API native) */
@@ -1459,3 +1464,4 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     margin-bottom: 3px;
     word-break: break-all;
 }
+

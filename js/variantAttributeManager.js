@@ -106,6 +106,8 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
     console.log('[variantAttributeManager] initVariantHandler END');
 }
 
+// Dans : webapp-vec/V2 (avec bug)/webapp-vec-main/js/variantAttributeManager.js
+
 function renderAvailableTerms() {
     if (!availableTermsContainer) return;
     availableTermsContainer.innerHTML = '';
@@ -116,16 +118,14 @@ function renderAvailableTerms() {
     availableTerms.forEach(term => {
         const termElement = document.createElement('div');
         termElement.className = 'term-draggable';
-        
-        // --- LA CORRECTION EST ICI ---
-        termElement.draggable = true; // Force l'élément à être nativement déplaçable
-        // --- FIN DE LA CORRECTION ---
+
+        // ▼▼▼ VÉRIFIEZ QUE CETTE LIGNE EST PRÉSENTE ▼▼▼
+        termElement.draggable = true;
+        // ▲▲▲ FIN DE LA VÉRIFICATION ▲▲▲
 
         termElement.title = term.name;
-        termElement.dataset.termSlug = term.value;
-        termElement.dataset.termName = term.name;
-        termElement.dataset.termId = term.term_id;
-
+        // ... le reste de votre fonction est correct ...
+        
         if (productVariantAttribute.display_type === 'color' && term.hex) {
             termElement.classList.add('color-swatch-draggable');
             termElement.style.backgroundColor = term.hex;
