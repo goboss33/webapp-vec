@@ -260,21 +260,7 @@ export function refreshIndicatorForImage(imageId) {
 
 
 
-// REMPLACEZ VOTRE FONCTION configureSortableForTerms DANS variantAttributeManager.js PAR CELLE-CI
-
-// --- DÉBUT DU BLOC DE DEBUG ---
-// Helper pour afficher les logs à l'écran sur mobile
-function logToPanel(message) {
-    const panel = document.getElementById('debug-log-panel');
-    if (panel) {
-        panel.style.display = 'block'; // On le rend visible
-        const logEntry = document.createElement('div');
-        const time = new Date().toLocaleTimeString();
-        logEntry.textContent = `[${time}] ${message}`;
-        panel.prepend(logEntry); // Les nouveaux messages apparaissent en haut
-    }
-}
-// --- FIN DU BLOC DE DEBUG ---
+// REMPLACEZ la fonction configureSortableForTerms par cette version finale et optimisée
 
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
     if (!availableTermsContainer) return;
@@ -284,22 +270,13 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         group: { name: 'terms-shared', pull: true, put: true },
         animation: 150,
         sort: false,
+
+        // --- CONFIGURATION FINALE (COMME L'ANCIENNE VERSION) ---
+        // On retire TOUTES les options de fallback (forceFallback, fallbackOnBody, etc.)
+        // pour utiliser l'API native du navigateur, qui est plus performante sur mobile.
+        // --- FIN DE LA CONFIGURATION ---
         
         onStart: function(evt) {
-            // --- DÉBUT DU DIAGNOSTIC ---
-            // On vérifie si SortableJS a ajouté sa classe de fallback au body.
-            // C'est le moyen le plus fiable de savoir quel mode est utilisé.
-            const isFallback = document.body.classList.contains('sortable-drag');
-            
-            logToPanel(`Drag Start. Mode Fallback: ${isFallback}`);
-            
-            if (isFallback) {
-                logToPanel('>>> BUG CONFIRMÉ : Le mode Fallback lent est ACTIF !');
-            } else {
-                logToPanel('>>> OK : Le mode Natif rapide est ACTIF.');
-            }
-            // --- FIN DU DIAGNOSTIC ---
-
             document.body.classList.add('dragging-color-swatch');
             temporaryImageDropZoneInstances.forEach(instance => instance.destroy());
             temporaryImageDropZoneInstances = [];
@@ -310,7 +287,7 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                 const instance = new Sortable(imgElContainer, {
                     group: { name: 'terms-shared', put: true },
                     animation: 0, 
-                    ghostClass: 'color-drop-target-ghost',
+                    ghostClass: 'color-drop-target-ghost', // On utilise la classe pour cacher le fantôme
                     onAdd: function(addEvt) {
                         const targetImageElement = this.el;
                         const droppedTermElement = addEvt.item;
