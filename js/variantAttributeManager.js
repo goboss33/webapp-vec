@@ -252,7 +252,7 @@ export function refreshIndicatorForImage(imageId) {
     }
 }
 
-// REMPLACEZ la fonction configureSortableForTerms par cette version finale
+// REMPLACEZ la fonction configureSortableForTerms par cette version finale et optimisée
 
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
     if (!availableTermsContainer) return;
@@ -262,12 +262,12 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         group: { name: 'terms-shared', pull: true, put: true },
         animation: 150,
         sort: false,
-        
-        // --- CONFIGURATION FINALE (COMME L'ANCIENNE VERSION) ---
-        // On ne force PAS de fallback. On laisse le navigateur gérer.
-        // Toutes les options comme forceFallback, fallbackOnBody, etc. sont retirées.
-        // --- FIN DE LA CONFIGURATION ---
 
+        // --- CONFIGURATION FINALE (COMME L'ANCIENNE VERSION) ---
+        // On retire TOUTES les options de fallback (forceFallback, fallbackOnBody, etc.)
+        // pour utiliser l'API native du navigateur, qui est plus performante sur mobile.
+        // --- FIN DE LA CONFIGURATION ---
+        
         onStart: function(evt) {
             document.body.classList.add('dragging-color-swatch');
             temporaryImageDropZoneInstances.forEach(instance => instance.destroy());
