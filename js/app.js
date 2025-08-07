@@ -50,14 +50,14 @@ console.log('app.js: Cropper manager functions imported.');
 import * as actionsManager from './actionsManager.js';
 console.log('app.js: Actions manager functions imported.');
 
-import * as variantManager from './variantManager.js';
+import * as variantManager from './variantAttributeManager.js';
 console.log('app.js: Variant manager functions imported.');
 
 // --- Variables Globales ---
 let currentProductId = null;
 let allImageData = [];
 let currentEditActionContext = null;
-let currentSystemColorAttributeSlug = null;
+let currentAttributeSlug = null;
 let allMannequinsData = []; // Nouvelle variable globale pour stocker les mannequins
 let selectedMannequinId = null; // Nouvelle variable globale pour le mannequin sélectionné
 let mannequinImageSwiperInstance = null; // <-- NOUVELLE LIGNE
@@ -110,42 +110,34 @@ function updateSizeGuideIcon(imageId, isSizeGuide) {
 
 // --- Enregistrement des Modifications ---
 // Elle collecte toujours les IDs depuis les .thumbnail-wrapper présents dans les zones au moment du clic.
+// REMPLACEZ VOTRE FONCTION handleSaveChanges EXISTANTE PAR CELLE-CI
+
 const handleSaveChanges = async () => {
     console.log('app.js: handleSaveChanges started.');
-    showLoading("Sauvegarde des rôles...");
+    showLoading("Sauvegarde des modifications...");
     updateStatus("Enregistrement des modifications...", 'info');
-    if(saveChangesButton) saveChangesButton.disabled = true;
+    if (saveChangesButton) saveChangesButton.disabled = true;
 
     const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
     const mainImageId = mainImageThumb ? mainImageThumb.dataset.imageId : null;
-    console.log('app.js: Main Image ID:', mainImageId);
 
     const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
     const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
-    console.log('app.js: Gallery Image IDs:', galleryImageIds);
 
     const customGalleryThumbs = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper') : [];
     const customGalleryImageIds = Array.from(customGalleryThumbs).map(wrapper => wrapper.dataset.imageId);
-    console.log('app.js: Custom Gallery Image IDs:', customGalleryImageIds);
 
-    // Trouver l'ID de l'image désignée comme guide des tailles (ou null)
     const sizeGuideEntry = allImageData.find(imgData => imgData.uses && imgData.uses.includes('size_guide'));
     const sizeGuideImageId = sizeGuideEntry ? sizeGuideEntry.id : null;
-    console.log(`app.js: Image Guide des Tailles sélectionnée pour sauvegarde: ID ${sizeGuideImageId}`);
 
-    // **** AJOUT : Collecter les IDs des images marquées pour suppression ****
     const imageIdsToDelete = allImageData
         .filter(imgData => imgData.markedForDeletion === true)
         .map(imgData => imgData.id);
-    
-    const variantColorMappings = variantManager.getVariantColorMappings();
 
-    // **** AJOUT : Récupérer le statut de traitement (0 ou 1) ****
-    const processingStatusString = productStatusToggleBtn ? productStatusToggleBtn.dataset.status : '0';
-    const imageProcessingStatus = parseInt(processingStatusString, 10); // Convertit '0'/'1' en nombre 0/1
-    
-    console.log(`app.js: Images marquées pour suppression (IDs): ${imageIdsToDelete.join(', ') || 'Aucune'}`);
-    console.log(`app.js: Mannequin sélectionné pour sauvegarde (ID): ${selectedMannequinId}`);
+    const imageProcessingStatus = parseInt(productStatusToggleBtn ? productStatusToggleBtn.dataset.status : '0', 10);
+
+    // --- NOUVELLE LOGIQUE DE GESTION DES VARIANTES ---
+    const variantMappings = variantAttributeManager.getVariantMappings(); // Appel au nouveau manager
     
     const payload = {
         productId: currentProductId,
@@ -153,39 +145,32 @@ const handleSaveChanges = async () => {
         mainImageId: mainImageId,
         galleryImageIds: galleryImageIds,
         customGalleryImageIds: customGalleryImageIds,
-        sizeGuideImageId: sizeGuideImageId, // **** AJOUTER CETTE LIGNE ****
+        sizeGuideImageId: sizeGuideImageId,
         imageIdsToDelete: imageIdsToDelete,
-        variantColorMappings: variantColorMappings, // **** AJOUTER CE CHAMP AU PAYLOAD ****
-        colorAttributeSlug: currentSystemColorAttributeSlug,
-        linked_mannequin_id: selectedMannequinId // Ajouter le mannequin sélectionné
+        variantMappings: variantMappings,           // Nom de clé générique
+        attributeSlug: currentAttributeSlug,        // Nom de clé générique
+        linked_mannequin_id: selectedMannequinId
     };
+    // --- FIN DE LA NOUVELLE LOGIQUE ---
+
     console.log("app.js: Données envoyées à n8n:", payload);
 
     try {
-        // NOUVELLE LIGNE : Appel à la fonction API
         const result = await saveChangesAPI(payload);
-        
         console.log("app.js: Réponse de n8n (Mise à jour):", result);
         updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
 
-        // ** NOUVEAU : Retirer les images supprimées de l'UI **
         if (imageIdsToDelete.length > 0) {
-            // Retirer de allImageData
             allImageData = allImageData.filter(imgData => !imageIdsToDelete.includes(imgData.id));
-            // Retirer du carrousel DOM
             imageIdsToDelete.forEach(deletedId => {
                 const itemToRemove = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${deletedId}"]`);
-                if (itemToRemove) {
-                    itemToRemove.remove();
-                }
-                // Note: Inutile de les retirer des dropzones car elles ne devraient pas y être si elles sont dans le carrousel
+                if (itemToRemove) itemToRemove.remove();
             });
-             // Mettre à jour la modale si ouverte et contient une image supprimée ?
-             if (modalOverlay.style.display === 'flex') { // Vérifie si la modale est ouverte
+            if (modalOverlay.style.display === 'flex') {
                 const currentModalImgData = getCurrentModalImage();
                 if (currentModalImgData && imageIdsToDelete.includes(currentModalImgData.id)) {
-                    closeModal(); // closeModal de app.js, qui appelle closeModalFromManager
-                    updateStatus("Modifications enregistrées. L'image affichée dans la modale a été supprimée.", 'info');
+                    closeModal();
+                    updateStatus("Modifications enregistrées. L'image affichée a été supprimée.", 'info');
                 }
             }
         }
@@ -193,7 +178,7 @@ const handleSaveChanges = async () => {
         console.error("app.js: Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
     } finally {
-        if(saveChangesButton) saveChangesButton.disabled = false;
+        if (saveChangesButton) saveChangesButton.disabled = false;
         hideLoading();
         console.log('app.js: handleSaveChanges finished.');
     }
@@ -202,146 +187,91 @@ const handleSaveChanges = async () => {
 // --- Logique de la Modal (Mise à jour pour Swiper) ---
 
 
-// Dans app.js
+// --- Logique de la Modal ---
+
 function closeModal() {
     console.log('app.js: closeModal called.');
-    closeModalFromManager(); // Pour overlay et Swiper
+    closeModalFromManager();
 
-    // Si un recadrage était en cours, il faut aussi l'annuler proprement via le manager
-    if (isCropperActive()) { // Utilise la fonction de cropperManager
+    if (isCropperActive()) {
         console.log("app.js: closeModal - Recadrage actif détecté, annulation via cropperManager.");
-        cancelCropperFromManager(); // Cela nettoiera l'instance cropper dans le manager
+        cancelCropperFromManager();
     }
-    // currentCroppingImage est maintenant géré par le manager, pas besoin de le nullifier ici
-    // console.log("app.js: Modal fermée."); // Le log de cropperManager est plus précis pour le crop.
 }
 
 // Gestionnaire de Clic pour le bouton Réglages (⚙️) - Appelle openImageModal
 function handleSettingsClick(event) {
-    const button = event.currentTarget;
-    const imageId = button.dataset.imageId; 
-    console.log(`app.js: Clic sur Réglages pour Image ID: ${imageId}`);
-//     openImageModal(imageId); // ANCIEN APPEL
-    openImageModalFromManager(imageId, allImageData); // NOUVEL APPEL
+    const button = event.currentTarget;
+    const imageId = button.dataset.imageId;
+    console.log(`app.js: Clic sur Réglages pour Image ID: ${imageId}`);
+    openImageModalFromManager(imageId, allImageData);
 }
 
 // Gère le clic sur le bouton "Guide des tailles" dans la modale
-function handleSizeGuideToggle(event) { // L'événement vient maintenant du bouton
+function handleSizeGuideToggle(event) {
+    // ... (Cette fonction reste inchangée, vous pouvez la garder telle quelle)
     console.log('app.js: handleSizeGuideToggle called.');
     const button = event.currentTarget;
     const imageId = button.dataset.currentImageId;
-
-    if (!imageId) {
-        console.error("app.js: Impossible de trouver l'ID de l'image associée au bouton Guide des tailles.");
-        return;
-    }
+    if (!imageId) return;
     const imageIdNum = parseInt(imageId, 10);
-
-    // Déterminer si on active ou désactive (basé sur la présence de la classe 'active-size-guide')
     const wasActive = button.classList.contains('active-size-guide');
     const newActiveState = !wasActive;
-
-    console.log(`app.js: Toggle Guide des Tailles pour ID ${imageIdNum}. Nouveau statut actif: ${newActiveState}`);
-
-    // Mettre à jour allImageData (logique pour UN SEUL guide des tailles)
     let previousSizeGuideId = null;
     allImageData.forEach(imgData => {
         const uses = imgData.uses || [];
         const isCurrentlySizeGuide = uses.includes('size_guide');
         const idMatches = imgData.id === imageIdNum;
-
-        if (newActiveState) { // Si on vient d'activer pour imageIdNum
+        if (newActiveState) {
             if (idMatches) {
-                if (!isCurrentlySizeGuide) {
-                    imgData.uses = [...uses, 'size_guide'];
-                }
+                if (!isCurrentlySizeGuide) imgData.uses = [...uses, 'size_guide'];
             } else if (isCurrentlySizeGuide) {
                 previousSizeGuideId = imgData.id;
                 imgData.uses = uses.filter(use => use !== 'size_guide');
             }
-        } else { // Si on vient de désactiver pour imageIdNum
+        } else {
             if (idMatches && isCurrentlySizeGuide) {
                 imgData.uses = uses.filter(use => use !== 'size_guide');
             }
         }
     });
-
-    // Mettre à jour l'apparence du bouton cliqué
-    if (newActiveState) {
-        button.classList.add('active-size-guide');
-    } else {
-        button.classList.remove('active-size-guide');
-    }
-
-    // Mettre à jour les icônes visuelles sur les miniatures/carousel
+    if (newActiveState) button.classList.add('active-size-guide');
+    else button.classList.remove('active-size-guide');
     updateSizeGuideIcon(imageIdNum, newActiveState);
-    if (previousSizeGuideId !== null) {
-        updateSizeGuideIcon(previousSizeGuideId, false);
-    }
-
-    // Mettre à jour l'affichage des infos dans la modale (si on y affichait les rôles, plus le cas)
-    // const currentImageInData = allImageData.find(img => img.id === imageIdNum);
-    // if (modalImageRoles && currentImageInData) { // modalImageRoles n'existe plus
-    //      modalImageRoles.textContent = currentImageInData.uses.join(', ') || 'Aucun';
-    // }
-
+    if (previousSizeGuideId !== null) updateSizeGuideIcon(previousSizeGuideId, false);
     updateStatus("Statut 'Guide des tailles' mis à jour localement.", "info");
 }
 
 // Gère le clic sur le bouton "DEL" dans le carrousel OU l'appel direct depuis la modale
 function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
-    console.log('app.js: handleMarkForDeletionClick called.');
-    let imageId;
-    let container; // Conteneur de l'image dans le carrousel
-
+    // ... (Cette fonction reste inchangée, vous pouvez la garder telle quelle)
+    let imageId, container;
     if (directImageId) {
         imageId = directImageId;
-        // Essayer de trouver le conteneur dans le carrousel pour la synchro visuelle si possible
-        if (imageCarousel) { // Assurez-vous que imageCarousel est défini et accessible
-             container = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`);
-        }
-    } else { // Vient d'un événement de clic
+        if (imageCarousel) container = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${imageId}"]`);
+    } else {
         const button = eventOrButton.currentTarget;
         imageId = button.dataset.imageId;
         container = button.closest('.carousel-image-container');
     }
-
-    if (!imageId) {
-        console.error("app.js: Impossible de trouver l'ID pour marquer pour suppression.");
-        return;
-    }
-
+    if (!imageId) return;
     const imageIdNum = parseInt(imageId, 10);
     const imageIndex = allImageData.findIndex(img => img.id === imageIdNum);
-
-    if (imageIndex === -1) {
-        console.error(`app.js: Image ID ${imageIdNum} non trouvée dans allImageData.`);
-        return;
-    }
-
+    if (imageIndex === -1) return;
     allImageData[imageIndex].markedForDeletion = !allImageData[imageIndex].markedForDeletion;
     const isMarked = allImageData[imageIndex].markedForDeletion;
-
-    console.log(`app.js: Image ID ${imageIdNum} marquée pour suppression: ${isMarked}`);
-
-    // Mettre à jour l'apparence visuelle du carrousel SI l'élément y est
     if (container) {
         const delButtonInCarousel = container.querySelector('.del-btn');
         if (isMarked) {
             container.classList.add('marked-for-deletion');
-            if (delButtonInCarousel) delButtonInCarousel.title = 'Annuler le marquage pour suppression';
+            if (delButtonInCarousel) delButtonInCarousel.title = 'Annuler le marquage';
         } else {
             container.classList.remove('marked-for-deletion');
-            if (delButtonInCarousel) delButtonInCarousel.title = 'Marquer pour suppression définitive';
+            if (delButtonInCarousel) delButtonInCarousel.title = 'Marquer pour suppression';
         }
-    } else if (directImageId) {
-        console.log(`app.js: Image ${directImageId} (appel direct) marquée/démarquée. Pas de conteneur carrousel trouvé pour màj visuelle immédiate.`);
     }
-
-    // Mettre à jour l'apparence du bouton dans la modale si elle est ouverte et concerne cette image
-    // On utilise getCurrentModalImage() qui est importé depuis modalManager.js
-    const currentModalImgForButton = getCurrentModalImage(); 
-    if (modalOverlay && modalOverlay.style.display === 'flex' && modalMarkForDeletionBtn && currentModalImgForButton?.id === imageIdNum) {
+    const currentModalImgForButton = getCurrentModalImage();
+    if (modalOverlay.style.display === 'flex' && modalMarkForDeletionBtn && currentModalImgForButton?.id === imageIdNum) {
         if (isMarked) {
             modalMarkForDeletionBtn.textContent = 'UNDO';
             modalMarkForDeletionBtn.classList.add('marked');
@@ -350,12 +280,10 @@ function handleMarkForDeletionClick(eventOrButton, directImageId = null) {
             modalMarkForDeletionBtn.classList.remove('marked');
         }
     }
-
     if (modalOverlay.style.display === 'flex') {
         refreshCurrentModalViewDataFromManager(allImageData);
     }
-
-    updateStatus(`Image ${imageIdNum} ${isMarked ? 'marquée pour suppression' : 'ne sera plus supprimée'}. Enregistrez pour appliquer.`, 'info');
+    updateStatus(`Image ${imageIdNum} ${isMarked ? 'marquée pour suppression' : 'ne sera plus supprimée'}.`, 'info');
 }
 
 // --- NOUVELLE Logique de Recadrage (Cropper.js) ---
@@ -940,145 +868,91 @@ function updateMannequinButtonDisplay() {
 }
 
 
-// --- Récupération Initiale des Données ---
 const fetchProductData = async () => {
-    updateStatus("Récupération des données produit...", 'info');
-    if (productNameElement) productNameElement.textContent = 'Chargement...';
-    
-    // Vider le carousel et les conteneurs de vignettes avant de re-peupler
-    // Cette partie peut rester ici ou être faite aussi au début de initializeSortableManager.
-    // La version dans sortableManager est plus complète car elle cible aussi les .thumbnail-container.
-    // Pour éviter double travail, nous laissons sortableManager s'en charger.
-    if (imageCarousel) imageCarousel.innerHTML = '<p>Chargement...</p>'; // Message temporaire
-    // Supprimons le nettoyage des .thumbnail-container ici car sortableManager le fait.
-    // document.querySelectorAll('.dropzone .thumbnail-container').forEach(container => container.innerHTML = ''); 
+    updateStatus("Récupération des données produit...", 'info');
+    if (productNameElement) productNameElement.textContent = 'Chargement...';
+    
+    if (imageCarousel) imageCarousel.innerHTML = '<p>Chargement...</p>';
+    allImageData = [];
 
-    allImageData = []; // Vider les données stockées
+    try {
+        const data = await fetchProductDataAPI(currentProductId);
+        console.log('app.js: Parsed JSON data:', data);
+        updateStatus("Données reçues. Affichage...", 'info');
 
-    try {
-        const data = await fetchProductDataAPI(currentProductId); 
-        
-        console.log('app.js: Parsed JSON data:', data);
-        updateStatus("Données reçues. Affichage...", 'info');
+        if (productNameElement) productNameElement.textContent = data.productName || 'Non trouvé';
 
-        if (productNameElement) productNameElement.textContent = data.productName || 'Non trouvé';
-
-        // Set selectedMannequinId from product data if available
-        // Make sure to parse to int, or set to null if 0 or empty string
         selectedMannequinId = data.linked_mannequin_id ? parseInt(data.linked_mannequin_id, 10) : null;
-        if (selectedMannequinId === 0) selectedMannequinId = null; // Treat 0 as no selection
-        console.log(`app.js: Initial linked_mannequin_id from product data: ${selectedMannequinId}`);
-
-        // IMPORTANT : Fetch ALL mannequins data HERE so updateMannequinButtonDisplay can use it immediately.
-        // We do this here as well so the main button can render on initial load.
+        if (selectedMannequinId === 0) selectedMannequinId = null;
+        
         try {
             let fetchedMannequins = await fetchMannequinsAPI();
             if (!Array.isArray(fetchedMannequins)) {
-                console.warn('app.js: Fetched mannequin data (initial load) is not an array, wrapping it.', fetchedMannequins);
                 fetchedMannequins = [fetchedMannequins];
             }
-            allMannequinsData = fetchedMannequins; // Store all mannequins globally
-            console.log('app.js: All mannequins fetched and stored for button display:', allMannequinsData);
+            allMannequinsData = fetchedMannequins;
         } catch (mannequinError) {
             console.error('app.js: Error fetching all mannequins for initial button display:', mannequinError);
-            allMannequinsData = []; // Ensure it's an empty array on error
+            allMannequinsData = [];
         }
         
-        // Update the main button display immediately after selectedMannequinId and allMannequinsData are set
         updateMannequinButtonDisplay();
 
+        if (data.images && Array.isArray(data.images)) {
+            allImageData = data.images;
 
-        if (data.images && Array.isArray(data.images)) {
-            allImageData = data.images; // Stocker
-
-            // --- MISE A JOUR DU BOUTON STATUT TRAITEMENT IMAGES ---
             if (productStatusToggleBtn) {
-                // On attend une valeur numérique 0 ou 1. Par défaut, 0 (non terminé).
-                const status = data.image_processing_status || 0; 
-                productStatusToggleBtn.dataset.status = status.toString(); // Doit être une chaîne dans dataset
-    
-                if (parseInt(status) === 1) { // Traitement terminé
+                const status = data.image_processing_status || 0;
+                productStatusToggleBtn.dataset.status = status.toString();
+                if (parseInt(status) === 1) {
                     productStatusToggleBtn.textContent = '✅';
                     productStatusToggleBtn.classList.remove('status-inactive');
                     productStatusToggleBtn.classList.add('status-active');
-                } else { // Traitement non terminé ou en cours
+                } else {
                     productStatusToggleBtn.textContent = '❌';
                     productStatusToggleBtn.classList.remove('status-active');
                     productStatusToggleBtn.classList.add('status-inactive');
                 }
             }
-            // --- FIN MISE A JOUR ---
-            
-            // Préparer les données pour variantManager
-            let parsedVariantColorAttributes = [];
-            if (data.variantColorAttributes) {
-                if (typeof data.variantColorAttributes === 'string') {
-                    try {
-                        parsedVariantColorAttributes = JSON.parse(data.variantColorAttributes);
-                        console.log('app.js: variantColorAttributes (string) parsed successfully:', parsedVariantColorAttributes);
-                    } catch (e) {
-                        console.error('app.js: Failed to parse variantColorAttributes string:', e);
-                        updateStatus('Erreur format données couleurs variantes.', 'error');
-                        // Vous pourriez vouloir cacher la section des couleurs ici ou afficher un message spécifique
-                        if (variantManager.variantColorAssignmentContainer) { // Accès direct au DOM element via dom.js si exporté ou via variantManager
-                            const container = document.getElementById('variant-color-assignment-container');
-                            if(container) container.style.display = 'none';
-                        }
-                    }
-                } else if (Array.isArray(data.variantColorAttributes)) {
-                    parsedVariantColorAttributes = data.variantColorAttributes;
-                    console.log('app.js: variantColorAttributes is already an array:', parsedVariantColorAttributes);
-                } else {
-                    console.warn('app.js: variantColorAttributes is neither a string nor an array. Type:', typeof data.variantColorAttributes);
-                     if (variantManager.variantColorAssignmentContainer) {
-                         const container = document.getElementById('variant-color-assignment-container');
-                         if(container) container.style.display = 'none';
-                     }
-                }
-            } else {
-                console.log('app.js: No variantColorAttributes found in data.');
-                 if (variantManager.variantColorAssignmentContainer) {
-                     const container = document.getElementById('variant-color-assignment-container');
-                     if(container) container.style.display = 'none';
-                 }
-            }
-            
-            // Initialiser SortableJS pour les images AVANT, pour que les placeholders soient créés
+
+            // --- NOUVELLE LOGIQUE DE GESTION DES VARIANTES ---
             initializeSortableManager(
-                allImageData, 
-                handleSettingsClick, 
+                allImageData,
+                handleSettingsClick,
                 handleMarkForDeletionClick,
-                variantManager.refreshIndicatorForImage // Passer la fonction en callback
+                variantAttributeManager.refreshIndicatorForImage // Appel au nouveau manager
             );
 
-            // Stocker le slug du premier attribut de couleur trouvé (s'il y en a un)
-            if (parsedVariantColorAttributes && parsedVariantColorAttributes.length > 0 && parsedVariantColorAttributes[0].attribute_slug) {
-                currentSystemColorAttributeSlug = parsedVariantColorAttributes[0].attribute_slug;
-                console.log('app.js: Slug de l\'attribut de couleur système stocké :', currentSystemColorAttributeSlug);
+            // L'API renvoie maintenant directement l'objet `variantAttribute`
+            if (data.variantAttribute && data.variantAttribute.attribute_slug) {
+                currentAttributeSlug = data.variantAttribute.attribute_slug; // Stocker le slug générique
+                // Initialiser le nouveau gestionnaire de variantes
+                variantAttributeManager.initVariantHandler(
+                    data.variantAttribute, 
+                    allImageData,
+                    variantAttributeManager.refreshIndicatorForImage // Passer le callback
+                );
             } else {
-                currentSystemColorAttributeSlug = null; // Assurer qu'il est null s'il n'est pas trouvé
-                console.log('app.js: Aucun slug d\'attribut de couleur système trouvé/stocké.');
+                // Cacher la section si aucun attribut de variante n'est trouvé
+                const variantContainer = document.getElementById('variant-assignment-container');
+                if (variantContainer) variantContainer.style.display = 'none';
             }
-            
-            // Appeler l'initialisation du gestionnaire de variantes ENSUITE
-            variantManager.initVariantColorSwatches(parsedVariantColorAttributes, allImageData);
+            // --- FIN DE LA NOUVELLE LOGIQUE ---
 
-            updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
-        } else { // Ce else est pour if (data.images && Array.isArray(data.images))
-            console.error("app.js: Format de données invalide : 'images' manquant ou n'est pas un tableau.");
-            if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur format données.</p>';
-            updateStatus("Erreur format données images.", 'error');
-            // S'assurer qu'on essaie quand même d'initialiser Sortable pour avoir une base, même vide.
-            initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick); 
-        }
-    } catch (error) {
-        console.error("app.js: Erreur fetchProductData:", error);
-        updateStatus(`Erreur chargement: ${error.message}`, 'error');
-        if (productNameElement) productNameElement.textContent = 'Erreur';
-        if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur chargement.</p>';
-        // Initialiser Sortable même en cas d'erreur pour que l'UI de base soit là
-        initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick); 
-    }
+            updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
+        } else {
+            console.error("app.js: Format de données invalide : 'images' manquant ou n'est pas un tableau.");
+            if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur format données.</p>';
+            updateStatus("Erreur format données images.", 'error');
+            initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick);
+        }
+    } catch (error) {
+        console.error("app.js: Erreur fetchProductData:", error);
+        updateStatus(`Erreur chargement: ${error.message}`, 'error');
+        if (productNameElement) productNameElement.textContent = 'Erreur';
+        if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur chargement.</p>';
+        initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick);
+    }
 };
 
 // --- Initialisation de l'application ---
@@ -1126,54 +1000,23 @@ document.addEventListener('DOMContentLoaded', () => {
             // ou un message bref, mais pour l'instant on empêche juste la fermeture.
         }
     });
-    if (modalDissociateColorBtn) {
-        modalDissociateColorBtn.addEventListener('click', (event) => {
-            console.log('app.js: Dissociate Color button clicked.');
+    if (modalDissociateTermBtn) {
+        modalDissociateTermBtn.addEventListener('click', (event) => {
+            console.log('app.js: Dissociate Term button clicked.');
             const imageId = event.currentTarget.dataset.imageId;
-            const colorSlug = event.currentTarget.dataset.colorSlug;
-    
-            if (!imageId || !colorSlug) {
-                console.error("app.js: Missing imageId or colorSlug on dissociate button.");
+            const termSlug = event.currentTarget.dataset.termSlug;
+
+            if (!imageId || !termSlug) {
+                console.error("app.js: Missing imageId or termSlug on dissociate button.");
                 return;
             }
-    
-            console.log(`app.js: Clicked dissociate for imageId: ${imageId}, colorSlug: ${colorSlug}`);
-    
-            // Récupérer la référence à productVariantColorData stockée dans variantManager
-            // Cela suppose que variantManager expose ou a stocké cette donnée de manière accessible
-            // ou que app.js la stocke aussi. Pour l'instant, on va la passer.
-            // Il faudrait que variantManager.js stocke productVariantColorData dans une variable de module
-            // et ait un getter ou le passe à dissociateColorFromImage.
-            // La fonction dissociateColorFromImage a été définie pour prendre productVariantDataRef.
-    
-            // Accéder à la variable productVariantColorData de variantManager.
-            // Pour cela, il faudrait que variantManager l'expose ou que app.js la garde.
-            // Simplifions : variantManager.js utilise sa propre variable de module productVariantColorData.
-            const dissociationSuccess = variantManager.dissociateColorFromImage(
-                imageId, 
-                colorSlug, 
-                allImageData, // app.js a la référence à allImageData
-                variantManager.getProductVariantData() // Supposons que variantManager a une fonction pour retourner productVariantColorData
-            );
-    
-            if (dissociationSuccess) {
-                // Rafraîchir l'affichage de la modale pour l'image actuelle
-                // updateModalInfoFromManager prend (index, currentAllImageData)
-                // Nous avons besoin de l'index actuel de la modale. getCurrentModalImage ne donne pas l'index.
-                // modalManager doit exposer son moduleCurrentModalIndex ou une fonction de rafraîchissement direct.
-    
-                // Option 1: Si modalManager expose l'index (pas idéal)
-                // const currentIndex = modalManager.getCurrentModalIndex(); // Fonction hypothétique
-                // if (currentIndex !== null) {
-                // updateModalInfoFromManager(currentIndex, allImageData);
-                // }
-    
-                // Option 2 (préférable): modalManager a une fonction pour rafraîchir sa vue actuelle
-                // ou refreshCurrentModalViewDataFromManager (que nous avons déjà) fait l'affaire.
-                refreshCurrentModalViewDataFromManager(allImageData); 
-                // Cette fonction appelle updateModalInfo avec l'index courant et allImageData.
-                // Elle mettra à jour l'affichage de la couleur (qui devrait être "Aucune" maintenant)
-                // et cachera le bouton de dissociation.
+
+            // Appel à la fonction générique du nouveau manager
+            const success = variantAttributeManager.dissociateTermFromImage(imageId, termSlug, allImageData);
+
+            if (success) {
+                // Rafraîchir la modale pour refléter la dissociation
+                refreshCurrentModalViewDataFromManager(allImageData);
             }
         });
     }

@@ -13,8 +13,8 @@ export let modalRemoveWatermarkBtn, modalGenerateMockupBtn, modalMarkForDeletion
 export let editActionConfirmationOverlay, confirmActionReplaceBtn, confirmActionNewBtn, confirmActionCancelBtn;
 export let loadingOverlay;
 export let modalToggleSizeGuideBtn;
-export let variantColorAssignmentContainer, availableColorSwatchesContainer, variantColorAttributeNameElement;
-export let modalImageAssignedColorIndicatorElement, modalImageAssignedColorNameElement, modalDissociateColorBtn;
+export let variantAssignmentContainer, availableTermsContainer, variantAttributeNameElement;
+export let modalImageAssignedTermIndicatorElement, modalImageAssignedTermNameElement, modalDissociateTermBtn;
 export let modalReplaceBackgroundBtn;
 export let modalUpscaleBtn;
 export let productStatusToggleBtn;
@@ -80,13 +80,13 @@ export function initDomElements() {
     confirmActionNewBtn = document.getElementById('confirm-action-new');
     confirmActionCancelBtn = document.getElementById('confirm-action-cancel');
 
-    variantColorAssignmentContainer = document.getElementById('variant-color-assignment-container');
-    availableColorSwatchesContainer = document.getElementById('available-color-swatches');
-    variantColorAttributeNameElement = document.getElementById('variant-color-attribute-name');
+    variantAssignmentContainer = document.getElementById('variant-assignment-container');
+    availableTermsContainer = document.getElementById('available-terms-container');
+    variantAttributeNameElement = document.getElementById('variant-attribute-name');
 
-    modalImageAssignedColorIndicatorElement = document.getElementById('modal-image-assigned-color-indicator');
-    modalImageAssignedColorNameElement = document.getElementById('modal-image-assigned-color-name');
-    modalDissociateColorBtn = document.getElementById('modal-dissociate-color-btn');
+    modalImageAssignedTermIndicatorElement = document.getElementById('modal-image-assigned-term-indicator');
+    modalImageAssignedTermNameElement = document.getElementById('modal-image-assigned-term-name');
+    modalDissociateTermBtn = document.getElementById('modal-dissociate-term-btn');
     modalReplaceBackgroundBtn = document.getElementById('modal-replace-background-btn');
     modalUpscaleBtn = document.getElementById('modal-upscale-btn'); 
 

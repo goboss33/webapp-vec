@@ -1268,3 +1268,71 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     border-color: var(--tg-theme-button-color, #007bff);
     background-color: rgba(0, 123, 255, 0.1);
 }
+
+/* --- Styles pour les Variantes --- */
+
+/* Conteneur commun pour les termes disponibles */
+.available-terms-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+    min-height: 40px;
+    border: 1px dashed var(--tg-theme-hint-color, #ccc);
+    border-radius: 4px;
+    background-color: var(--tg-theme-bg-color, #fff);
+}
+
+/* Style commun pour tous les termes draggables */
+.term-draggable {
+    cursor: grab;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.1s ease-out;
+}
+.term-draggable:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* Style spécifique pour les pastilles de couleur */
+.color-swatch-draggable {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+}
+
+/* NOUVEAU: Style spécifique pour les boutons textuels */
+.term-button-draggable {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    font-size: 0.9em;
+    color: #333;
+}
+
+/* Styles pour l'indicateur sur l'image dans la modale */
+.modal-term-indicator-inline {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+    border: 1px solid #ccc;
+}
+
+/* Pour les couleurs, ce sera un carré/rond */
+.modal-term-indicator-inline.is-color {
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+}
+
+/* Pour les autres, ce sera une étiquette de texte */
+.modal-term-indicator-inline.is-button {
+    padding: 2px 4px;
+    font-size: 0.8em;
+    border-radius: 3px;
+    background-color: #e9ecef;
+}

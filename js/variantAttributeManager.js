@@ -1,0 +1,298 @@
+// js/variantAttributeManager.js
+
+import {
+    variantAssignmentContainer,
+    availableTermsContainer,
+    variantAttributeNameElement,
+    imageCarousel,
+    dropzoneMain,
+    dropzoneGallery,
+    dropzoneCustom
+} from './dom.js';
+import { updateStatus } from './uiUtils.js';
+
+console.log('variantAttributeManager.js module loaded');
+
+// --- État du module ---
+let productVariantAttribute = null;
+let currentImageTermMappings = new Map();
+let availableTerms = [];
+let sortableAvailableTerms = null;
+let temporaryImageDropZoneInstances = [];
+
+// --- Fonctions de création d'éléments (pour le retour au carrousel) ---
+// Note: Ces fonctions sont simplifiées et ne gèrent pas les callbacks de clic.
+// Idéalement, sortableManager devrait exposer ces fonctions de création.
+// Pour l'instant, c'est une solution fonctionnelle.
+function createCarouselItem(image) {
+    const container = document.createElement('div');
+    container.className = 'carousel-image-container';
+    container.dataset.imageId = image.id;
+    container.dataset.imageUrl = image.url;
+    const img = document.createElement('img');
+    img.src = image.url;
+    container.appendChild(img);
+    // On n'ajoute pas les boutons ici pour simplifier. L'essentiel est de remettre l'image.
+    return container;
+}
+
+
+/**
+ * Initialise le système de gestion des variantes.
+ * @param {Object} variantAttribute - L'objet variantAttribute de l'API.
+ * @param {Array} allImageData - Le tableau global 'allImageData'.
+ * @param {Function} onRefreshIndicatorCallback - Callback pour rafraîchir les indicateurs sur les images
+ */
+export function initVariantHandler(variantAttribute, allImageData, onRefreshIndicatorCallback) {
+    console.log('[variantAttributeManager] initVariantHandler START');
+    productVariantAttribute = variantAttribute;
+
+    if (!variantAttribute || !variantAttribute.terms || variantAttribute.terms.length === 0) {
+        console.warn('[variantAttributeManager] No variant attribute found for this product.');
+        if (variantAssignmentContainer) variantAssignmentContainer.style.display = 'none';
+        return;
+    }
+
+    if (variantAttributeNameElement) {
+        variantAttributeNameElement.textContent = productVariantAttribute.attribute_name;
+    }
+    if (variantAssignmentContainer) {
+        variantAssignmentContainer.style.display = 'block';
+    }
+
+    currentImageTermMappings.clear();
+    availableTerms = [];
+
+    allImageData.forEach(image => {
+        if (image.assigned_variant_slug) {
+            const term = productVariantAttribute.terms.find(t => t.value === image.assigned_variant_slug);
+            if (term) {
+                const mapping = {
+                    termSlug: term.value,
+                    termName: term.name,
+                    termId: term.term_id,
+                    hex: term.hex,
+                };
+                currentImageTermMappings.set(image.id.toString(), mapping);
+                image.assigned_term_name = term.name;
+                image.assigned_term_hex = term.hex;
+                image.assigned_term_slug = term.value;
+            }
+        }
+    });
+
+    const assignedTermSlugs = new Set(Array.from(currentImageTermMappings.values()).map(m => m.termSlug));
+    availableTerms = productVariantAttribute.terms.filter(term => !assignedTermSlugs.has(term.value));
+
+    renderAvailableTerms();
+    configureSortableForTerms(allImageData, onRefreshIndicatorCallback);
+    
+    // On s'assure que les indicateurs sont bien affichés au chargement
+    allImageData.forEach(image => {
+        if(image.assigned_term_slug) {
+            onRefreshIndicatorCallback(image.id);
+        }
+    });
+    console.log('[variantAttributeManager] initVariantHandler END');
+}
+
+function renderAvailableTerms() {
+    if (!availableTermsContainer) return;
+    availableTermsContainer.innerHTML = '';
+    if (availableTerms.length === 0) {
+        availableTermsContainer.innerHTML = '<p class="no-swatches-message">Toutes les variantes sont assignées.</p>';
+        return;
+    }
+    availableTerms.forEach(term => {
+        const termElement = document.createElement('div');
+        termElement.className = 'term-draggable';
+        termElement.title = term.name;
+        termElement.dataset.termSlug = term.value;
+        termElement.dataset.termName = term.name;
+        termElement.dataset.termId = term.term_id;
+        if (productVariantAttribute.display_type === 'color' && term.hex) {
+            termElement.classList.add('color-swatch-draggable');
+            termElement.style.backgroundColor = term.hex;
+            termElement.dataset.hex = term.hex;
+        } else {
+            termElement.classList.add('term-button-draggable');
+            termElement.textContent = term.name;
+        }
+        availableTermsContainer.appendChild(termElement);
+    });
+}
+
+export function renderTermIndicator(imageId, termData) {
+    const placeholders = document.querySelectorAll(`.image-color-indicator-placeholder[data-indicator-for-image-id="${imageId}"]`);
+    if (!placeholders.length || !termData) return;
+
+    placeholders.forEach(placeholder => {
+        placeholder.innerHTML = '';
+        placeholder.style.backgroundColor = 'transparent';
+        placeholder.title = `Variante: ${termData.termName}`;
+        placeholder.dataset.assignedTermSlug = termData.termSlug;
+        
+        if (productVariantAttribute.display_type === 'color' && termData.hex) {
+            placeholder.style.backgroundColor = termData.hex;
+        } else {
+            placeholder.textContent = termData.termName.substring(0, 3).toUpperCase();
+            placeholder.style.cssText += 'font-size: 8px; color: white; background-color: #555; text-align: center; line-height: 16px; border-radius: 3px;';
+        }
+        placeholder.classList.add('active-indicator');
+    });
+}
+
+export function removeTermIndicator(imageId) {
+    const placeholders = document.querySelectorAll(`.image-color-indicator-placeholder[data-indicator-for-image-id="${imageId}"]`);
+    placeholders.forEach(placeholder => {
+        placeholder.innerHTML = '';
+        placeholder.style.cssText = '';
+        placeholder.title = '';
+        delete placeholder.dataset.assignedTermSlug;
+        placeholder.classList.remove('active-indicator');
+    });
+}
+
+export function dissociateTermFromImage(imageId, termSlug, allImageDataRef) {
+    const imageIdStr = imageId.toString();
+    if (!currentImageTermMappings.has(imageIdStr)) return false;
+    const currentMapping = currentImageTermMappings.get(imageIdStr);
+    if (currentMapping.termSlug !== termSlug) return false;
+
+    currentImageTermMappings.delete(imageIdStr);
+
+    const imageInData = allImageDataRef.find(img => img.id.toString() === imageIdStr);
+    if (imageInData) {
+        delete imageInData.assigned_variant_slug;
+        delete imageInData.assigned_term_name;
+        delete imageInData.assigned_term_hex;
+        delete imageInData.assigned_term_slug;
+    }
+
+    removeTermIndicator(imageIdStr);
+
+    const termObject = productVariantAttribute.terms.find(term => term.value === termSlug);
+    if (termObject && !availableTerms.some(t => t.value === termSlug)) {
+        availableTerms.push(termObject);
+    }
+
+    renderAvailableTerms();
+    updateStatus(`Variante '${currentMapping.termName}' dissociée.`, 'info');
+    return true;
+}
+
+export function getVariantMappings() {
+    return Array.from(currentImageTermMappings, ([imageId, data]) => ({ imageId, termSlug: data.termSlug }));
+}
+
+export function getVariantAttributeData() {
+    return productVariantAttribute;
+}
+
+export function refreshIndicatorForImage(imageId) {
+    if (!imageId) return;
+    const imageIdStr = imageId.toString();
+    if (currentImageTermMappings.has(imageIdStr)) {
+        const termData = currentImageTermMappings.get(imageIdStr);
+        renderTermIndicator(imageIdStr, termData);
+    } else {
+        removeTermIndicator(imageIdStr);
+    }
+}
+
+function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
+    if (!availableTermsContainer) return;
+    if (sortableAvailableTerms) sortableAvailableTerms.destroy();
+
+    sortableAvailableTerms = new Sortable(availableTermsContainer, {
+        group: { name: 'terms-shared', pull: true, put: true },
+        animation: 150,
+        sort: false,
+        onStart: function(evt) {
+            document.body.classList.add('dragging-color-swatch'); // On garde cette classe pour le style
+            temporaryImageDropZoneInstances.forEach(instance => instance.destroy());
+            temporaryImageDropZoneInstances = [];
+            const imageElements = document.querySelectorAll('.carousel-image-container, .thumbnail-wrapper');
+            
+            imageElements.forEach(imgElContainer => {
+                if (!imgElContainer.dataset.imageId) return;
+                const instance = new Sortable(imgElContainer, {
+                    group: { name: 'terms-shared', put: true },
+                    animation: 0,
+                    ghostClass: 'color-drop-target-ghost',
+                    onAdd: function(addEvt) {
+                        const targetImageElement = this.el;
+                        const droppedTermElement = addEvt.item;
+                        const targetImageId = targetImageElement.dataset.imageId;
+
+                        if (droppedTermElement.parentElement === targetImageElement) {
+                            targetImageElement.removeChild(droppedTermElement);
+                        }
+                        
+                        const newTermData = {
+                            termSlug: droppedTermElement.dataset.termSlug,
+                            termName: droppedTermElement.dataset.termName,
+                            hex: droppedTermElement.dataset.hex || null
+                        };
+
+                        const currentMapping = currentImageTermMappings.get(targetImageId);
+                        if (currentMapping && currentMapping.termSlug === newTermData.termSlug) return;
+                        
+                        if (currentMapping) {
+                            const oldTerm = productVariantAttribute.terms.find(t => t.value === currentMapping.termSlug);
+                            if (oldTerm && !availableTerms.some(t => t.value === oldTerm.value)) {
+                                availableTerms.push(oldTerm);
+                            }
+                        }
+                        
+                        currentImageTermMappings.forEach((map, imgId) => {
+                            if (map.termSlug === newTermData.termSlug && imgId !== targetImageId) {
+                                currentImageTermMappings.delete(imgId);
+                                removeTermIndicator(imgId);
+                                const oldImgInAllData = allImageDataRef.find(i => i.id.toString() === imgId);
+                                if (oldImgInAllData) {
+                                    delete oldImgInAllData.assigned_variant_slug;
+                                    delete oldImgInAllData.assigned_term_name;
+                                    delete oldImgInAllData.assigned_term_hex;
+                                }
+                            }
+                        });
+
+                        currentImageTermMappings.set(targetImageId, newTermData);
+                        
+                        const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
+                        if (targetImgInAllData) {
+                            targetImgInAllData.assigned_variant_slug = newTermData.termSlug;
+                            targetImgInAllData.assigned_term_name = newTermData.termName;
+                            targetImgInAllData.assigned_term_hex = newTermData.hex;
+                        }
+                        
+                        onRefreshIndicatorCallback(targetImageId);
+                        
+                        availableTerms = availableTerms.filter(term => term.value !== newTermData.termSlug);
+                        updateStatus(`'${newTermData.termName}' assigné à l'image ID ${targetImageId}.`, 'success');
+                    }
+                });
+                temporaryImageDropZoneInstances.push(instance);
+            });
+        },
+        onEnd: function(evt) {
+            document.body.classList.remove('dragging-color-swatch');
+            temporaryImageDropZoneInstances.forEach(instance => instance.destroy());
+            temporaryImageDropZoneInstances = [];
+
+            const termSlug = evt.item.dataset.termSlug;
+            let wasAssigned = Array.from(currentImageTermMappings.values()).some(m => m.termSlug === termSlug);
+            
+            if (wasAssigned) {
+                if (evt.item.parentElement) evt.item.remove();
+            } else {
+                if (!availableTerms.some(term => term.value === termSlug)) {
+                    const termObject = productVariantAttribute.terms.find(t => t.value === termSlug);
+                    if (termObject) availableTerms.push(termObject);
+                }
+            }
+            renderAvailableTerms();
+        }
+    });
+}
