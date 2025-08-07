@@ -116,10 +116,16 @@ function renderAvailableTerms() {
     availableTerms.forEach(term => {
         const termElement = document.createElement('div');
         termElement.className = 'term-draggable';
+        
+        // --- LA CORRECTION EST ICI ---
+        termElement.draggable = true; // Force l'élément à être nativement déplaçable
+        // --- FIN DE LA CORRECTION ---
+
         termElement.title = term.name;
         termElement.dataset.termSlug = term.value;
         termElement.dataset.termName = term.name;
         termElement.dataset.termId = term.term_id;
+
         if (productVariantAttribute.display_type === 'color' && term.hex) {
             termElement.classList.add('color-swatch-draggable');
             termElement.style.backgroundColor = term.hex;
