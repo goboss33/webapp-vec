@@ -1533,3 +1533,43 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 .no-swatches-message {
 	display:contents;
 }
+
+/* DANS css/style.css */
+
+/* Styles pour la Checklist dans la Modale */
+.checklist-container {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.1em;
+}
+.checklist-item:last-child {
+    border-bottom: none;
+}
+
+.checklist-item .checklist-status {
+    font-size: 1.5em;
+    margin-right: 15px;
+    line-height: 1;
+}
+
+/* Style pour un critère validé */
+.checklist-item.is-valid .checklist-status::before {
+    content: '✅';
+}
+.checklist-item.is-valid .checklist-text {
+    text-decoration: line-through;
+    color: var(--tg-theme-hint-color, #6c757d);
+}
+
+/* Style pour un critère non validé */
+.checklist-item.is-invalid .checklist-status::before {
+    content: '❌';
+}

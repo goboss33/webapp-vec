@@ -32,7 +32,8 @@ import {
     // --- AJOUTEZ CES DEUX VARIABLES À LA LISTE ---
     resetVariantsBtn,
     noVariantsMessage,
-    aliexpressLinkElement
+    aliexpressLinkElement,
+	checklistModal, checklistModalCloseBtn, checklistItemCustomImages
     
 } from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
@@ -188,6 +189,64 @@ const handleSaveChanges = async () => {
         console.log('app.js: handleSaveChanges finished.');
     }
 };
+
+// DANS js/app.js
+
+// --- NOUVELLES FONCTIONS POUR LA CHECKLIST DE VALIDATION ---
+
+let validationCriteria = {
+    customImages: false
+    // d'autres critères viendront ici
+};
+
+/** Met à jour la checklist dans la modale et l'état global des critères */
+function runAllValidationChecks() {
+    // Critère 1: Nombre d'images dans la zone "Custom"
+    const customImageCount = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper').length : 0;
+    validationCriteria.customImages = (customImageCount === 3);
+    
+    // Mettre à jour l'UI de l'item dans la modale
+    if (checklistItemCustomImages) {
+        checklistItemCustomImages.classList.toggle('is-valid', validationCriteria.customImages);
+        checklistItemCustomImages.classList.toggle('is-invalid', !validationCriteria.customImages);
+    }
+
+    // Mettre à jour le bouton de statut principal
+    updateMainStatusButton();
+}
+
+/** Met à jour l'icône du bouton de statut principal (✅/❌) */
+function updateMainStatusButton() {
+    const allValid = Object.values(validationCriteria).every(status => status === true);
+
+    if (productStatusToggleBtn) {
+        productStatusToggleBtn.dataset.status = allValid ? '1' : '0';
+        if (allValid) {
+            productStatusToggleBtn.textContent = '✅';
+            productStatusToggleBtn.classList.add('status-active');
+            productStatusToggleBtn.classList.remove('status-inactive');
+        } else {
+            productStatusToggleBtn.textContent = '❌';
+            productStatusToggleBtn.classList.add('status-inactive');
+            productStatusToggleBtn.classList.remove('status-active');
+        }
+    }
+}
+
+/** Ouvre la modale de la checklist */
+function openChecklistModal() {
+    if (checklistModal) {
+        runAllValidationChecks(); // S'assure que l'affichage est à jour avant d'ouvrir
+        checklistModal.style.display = 'flex';
+    }
+}
+
+/** Ferme la modale de la checklist */
+function closeChecklistModal() {
+    if (checklistModal) {
+        checklistModal.style.display = 'none';
+    }
+}
 
 // --- Logique de la Modal (Mise à jour pour Swiper) ---
 
@@ -967,11 +1026,13 @@ const fetchProductData = async () => {
 			}
 
             updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
+			runAllValidationChecks();
         } else {
             console.error("app.js: Format de données invalide : 'images' manquant ou n'est pas un tableau.");
             if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur format données.</p>';
             updateStatus("Erreur format données images.", 'error');
             initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick, variantAttributeManager.refreshIndicatorForImage);
+			runAllValidationChecks();
         }
     } catch (error) {
         console.error("app.js: Erreur fetchProductData:", error);
@@ -979,6 +1040,7 @@ const fetchProductData = async () => {
         if (productNameElement) productNameElement.textContent = 'Erreur';
         if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur chargement.</p>';
         initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick, variantAttributeManager.refreshIndicatorForImage);
+		runAllValidationChecks();
     }
 };
 
@@ -1117,24 +1179,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Écouteur pour le bouton de statut de traitement des images
     if (productStatusToggleBtn) {
         productStatusToggleBtn.addEventListener('click', () => {
-            console.log('app.js: productStatusToggleBtn clicked.');
-            const currentStatus = productStatusToggleBtn.dataset.status; // Sera '0' ou '1'
-            const newStatus = currentStatus === '1' ? '0' : '1';
-            
-            productStatusToggleBtn.dataset.status = newStatus;
-            
-            if (newStatus === '1') {
-                productStatusToggleBtn.textContent = '✅';
-                productStatusToggleBtn.classList.remove('status-inactive');
-                productStatusToggleBtn.classList.add('status-active');
-                updateStatus("Statut du traitement des images : Terminé. Enregistrez pour appliquer.", 'info');
-            } else {
-                productStatusToggleBtn.textContent = '❌';
-                productStatusToggleBtn.classList.remove('status-active');
-                productStatusToggleBtn.classList.add('status-inactive');
-                updateStatus("Statut du traitement des images : Non Terminé. Enregistrez pour appliquer.", 'info');
-            }
+            console.log('app.js: productStatusToggleBtn clicked. Opening checklist modal.');
+            // L'ancienne logique de toggle est remplacée par l'ouverture de la modale
+            openChecklistModal();
         });
+    }
+	if (checklistModalCloseBtn) {
+        checklistModalCloseBtn.addEventListener('click', closeChecklistModal);
     }
 
     // --- NOUVEAUX ÉCOUTEURS D'ÉVÉNEMENTS POUR LA SÉLECTION DES MANNEQUINS ---

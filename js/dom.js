@@ -21,6 +21,7 @@ export let productStatusToggleBtn;
 export let mannequinImageSelectionModal, mannequinImageSwiperWrapper, mannequinImageModalCloseBtn, mannequinImageValidateBtn, mannequinImageCancelBtn;
 export let resetVariantsBtn, noVariantsMessage;
 export let aliexpressLinkElement;
+export let checklistModal, checklistModalCloseBtn, checklistItemCustomImages;
 
 // NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
 export let mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn, mannequinFilterGreen, mannequinFilterOrange, mannequinFilterRed;
@@ -127,4 +128,8 @@ export function initDomElements() {
     noVariantsMessage = document.getElementById('no-variants-message');
 	
 	aliexpressLinkElement = document.getElementById('aliexpressLink');
+	
+	checklistModal = document.getElementById('checklist-modal');
+    checklistModalCloseBtn = document.getElementById('checklist-modal-close-btn');
+    checklistItemCustomImages = document.getElementById('checklist-item-custom-images');
 }

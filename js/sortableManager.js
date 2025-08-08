@@ -208,6 +208,10 @@ function handleThumbnailRemoveClickInternal(event) {
     } else {
         console.error("sortableManager.js: Carousel element non trouvé.");
     }
+	
+	if (typeof onStateChangeCallback === 'function') {
+		onStateChangeCallback();
+	}
 }
 
 
@@ -483,6 +487,10 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
                     onRefreshIndicatorCallback(droppedImageId); // ou originalImageData.id
                 }
                 console.log(`sortableManager.js -> Enfants final dans ${currentRole}: ${targetContainer.children.length}`);
+				
+				if (typeof onStateChangeCallback === 'function') {
+					onStateChangeCallback();
+				}
             }, 
             onRemove: function(evt) {
                 const itemEl = evt.item;
