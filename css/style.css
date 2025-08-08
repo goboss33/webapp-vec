@@ -1326,7 +1326,6 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 /* Conteneur commun pour les termes disponibles */
 .available-terms-container {
     display: flex;
-    flex-wrap: wrap;
     gap: 8px;
     padding: 10px;
     min-height: 40px;
