@@ -124,7 +124,7 @@ function renderAvailableTerms() {
     if (availableTerms.length === 0) {
         const message = document.createElement('p');
         message.className = 'no-swatches-message';
-        message.textContent = 'Toutes les variantes sont assignées.';
+        message.textContent = '✅ Variantes assignées';
         availableTermsContainer.appendChild(message);
         return;
     }
