@@ -31,7 +31,8 @@ import {
 
     // --- AJOUTEZ CES DEUX VARIABLES À LA LISTE ---
     resetVariantsBtn,
-    noVariantsMessage
+    noVariantsMessage,
+    aliexpressLinkElement
     
 } from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
@@ -897,6 +898,15 @@ const fetchProductData = async () => {
         updateStatus("Données reçues. Affichage...", 'info');
 
         if (productNameElement) productNameElement.textContent = data.productName || 'Non trouvé';
+
+		if (aliexpressLinkElement) {
+            if (data['aliexpress-link']) {
+                aliexpressLinkElement.href = data['aliexpress-link'];
+                aliexpressLinkElement.style.display = 'inline-block'; // Affiche l'icône
+            } else {
+                aliexpressLinkElement.style.display = 'none'; // Garde l'icône cachée
+            }
+        }
 
         selectedMannequinId = data.linked_mannequin_id ? parseInt(data.linked_mannequin_id, 10) : null;
         if (selectedMannequinId === 0) selectedMannequinId = null;

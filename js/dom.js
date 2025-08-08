@@ -20,6 +20,7 @@ export let modalUpscaleBtn;
 export let productStatusToggleBtn;
 export let mannequinImageSelectionModal, mannequinImageSwiperWrapper, mannequinImageModalCloseBtn, mannequinImageValidateBtn, mannequinImageCancelBtn;
 export let resetVariantsBtn, noVariantsMessage;
+export let aliexpressLinkElement;
 
 // NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
 export let mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn, mannequinFilterGreen, mannequinFilterOrange, mannequinFilterRed;
@@ -124,4 +125,6 @@ export function initDomElements() {
 	// AJOUTEZ CES DEUX LIGNES
     resetVariantsBtn = document.getElementById('reset-variants-btn');
     noVariantsMessage = document.getElementById('no-variants-message');
+	
+	aliexpressLinkElement = document.getElementById('aliexpressLink');
 }

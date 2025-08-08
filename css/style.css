@@ -13,11 +13,26 @@ body {
 }
 
 .main-product-title {
-    font-size: 1.1em; /* Taille de police normale mais légèrement plus grande */
+    font-size: 0.9em; /* Taille de police normale mais légèrement plus grande */
     font-weight: normal; /* Annule la graisse par défaut du h2 */
     margin: 0 0 10px 0; /* Espacement en dessous du titre */
     text-align: center; /* Centrer le titre */
     color: var(--tg-theme-hint-color, #6c757d); /* Couleur pour l'ID */
+	/* AJOUT : Permet un bon alignement vertical de l'icône */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap; /* Permet au titre de passer à la ligne sur mobile */
+}
+/* AJOUT : Nouvelles règles pour l'icône de lien externe */
+.external-link-icon {
+    display: inline-block;
+    text-decoration: none; /* Pas de soulignement */
+    color: var(--tg-theme-link-color, #007bff);
+    font-size: 1.2em; /* Taille de l'icône */
+    margin-left: 8px; /* Espace par rapport au titre */
+    line-height: 1; /* Assure un bon alignement */
+    transition: transform 0.2s;
 }
 
 .main-product-title strong {
