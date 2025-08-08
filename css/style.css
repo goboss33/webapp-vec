@@ -32,6 +32,12 @@ body {
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
 }
+
+hr {
+    border: none;
+    border-top: 1px solid var(--tg-theme-hint-color, #ccc);
+    margin: 15px 0;
+}
 /* FIN DES NOUVEAUX STYLES */
 
 /* Conteneur pour les boutons du haut (Statut, Mannequin) */
