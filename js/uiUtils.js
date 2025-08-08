@@ -19,20 +19,33 @@ import {
     modalGenerateMockupBtn, // Needed for resetModalToActionView
     modalToggleSizeGuideBtn,
     modalReplaceBackgroundBtn,
-    modalUpscaleBtn         
+    modalUpscaleBtn
     // Ajoutez d'autres éléments DOM importés ici si resetModalToActionView en a besoin de plus
 } from './dom.js';
 
 console.log('uiUtils.js module loaded');
 
-// Met à jour le message de statut
+// 1. AJOUTEZ une variable pour stocker notre fonction de rappel
+let onStatusUpdateCallback = null;
+
+// 2. AJOUTEZ cette nouvelle fonction pour permettre à app.js de "s'inscrire"
+export function registerOnStatusUpdateCallback(callback) {
+    onStatusUpdateCallback = callback;
+}
+
+// 3. MODIFIEZ la fonction updateStatus existante
 export const updateStatus = (message, type = 'info') => {
-    if (statusElement) {
-        statusElement.textContent = message;
-        statusElement.className = `status-message status-${type}`;
-    } else {
-        console.error("statusElement non trouvé (dans uiUtils.js).");
-    }
+    if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.className = `status-message status-${type}`;
+    } else {
+        console.error("statusElement non trouvé (dans uiUtils.js).");
+    }
+
+    // Appelle la fonction de rappel si elle a été enregistrée
+    if (typeof onStatusUpdateCallback === 'function') {
+        onStatusUpdateCallback();
+    }
 };
 
 // --- Indicateur de Chargement ---
