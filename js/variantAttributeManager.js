@@ -15,16 +15,12 @@ console.log('variantAttributeManager.js module loaded');
 
 // --- État du module ---
 let productVariantAttribute = null;
-// MODIFICATION: Chaque image peut avoir un tableau de variantes.
 let currentImageTermMappings = new Map(); // Map<imageId, Array<termData>>
 let availableTerms = [];
 let sortableAvailableTerms = null;
 let temporaryImageDropZoneInstances = [];
 
 // --- Fonctions de création d'éléments (pour le retour au carrousel) ---
-// Note: Ces fonctions sont simplifiées et ne gèrent pas les callbacks de clic.
-// Idéalement, sortableManager devrait exposer ces fonctions de création.
-// Pour l'instant, c'est une solution fonctionnelle.
 function createCarouselItem(image) {
     const container = document.createElement('div');
     container.className = 'carousel-image-container';
@@ -33,10 +29,8 @@ function createCarouselItem(image) {
     const img = document.createElement('img');
     img.src = image.url;
     container.appendChild(img);
-    // On n'ajoute pas les boutons ici pour simplifier. L'essentiel est de remettre l'image.
     return container;
 }
-
 
 /**
  * Initialise le système de gestion des variantes.
@@ -62,16 +56,13 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
     }
 
     currentImageTermMappings.clear();
-    
-    // On peuple la liste des termes disponibles.
     availableTerms = [...productVariantAttribute.terms];
 
-    // On initialise la map des assignations.
     allImageData.forEach(img => {
         currentImageTermMappings.set(img.id.toString(), []);
+        img.assigned_terms = []; 
     });
-    
-    // On traite les assignations existantes
+
     productVariantAttribute.terms.forEach(term => {
         if (term.current_image_id) {
             const imageIdStr = term.current_image_id.toString();
@@ -88,12 +79,8 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
                 const termsForImage = currentImageTermMappings.get(imageIdStr);
                 if (termsForImage) {
                     termsForImage.push(termData);
+                    imageToUpdate.assigned_terms.push(termData);
                 }
-                
-                if (!imageToUpdate.assigned_terms) {
-                    imageToUpdate.assigned_terms = [];
-                }
-                imageToUpdate.assigned_terms.push(termData);
             }
         }
     });
@@ -119,7 +106,7 @@ function renderAvailableTerms() {
     if (availableTerms.length === 0) {
         const message = document.createElement('p');
         message.className = 'no-swatches-message';
-        message.textContent = '✅ Toutes les variantes sont assignées';
+        message.textContent = 'Aucune variante disponible.';
         availableTermsContainer.appendChild(message);
         return;
     }
@@ -180,6 +167,16 @@ export function renderTermIndicator(imageId, termsDataArray) {
     });
 }
 
+export function removeTermIndicator(imageId) {
+    const placeholders = document.querySelectorAll(`.image-color-indicator-placeholder[data-indicator-for-image-id="${imageId}"]`);
+    placeholders.forEach(placeholder => {
+        placeholder.innerHTML = '';
+        placeholder.className = 'image-color-indicator-placeholder';
+        placeholder.classList.remove('active-indicator');
+    });
+}
+
+
 export function dissociateTermFromImage(imageId, termSlug, allImageDataRef) {
     const imageIdStr = imageId.toString();
     const termsForImage = currentImageTermMappings.get(imageIdStr);
@@ -203,12 +200,15 @@ export function dissociateTermFromImage(imageId, termSlug, allImageDataRef) {
 }
 
 export function dissociateAllTerms(allImageDataRef) {
-    if (currentImageTermMappings.size === 0) {
+    let hadAssignments = false;
+    currentImageTermMappings.forEach(terms => {
+        if (terms.length > 0) hadAssignments = true;
+    });
+
+    if (!hadAssignments) {
         updateStatus("Aucune variation n'est actuellement assignée.", "info");
         return false;
     }
-
-    availableTerms = [...productVariantAttribute.terms];
 
     currentImageTermMappings.forEach((terms, imageId) => {
         terms.length = 0;
@@ -219,7 +219,6 @@ export function dissociateAllTerms(allImageDataRef) {
         removeTermIndicator(imageId);
     });
 
-    renderAvailableTerms();
     updateStatus("Toutes les associations de variantes ont été réinitialisées.", "success");
     return true;
 }
@@ -295,14 +294,35 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                             hex: droppedTermElement.dataset.hex || null
                         };
 
+                        // --- DEBUT DE LA NOUVELLE LOGIQUE ---
+                        // 1. Vérifier si cette variante est déjà assignée ailleurs
+                        let oldImageId = null;
+                        currentImageTermMappings.forEach((terms, imageId) => {
+                            if (imageId !== targetImageId) {
+                                if (terms.some(t => t.termSlug === newTermData.termSlug)) {
+                                    oldImageId = imageId;
+                                }
+                            }
+                        });
+
+                        // 2. Si elle est assignée ailleurs, la retirer de l'ancienne image
+                        if (oldImageId) {
+                            dissociateTermFromImage(oldImageId, newTermData.termSlug, allImageDataRef);
+                            updateStatus(`Variante '${newTermData.termName}' déplacée.`, 'info');
+                        }
+                        // --- FIN DE LA NOUVELLE LOGIQUE ---
+
+
                         const termsForImage = currentImageTermMappings.get(targetImageId);
                         
-                        if (termsForImage.some(t => t.termSlug === newTermData.termSlug)) {
+                        if (termsForImage && termsForImage.some(t => t.termSlug === newTermData.termSlug)) {
                             updateStatus(`La variante '${newTermData.termName}' est déjà assignée à cette image.`, 'warn');
                             return;
                         }
 
-                        termsForImage.push(newTermData);
+                        if (termsForImage) {
+                            termsForImage.push(newTermData);
+                        }
 
                         const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
                         if (targetImgInAllData) {
