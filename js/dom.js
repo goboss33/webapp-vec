@@ -21,7 +21,8 @@ export let productStatusToggleBtn;
 export let mannequinImageSelectionModal, mannequinImageSwiperWrapper, mannequinImageModalCloseBtn, mannequinImageValidateBtn, mannequinImageCancelBtn;
 export let resetVariantsBtn, noVariantsMessage;
 export let aliexpressLinkElement;
-export let checklistModal, checklistModalCloseBtn, checklistItemCustomImages;
+export let checklistModal, checklistModalCloseBtn, checklistItemCustomImages,
+           checklistItemGalleryCount, checklistItemMannequin, checklistItemVariantsAssigned;
 
 // NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
 export let mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn, mannequinFilterGreen, mannequinFilterOrange, mannequinFilterRed;
@@ -132,4 +133,7 @@ export function initDomElements() {
 	checklistModal = document.getElementById('checklist-modal');
     checklistModalCloseBtn = document.getElementById('checklist-modal-close-btn');
     checklistItemCustomImages = document.getElementById('checklist-item-custom-images');
+	checklistItemGalleryCount = document.getElementById('checklist-item-gallery-count');
+    checklistItemMannequin = document.getElementById('checklist-item-mannequin');
+    checklistItemVariantsAssigned = document.getElementById('checklist-item-variants-assigned');
 }

@@ -33,7 +33,10 @@ import {
     resetVariantsBtn,
     noVariantsMessage,
     aliexpressLinkElement,
-	checklistModal, checklistModalCloseBtn, checklistItemCustomImages
+	checklistModal, checklistModalCloseBtn, checklistItemCustomImages,
+    checklistItemGalleryCount,
+    checklistItemMannequin,
+    checklistItemVariantsAssigned
     
 } from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
@@ -195,21 +198,55 @@ const handleSaveChanges = async () => {
 // --- NOUVELLES FONCTIONS POUR LA CHECKLIST DE VALIDATION ---
 
 let validationCriteria = {
-    customImages: false
-    // d'autres critères viendront ici
+    customImages: false,
+    galleryCount: false, // <-- AJOUTER
+    mannequinSelected: false, // <-- AJOUTER
+    variantsAssigned: false // <-- AJOUTER
 };
+
+// DANS js/app.js
 
 /** Met à jour la checklist dans la modale et l'état global des critères */
 function runAllValidationChecks() {
-    // Critère 1: Nombre d'images dans la zone "Custom"
+    // --- Critère 1: Nombre d'images "Custom" ---
     const customImageCount = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper').length : 0;
     validationCriteria.customImages = (customImageCount === 3);
     
-    // Mettre à jour l'UI de l'item dans la modale
-    if (checklistItemCustomImages) {
-        checklistItemCustomImages.classList.toggle('is-valid', validationCriteria.customImages);
-        checklistItemCustomImages.classList.toggle('is-invalid', !validationCriteria.customImages);
-    }
+    // --- Critère 2: Nombre d'images "Galerie" ---
+    const galleryImageCount = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper').length : 0;
+    validationCriteria.galleryCount = (galleryImageCount >= 3);
+
+    // --- Critère 3: Mannequin sélectionné ---
+    validationCriteria.mannequinSelected = (selectedMannequinId !== null && selectedMannequinId > 0);
+
+    // --- Critère 4: Toutes les variations assignées ---
+    const unassignedTermsCount = variantAttributeManager.getAvailableTermsCount();
+    const mappings = variantAttributeManager.getVariantMappings();
+    const assignedImageIds = mappings.map(m => m.imageId);
+
+    const dropzoneImageIds = [
+        ...(dropzoneMain ? Array.from(dropzoneMain.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : []),
+        ...(dropzoneCustom ? Array.from(dropzoneCustom.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : []),
+        ...(dropzoneGallery ? Array.from(dropzoneGallery.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : [])
+    ];
+    
+    const allAssignedImagesInDropzones = assignedImageIds.every(id => dropzoneImageIds.includes(id));
+    
+    validationCriteria.variantsAssigned = (unassignedTermsCount === 0 && allAssignedImagesInDropzones && mappings.length > 0);
+
+
+    // --- Mise à jour de l'interface utilisateur de la checklist ---
+    const updateChecklistItemUI = (element, isValid) => {
+        if (element) {
+            element.classList.toggle('is-valid', isValid);
+            element.classList.toggle('is-invalid', !isValid);
+        }
+    };
+
+    updateChecklistItemUI(checklistItemCustomImages, validationCriteria.customImages);
+    updateChecklistItemUI(checklistItemGalleryCount, validationCriteria.galleryCount);
+    updateChecklistItemUI(checklistItemMannequin, validationCriteria.mannequinSelected);
+    updateChecklistItemUI(checklistItemVariantsAssigned, validationCriteria.variantsAssigned);
 
     // Mettre à jour le bouton de statut principal
     updateMainStatusButton();

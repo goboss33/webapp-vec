@@ -252,6 +252,15 @@ export function dissociateAllTerms(allImageDataRef) {
     return true;
 }
 
+// AJOUTEZ CETTE NOUVELLE FONCTION (n'importe où dans le fichier)
+/**
+ * Retourne le nombre de termes de variante actuellement disponibles (non assignés).
+ * @returns {number}
+ */
+export function getAvailableTermsCount() {
+    return availableTerms.length;
+}
+
 export function getVariantMappings() {
     return Array.from(currentImageTermMappings, ([imageId, data]) => ({ imageId, termSlug: data.termSlug }));
 }
