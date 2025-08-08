@@ -8,45 +8,88 @@ body {
 }
 
 /* NOUVEAUX STYLES POUR LE HEADER PRINCIPAL */
-.main-header {
-    margin-bottom: 20px; /* Espace avant la section des variantes */
-}
-
-.main-product-title {
-    font-size: 0.9em; /* Taille de police normale mais légèrement plus grande */
-    font-weight: normal; /* Annule la graisse par défaut du h2 */
-    margin: 0 0 10px 0; /* Espacement en dessous du titre */
-    text-align: center; /* Centrer le titre */
-    color: var(--tg-theme-hint-color, #6c757d); /* Couleur pour l'ID */
-	/* AJOUT : Permet un bon alignement vertical de l'icône */
+/* NOUVEAUX STYLES POUR LA BARRE DE TITRE */
+.top-bar-header {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* Permet au titre de passer à la ligne sur mobile */
-}
-/* AJOUT : Nouvelles règles pour l'icône de lien externe */
-.external-link-icon {
-    display: inline-block;
-    text-decoration: none; /* Pas de soulignement */
-    color: var(--tg-theme-link-color, #007bff);
-    font-size: 1.2em; /* Taille de l'icône */
-    margin-left: 8px; /* Espace par rapport au titre */
-    line-height: 1; /* Assure un bon alignement */
-    transition: transform 0.2s;
+    gap: 10px;
+    padding: 8px 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--tg-theme-hint-color, #ccc);
+    border-radius: 8px;
 }
 
-.main-product-title strong {
-    font-weight: 600; /* Un peu de graisse pour le nom */
-    text-transform: uppercase; /* Mettre en majuscules */
-    color: var(--tg-theme-text-color, #000); /* Couleur du texte du nom */
-    background-color: #fffb85; /* Jaune stabilo */
-    padding: 2px 5px; /* Petit espace intérieur pour l'effet surligné */
-    border-radius: 3px;
-    
-    /* Assure que le surlignage s'adapte bien au texte */
+/* Colonne 1 : Bouton Sauvegarder */
+.top-bar-left #saveChangesButton {
+    background-color: var(--tg-theme-button-color, #007bff);
+    color: var(--tg-theme-button-text-color, #fff);
+    border: none;
+    border-radius: 6px;
+    width: 44px;
+    height: 38px;
+    font-size: 1.5em;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* Empêche le bouton de rétrécir */
+}
+.top-bar-left #saveChangesButton:disabled {
+    opacity: 0.7;
+}
+
+
+/* Colonne 2 : Titre du Produit */
+.top-bar-center {
+    flex-grow: 1; /* Prend l'espace disponible */
+    text-align: center;
+    min-width: 0; /* Important pour que le flex-grow fonctionne correctement */
+}
+.top-bar-center .main-product-title {
+    margin: 0;
+    font-size: 1em;
+    font-weight: normal;
+}
+.top-bar-center .main-product-title strong {
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--tg-theme-text-color, #000);
+    background-color: #fffb85;
+    padding: 3px 6px;
+    border-radius: 4px;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
 }
+
+/* Colonne 3 : ID et Lien AliExpress */
+.top-bar-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex-shrink: 0; /* Empêche le bloc de rétrécir */
+}
+.top-bar-right .product-id-display {
+    font-size: 0.8em;
+    color: var(--tg-theme-hint-color);
+}
+.top-bar-right .external-link-icon {
+    font-size: 0.85em;
+    font-weight: bold;
+    text-decoration: none;
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+.top-bar-right .external-link-icon:hover {
+    background-color: #d0d0d0;
+}
+
 
 hr {
     border: none;
@@ -306,19 +349,6 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     word-break: break-all;
 }
 
-/* Bouton Enregistrer */
-#saveChangesButton {
-    display: block;
-    width: 100%;
-    padding: 12px 15px;
-    font-size: 1em;
-    cursor: pointer;
-    background-color: var(--tg-theme-button-color);
-    color: var(--tg-theme-button-text-color);
-    border: none;
-    border-radius: 5px;
-    margin-top: 20px;
-}
 #saveChangesButton:disabled {
     opacity: 0.7;
 }
