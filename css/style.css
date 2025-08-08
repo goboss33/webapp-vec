@@ -280,6 +280,10 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     display: block;
     margin: 0 auto 5px auto;
     cursor: grab;
+	/* --- AJOUTEZ CES DEUX LIGNES --- */
+    -webkit-touch-callout: none; /* Empêche le menu contextuel sur iOS Safari */
+    user-select: none;           /* Empêche la sélection de l'image sur tous les navigateurs */
+    /* --- FIN DE L'AJOUT --- */
 }
 #image-carousel .sortable-drag img {
     cursor: grabbing; /* Curseur "main fermée" */
