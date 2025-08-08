@@ -1613,3 +1613,68 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     border-color: #6c757d;
 }
 
+/* DANS css/style.css (à la fin) */
+
+/* Styles pour les indicateurs multiples dans la modale */
+#variant-list-container {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    vertical-align: middle;
+}
+
+.modal-term-indicator-inline {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 0.9em;
+}
+
+.modal-term-indicator-inline.is-color {
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.modal-term-indicator-inline .modal-dissociate-term-btn {
+    margin-left: 5px;
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 1.2em;
+    line-height: 1;
+    padding: 0 2px;
+}
+.modal-term-indicator-inline .modal-dissociate-term-btn:hover {
+    color: red;
+}
+
+/* Styles pour les indicateurs multiples sur les miniatures */
+.image-color-indicator-placeholder.multiple-indicators {
+    display: flex;
+    flex-direction: row; /* Aligner les pastilles horizontalement */
+    gap: 2px;
+    padding: 2px;
+    border-radius: 4px;
+    background-color: rgba(0,0,0,0.5);
+    width: auto; /* Largeur automatique */
+    height: auto; /* Hauteur automatique */
+    min-width: 0;
+    min-height: 0;
+}
+
+.image-color-indicator-placeholder .term-indicator-item {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid white;
+}
+
+.image-color-indicator-placeholder .term-indicator-item.is-button-indicator {
+    /* Style pour les variantes texte si nécessaire (non implémenté ici) */
+    display: none; 
+}

@@ -15,15 +15,13 @@ console.log('variantAttributeManager.js module loaded');
 
 // --- État du module ---
 let productVariantAttribute = null;
-let currentImageTermMappings = new Map();
+// MODIFICATION CLÉ : on passe d'une association simple à un tableau de variantes par image.
+let currentImageTermMappings = new Map(); // La clé est imageId, la valeur est maintenant un ARRAY de mappings { termSlug, termName, ... }
 let availableTerms = [];
 let sortableAvailableTerms = null;
 let temporaryImageDropZoneInstances = [];
 
-// --- Fonctions de création d'éléments (pour le retour au carrousel) ---
-// Note: Ces fonctions sont simplifiées et ne gèrent pas les callbacks de clic.
-// Idéalement, sortableManager devrait exposer ces fonctions de création.
-// Pour l'instant, c'est une solution fonctionnelle.
+// --- Fonctions de création d'éléments ---
 function createCarouselItem(image) {
     const container = document.createElement('div');
     container.className = 'carousel-image-container';
@@ -32,10 +30,8 @@ function createCarouselItem(image) {
     const img = document.createElement('img');
     img.src = image.url;
     container.appendChild(img);
-    // On n'ajoute pas les boutons ici pour simplifier. L'essentiel est de remettre l'image.
     return container;
 }
-
 
 /**
  * Initialise le système de gestion des variantes.
@@ -43,8 +39,6 @@ function createCarouselItem(image) {
  * @param {Array} allImageData - Le tableau global 'allImageData'.
  * @param {Function} onRefreshIndicatorCallback - Callback pour rafraîchir les indicateurs sur les images
  */
-// REMPLACEZ VOTRE FONCTION initVariantHandler DANS variantAttributeManager.js PAR CELLE-CI
-
 export function initVariantHandler(variantAttribute, allImageData, onRefreshIndicatorCallback) {
     console.log('[variantAttributeManager] initVariantHandler START');
     productVariantAttribute = variantAttribute;
@@ -65,40 +59,48 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
     currentImageTermMappings.clear();
     availableTerms = [];
 
+    // MODIFICATION : Logique pour peupler la map avec des tableaux de variantes
     productVariantAttribute.terms.forEach(term => {
         if (term.current_image_id) {
             const imageIdStr = term.current_image_id.toString();
             const imageToUpdate = allImageData.find(img => img.id.toString() === imageIdStr);
             
             if (imageToUpdate) {
-                // --- DÉBUT DE LA CORRECTION ---
-                // On utilise `assigned_term_slug` pour être cohérent avec la modale
-                imageToUpdate.assigned_term_slug = term.value;
-                // --- FIN DE LA CORRECTION ---
+                // On s'assure que les champs pour l'assignation multiple existent sur l'objet image
+                if (!Array.isArray(imageToUpdate.assigned_terms)) {
+                    imageToUpdate.assigned_terms = [];
+                }
+                const termInfo = {
+                    slug: term.value,
+                    name: term.name,
+                    hex: term.hex
+                };
+                imageToUpdate.assigned_terms.push(termInfo);
                 
-                imageToUpdate.assigned_term_name = term.name;
-                imageToUpdate.assigned_term_hex = term.hex;
-                
-                const mapping = {
+                // On peuple notre map interne
+                if (!currentImageTermMappings.has(imageIdStr)) {
+                    currentImageTermMappings.set(imageIdStr, []);
+                }
+                currentImageTermMappings.get(imageIdStr).push({
                     termSlug: term.value,
                     termName: term.name,
                     termId: term.term_id,
                     hex: term.hex,
-                };
-                currentImageTermMappings.set(imageIdStr, mapping);
+                });
             }
         }
     });
 
-    const assignedTermSlugs = new Set(Array.from(currentImageTermMappings.values()).map(m => m.termSlug));
+    const assignedTermSlugs = new Set(
+        Array.from(currentImageTermMappings.values()).flat().map(m => m.termSlug)
+    );
     availableTerms = productVariantAttribute.terms.filter(term => !assignedTermSlugs.has(term.value));
 
     renderAvailableTerms();
     configureSortableForTerms(allImageData, onRefreshIndicatorCallback);
     
     allImageData.forEach(image => {
-        // La clé utilisée ici par la modale est maintenant correcte
-        if(image.assigned_term_slug) {
+        if (image.assigned_terms && image.assigned_terms.length > 0) {
             onRefreshIndicatorCallback(image.id);
         }
     });
@@ -106,25 +108,16 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
     console.log('[variantAttributeManager] initVariantHandler END');
 }
 
-// DANS js/variantAttributeManager.js
-
 function renderAvailableTerms() {
     if (!availableTermsContainer) return;
 
-    // --- MODIFICATION : Ne pas effacer tout le conteneur ---
-    // AVANT:
-    // availableTermsContainer.innerHTML = '';
-
-    // APRÈS:
-    // Sélectionne et supprime uniquement les anciens termes et messages
     const existingTerms = availableTermsContainer.querySelectorAll('.term-draggable, .no-swatches-message');
     existingTerms.forEach(term => term.remove());
-    // --- FIN DE LA MODIFICATION ---
 
     if (availableTerms.length === 0) {
         const message = document.createElement('p');
         message.className = 'no-swatches-message';
-        message.textContent = '✅ Variantes assignées';
+        message.textContent = '✅ Toutes les variantes sont assignées';
         availableTermsContainer.appendChild(message);
         return;
     }
@@ -132,9 +125,7 @@ function renderAvailableTerms() {
     availableTerms.forEach(term => {
         const termElement = document.createElement('div');
         termElement.className = 'term-draggable';
-		
 		termElement.draggable = true;
-		
         termElement.title = term.name;
         termElement.dataset.termSlug = term.value;
         termElement.dataset.termName = term.name;
@@ -151,28 +142,36 @@ function renderAvailableTerms() {
     });
 }
 
-// REMPLACEZ la fonction renderTermIndicator existante par celle-ci
-
-export function renderTermIndicator(imageId, termData) {
+// MODIFICATION : Affiche plusieurs indicateurs de variantes
+export function renderTermIndicator(imageId, termsDataArray) {
     const placeholders = document.querySelectorAll(`.image-color-indicator-placeholder[data-indicator-for-image-id="${imageId}"]`);
-    if (!placeholders.length || !termData) return;
+    if (!placeholders.length) return;
 
     placeholders.forEach(placeholder => {
-        // Reset
-        placeholder.innerHTML = '';
-        placeholder.style.backgroundColor = 'transparent';
+        placeholder.innerHTML = ''; // Nettoyer les anciens indicateurs
         placeholder.className = 'image-color-indicator-placeholder'; // Reset classes
-
-        placeholder.title = `Variante: ${termData.termName}`;
-        placeholder.dataset.assignedTermSlug = termData.termSlug;
+        placeholder.classList.add('multiple-indicators'); // Classe pour gérer le layout de plusieurs pastilles
         
-        if (productVariantAttribute.display_type === 'color' && termData.hex) {
-            placeholder.classList.add('is-color-indicator');
-            placeholder.style.backgroundColor = termData.hex;
-        } else {
-            placeholder.classList.add('is-button-indicator');
-            placeholder.textContent = termData.termName;
+        if (!termsDataArray || termsDataArray.length === 0) {
+            removeTermIndicator(imageId);
+            return;
         }
+        
+        termsDataArray.forEach(termData => {
+            const indicator = document.createElement('span');
+            indicator.className = 'term-indicator-item';
+            indicator.title = `Variante: ${termData.termName}`;
+            indicator.dataset.assignedTermSlug = termData.termSlug;
+
+            if (productVariantAttribute.display_type === 'color' && termData.hex) {
+                indicator.classList.add('is-color-indicator');
+                indicator.style.backgroundColor = termData.hex;
+            } else {
+                indicator.classList.add('is-button-indicator');
+                indicator.textContent = termData.termName;
+            }
+            placeholder.appendChild(indicator);
+        });
         placeholder.classList.add('active-indicator');
     });
 }
@@ -183,128 +182,114 @@ export function removeTermIndicator(imageId) {
         placeholder.innerHTML = '';
         placeholder.style.cssText = '';
         placeholder.title = '';
-        delete placeholder.dataset.assignedTermSlug;
+        placeholder.className = 'image-color-indicator-placeholder'; // Reset complet
         placeholder.classList.remove('active-indicator');
     });
 }
 
+// MODIFICATION : Dissocie une seule variante d'une image
 export function dissociateTermFromImage(imageId, termSlug, allImageDataRef) {
     const imageIdStr = imageId.toString();
     if (!currentImageTermMappings.has(imageIdStr)) return false;
-    const currentMapping = currentImageTermMappings.get(imageIdStr);
-    if (currentMapping.termSlug !== termSlug) return false;
 
-    currentImageTermMappings.delete(imageIdStr);
+    const termsForImage = currentImageTermMappings.get(imageIdStr);
+    const termIndex = termsForImage.findIndex(t => t.termSlug === termSlug);
+    
+    if (termIndex === -1) return false;
 
-    const imageInData = allImageDataRef.find(img => img.id.toString() === imageIdStr);
-    if (imageInData) {
-        delete imageInData.assigned_variant_slug;
-        delete imageInData.assigned_term_name;
-        delete imageInData.assigned_term_hex;
-        delete imageInData.assigned_term_slug;
+    // Retirer la variante de la liste pour cette image
+    const [removedTerm] = termsForImage.splice(termIndex, 1);
+    
+    // Si la liste est vide, on retire l'entrée de la map
+    if (termsForImage.length === 0) {
+        currentImageTermMappings.delete(imageIdStr);
     }
 
-    removeTermIndicator(imageIdStr);
+    // Mettre à jour allImageData
+    const imageInData = allImageDataRef.find(img => img.id.toString() === imageIdStr);
+    if (imageInData && Array.isArray(imageInData.assigned_terms)) {
+        imageInData.assigned_terms = imageInData.assigned_terms.filter(t => t.slug !== termSlug);
+        if (imageInData.assigned_terms.length === 0) {
+            delete imageInData.assigned_terms;
+        }
+    }
 
+    // Rafraîchir l'indicateur
+    refreshIndicatorForImage(imageIdStr);
+
+    // Remettre la variante dans la liste des disponibles
     const termObject = productVariantAttribute.terms.find(term => term.value === termSlug);
     if (termObject && !availableTerms.some(t => t.value === termSlug)) {
         availableTerms.push(termObject);
     }
 
     renderAvailableTerms();
-    updateStatus(`Variante '${currentMapping.termName}' dissociée.`, 'info');
+    updateStatus(`Variante '${removedTerm.termName}' dissociée.`, 'info');
     return true;
 }
 
-/**
- * Dissocie toutes les variantes de toutes les images.
- * @param {Array} allImageDataRef - Référence au tableau global d'images.
- */
 export function dissociateAllTerms(allImageDataRef) {
     if (currentImageTermMappings.size === 0) {
         updateStatus("Aucune variation n'est actuellement assignée.", "info");
         return false;
     }
 
-    // On remet tous les termes assignés dans la liste des termes disponibles
     productVariantAttribute.terms.forEach(term => {
         if (!availableTerms.some(t => t.value === term.value)) {
             availableTerms.push(term);
         }
     });
 
-    // On vide la carte des assignations
     currentImageTermMappings.clear();
 
-    // On nettoie les données dans allImageData et on retire les indicateurs
     allImageDataRef.forEach(image => {
-        if (image.assigned_term_slug) {
-            delete image.assigned_term_slug;
-            delete image.assigned_term_name;
-            delete image.assigned_term_hex;
+        if (image.assigned_terms) {
+            delete image.assigned_terms;
             removeTermIndicator(image.id);
         }
     });
 
-    // On rafraîchit l'affichage des termes disponibles
     renderAvailableTerms();
     updateStatus("Toutes les associations de variantes ont été réinitialisées.", "success");
     return true;
 }
 
-// AJOUTEZ CETTE NOUVELLE FONCTION (n'importe où dans le fichier)
-/**
- * Retourne le nombre de termes de variante actuellement disponibles (non assignés).
- * @returns {number}
- */
 export function getAvailableTermsCount() {
     return availableTerms.length;
 }
 
-/**
- * Vérifie si le produit a des attributs de variation à gérer.
- * @returns {boolean}
- */
 export function hasVariations() {
     return productVariantAttribute !== null && productVariantAttribute.terms && productVariantAttribute.terms.length > 0;
 }
 
+// MODIFICATION : Retourne un format adapté pour l'API (tableau plat)
 export function getVariantMappings() {
-    return Array.from(currentImageTermMappings, ([imageId, data]) => ({ imageId, termSlug: data.termSlug }));
+    const mappings = [];
+    for (const [imageId, terms] of currentImageTermMappings.entries()) {
+        terms.forEach(term => {
+            mappings.push({ imageId: imageId, termSlug: term.termSlug });
+        });
+    }
+    return mappings;
 }
 
 export function getVariantAttributeData() {
     return productVariantAttribute;
 }
 
+// MODIFICATION : Rafraîchit l'indicateur pour afficher une ou plusieurs variantes
 export function refreshIndicatorForImage(imageId) {
     if (!imageId) return;
     const imageIdStr = imageId.toString();
-    if (currentImageTermMappings.has(imageIdStr)) {
-        const termData = currentImageTermMappings.get(imageIdStr);
-        renderTermIndicator(imageIdStr, termData);
+    if (currentImageTermMappings.has(imageIdStr) && currentImageTermMappings.get(imageIdStr).length > 0) {
+        const termsData = currentImageTermMappings.get(imageIdStr);
+        renderTermIndicator(imageIdStr, termsData);
     } else {
         removeTermIndicator(imageIdStr);
     }
 }
 
-
-
-// --- DÉBUT DU BLOC DE DEBUG ---
-function logToPanel(message) {
-    const panel = document.getElementById('debug-log-panel');
-    if (panel) {
-        panel.style.display = 'block';
-        const logEntry = document.createElement('div');
-        const time = new Date().toLocaleTimeString();
-        logEntry.textContent = `[${time}] ${message}`;
-        panel.prepend(logEntry);
-    }
-}
-// --- FIN DU BLOC DE DEBUG ---
-
-// REMPLACEZ la fonction configureSortableForTerms par cette version finale et optimisée
-
+// MODIFICATION : La logique d'assignation `onAdd` est mise à jour en profondeur
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
     if (!availableTermsContainer) return;
     if (sortableAvailableTerms) sortableAvailableTerms.destroy();
@@ -313,14 +298,7 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         group: { name: 'terms-shared', pull: true, put: true },
         animation: 150,
         sort: false,
-		// --- AJOUT DE CETTE LIGNE ---
-        filter: '#reset-variants-btn', // Indique à SortableJS d'ignorer les clics sur cet élément
-        // --- FIN DE L'AJOUT ---
-        // --- CONFIGURATION FINALE (COMME L'ANCIENNE VERSION) ---
-        // On retire TOUTES les options de fallback (forceFallback, fallbackOnBody, etc.)
-        // pour utiliser l'API native du navigateur, qui est plus performante sur mobile.
-        // --- FIN DE LA CONFIGURATION ---
-        
+        filter: '#reset-variants-btn',
         onStart: function(evt) {
             document.body.classList.add('dragging-color-swatch');
             temporaryImageDropZoneInstances.forEach(instance => instance.destroy());
@@ -328,11 +306,10 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
             const imageElements = document.querySelectorAll('.carousel-image-container, .thumbnail-wrapper');
             
             imageElements.forEach(imgElContainer => {
-                if (!imgElContainer.dataset.imageId) return;
                 const instance = new Sortable(imgElContainer, {
                     group: { name: 'terms-shared', put: true },
                     animation: 0, 
-                    ghostClass: 'color-drop-target-ghost', // On utilise la classe pour cacher le fantôme
+                    ghostClass: 'color-drop-target-ghost',
                     onAdd: function(addEvt) {
                         const targetImageElement = this.el;
                         const droppedTermElement = addEvt.item;
@@ -345,39 +322,47 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                         const newTermData = {
                             termSlug: droppedTermElement.dataset.termSlug,
                             termName: droppedTermElement.dataset.termName,
+                            termId: droppedTermElement.dataset.termId,
                             hex: droppedTermElement.dataset.hex || null
                         };
 
-                        const currentMapping = currentImageTermMappings.get(targetImageId);
-                        if (currentMapping && currentMapping.termSlug === newTermData.termSlug) return;
-                        
-                        if (currentMapping) {
-                            const oldTerm = productVariantAttribute.terms.find(t => t.value === currentMapping.termSlug);
-                            if (oldTerm && !availableTerms.some(t => t.value === oldTerm.value)) {
-                                availableTerms.push(oldTerm);
-                            }
-                        }
-                        
-                        currentImageTermMappings.forEach((map, imgId) => {
-                            if (map.termSlug === newTermData.termSlug && imgId !== targetImageId) {
-                                currentImageTermMappings.delete(imgId);
-                                onRefreshIndicatorCallback(imgId);
-                                const oldImgInAllData = allImageDataRef.find(i => i.id.toString() === imgId);
-                                if (oldImgInAllData) {
-                                    delete oldImgInAllData.assigned_term_slug;
-                                    delete oldImgInAllData.assigned_term_name;
-                                    delete oldImgInAllData.assigned_term_hex;
-                                }
+                        // 1. Un variant ne peut être assigné qu'à UNE SEULE image.
+                        // On doit d'abord le retirer de son ancienne image s'il y en a une.
+                        currentImageTermMappings.forEach((terms, imgId) => {
+                            const termIndex = terms.findIndex(t => t.termSlug === newTermData.termSlug);
+                            if (termIndex > -1 && imgId !== targetImageId) {
+                                terms.splice(termIndex, 1); // Retirer
+                                if (terms.length === 0) currentImageTermMappings.delete(imgId);
+                                onRefreshIndicatorCallback(imgId); // Rafraîchir l'ancienne image
                             }
                         });
 
-                        currentImageTermMappings.set(targetImageId, newTermData);
+                        // 2. On ajoute la variante à la nouvelle image.
+                        if (!currentImageTermMappings.has(targetImageId)) {
+                            currentImageTermMappings.set(targetImageId, []);
+                        }
+                        const termsForTargetImage = currentImageTermMappings.get(targetImageId);
+                        
+                        // Empêcher d'ajouter deux fois la même variante à la même image
+                        if (termsForTargetImage.some(t => t.termSlug === newTermData.termSlug)) {
+                             updateStatus(`Cette variante est déjà sur cette image.`, 'warn');
+                             return; // On arrête ici
+                        }
+
+                        termsForTargetImage.push(newTermData);
                         
                         const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
                         if (targetImgInAllData) {
-                            targetImgInAllData.assigned_term_slug = newTermData.termSlug;
-                            targetImgInAllData.assigned_term_name = newTermData.termName;
-                            targetImgInAllData.assigned_term_hex = newTermData.hex;
+                            if (!Array.isArray(targetImgInAllData.assigned_terms)) {
+                                targetImgInAllData.assigned_terms = [];
+                            }
+                            // Assurer de ne pas avoir de doublon dans les données de l'image aussi
+                            targetImgInAllData.assigned_terms = targetImgInAllData.assigned_terms.filter(t => t.slug !== newTermData.termSlug);
+                            targetImgInAllData.assigned_terms.push({
+                                slug: newTermData.termSlug,
+                                name: newTermData.termName,
+                                hex: newTermData.hex
+                            });
                         }
                         
                         onRefreshIndicatorCallback(targetImageId);
@@ -395,12 +380,19 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
             temporaryImageDropZoneInstances = [];
 
             const termSlug = evt.item.dataset.termSlug;
-            let wasAssigned = Array.from(currentImageTermMappings.values()).some(m => m.termSlug === termSlug);
+            // Vérifier si le terme a bien été assigné à une image
+            let wasAssigned = false;
+            for (const terms of currentImageTermMappings.values()) {
+                if (terms.some(t => t.termSlug === termSlug)) {
+                    wasAssigned = true;
+                    break;
+                }
+            }
             
             if (wasAssigned) {
                 if (evt.item.parentElement) evt.item.remove();
             } else {
-                if (!availableTerms.some(term => term.value === termSlug)) {
+                 if (!availableTerms.some(term => term.value === termSlug)) {
                     const termObject = productVariantAttribute.terms.find(t => t.value === termSlug);
                     if (termObject) availableTerms.push(termObject);
                 }

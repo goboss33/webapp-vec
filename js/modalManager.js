@@ -9,8 +9,9 @@ import {
     dropzoneMain,
     dropzoneGallery,
     dropzoneCustom,
-    modalImageAssignedTermIndicatorElement,
-    modalImageAssignedTermNameElement,
+    // MODIFICATION : Ces éléments ne sont plus utilisés, on les retire pour la clarté.
+    // modalImageAssignedTermIndicatorElement,
+    // modalImageAssignedTermNameElement,
     modalDissociateTermBtn
 } from './dom.js';
 import { resetModalToActionView } from './uiUtils.js';
@@ -20,8 +21,9 @@ console.log('modalManager.js module loaded');
 let moduleModalSwiperInstance = null;
 let moduleModalImageList = [];
 let moduleCurrentModalIndex = 0;
-let moduleVariantAttributeData = null; // Variable pour stocker les données de la variante
+let moduleVariantAttributeData = null; 
 
+// MODIFICATION : La fonction est entièrement revue pour gérer un tableau de variantes.
 export function updateModalInfo(index, currentAllImageData) {
     if (index < 0 || index >= moduleModalImageList.length) return;
     
@@ -44,31 +46,41 @@ export function updateModalInfo(index, currentAllImageData) {
 
     const imageFullData = currentAllImageData.find(img => img.id === imageData.id);
     
-    // On utilise maintenant `moduleVariantAttributeData` stocké localement
-    if (imageFullData && imageFullData.assigned_term_slug && moduleVariantAttributeData) {
-        if (modalImageAssignedTermIndicatorElement) {
-            modalImageAssignedTermIndicatorElement.textContent = '';
-            modalImageAssignedTermIndicatorElement.className = 'modal-term-indicator-inline';
-            if (moduleVariantAttributeData.display_type === 'color' && imageFullData.assigned_term_hex) {
-                modalImageAssignedTermIndicatorElement.classList.add('is-color');
-                modalImageAssignedTermIndicatorElement.style.backgroundColor = imageFullData.assigned_term_hex;
-            } else {
-                modalImageAssignedTermIndicatorElement.classList.add('is-button');
-                modalImageAssignedTermIndicatorElement.textContent = imageFullData.assigned_term_name;
-                modalImageAssignedTermIndicatorElement.style.backgroundColor = '';
-            }
+    // Logique pour afficher les variantes multiples
+    const variantListContainer = document.getElementById('variant-list-container');
+    if (variantListContainer) {
+        variantListContainer.innerHTML = ''; // Vider la liste
+        if (imageFullData && Array.isArray(imageFullData.assigned_terms) && imageFullData.assigned_terms.length > 0) {
+            imageFullData.assigned_terms.forEach(term => {
+                const variantTag = document.createElement('span');
+                variantTag.className = 'modal-term-indicator-inline';
+                
+                if (moduleVariantAttributeData.display_type === 'color' && term.hex) {
+                    variantTag.classList.add('is-color');
+                    variantTag.style.backgroundColor = term.hex;
+                    variantTag.title = term.name;
+                } else {
+                    variantTag.classList.add('is-button');
+                    variantTag.textContent = term.name;
+                }
+
+                // Bouton de dissociation pour chaque variante
+                const dissociateBtn = document.createElement('button');
+                dissociateBtn.innerHTML = '&times;';
+                dissociateBtn.className = 'modal-dissociate-term-btn';
+                dissociateBtn.dataset.imageId = imageData.id.toString();
+                dissociateBtn.dataset.termSlug = term.slug;
+                // On attache l'événement directement ici, car le bouton est dynamique.
+                // L'événement sera intercepté dans app.js via la délégation.
+                
+                variantTag.appendChild(dissociateBtn);
+                variantListContainer.appendChild(variantTag);
+            });
+        } else {
+            variantListContainer.textContent = 'Aucune';
         }
-        if (modalImageAssignedTermNameElement) modalImageAssignedTermNameElement.textContent = imageFullData.assigned_term_name;
-        if (modalDissociateTermBtn) {
-            modalDissociateTermBtn.style.display = 'inline-block';
-            modalDissociateTermBtn.dataset.imageId = imageData.id.toString();
-            modalDissociateTermBtn.dataset.termSlug = imageFullData.assigned_term_slug;
-        }
-    } else {
-        if (modalImageAssignedTermIndicatorElement) modalImageAssignedTermIndicatorElement.textContent = '';
-        if (modalImageAssignedTermNameElement) modalImageAssignedTermNameElement.textContent = 'Aucune';
-        if (modalDissociateTermBtn) modalDissociateTermBtn.style.display = 'none';
     }
+
 
     if (modalToggleSizeGuideBtn) {
         if (imageFullData && imageFullData.uses?.includes('size_guide')) {
@@ -97,9 +109,8 @@ export function updateModalInfo(index, currentAllImageData) {
     }
 }
 
-// On ajoute `variantAttributeData` comme paramètre
 export function openModal(imageId, currentAllImageData, variantAttributeData) {
-    moduleVariantAttributeData = variantAttributeData; // On stocke les données
+    moduleVariantAttributeData = variantAttributeData; 
     
     const orderedImages = [];
     const encounteredIds = new Set();

@@ -1379,6 +1379,30 @@ document.addEventListener('DOMContentLoaded', () => {
             runAllValidationChecks(); // Met à jour l'UI
         });
     }
+	
+	if (modalImageInfo) { // Utiliser un conteneur parent qui existe toujours
+        modalImageInfo.addEventListener('click', (event) => {
+            if (event.target.matches('.modal-dissociate-term-btn')) {
+                console.log('app.js: Dissociate Term button clicked via delegation.');
+                const button = event.target;
+                const imageId = button.dataset.imageId;
+                const termSlug = button.dataset.termSlug;
+    
+                if (!imageId || !termSlug) {
+                    console.error("app.js: Missing imageId or termSlug on dissociate button.");
+                    return;
+                }
+    
+                // Appel à la fonction du manager qui a été modifiée
+                const success = variantAttributeManager.dissociateTermFromImage(imageId, termSlug, allImageData);
+    
+                if (success) {
+                    // Rafraîchir la modale pour refléter la dissociation
+                    refreshCurrentModalViewDataFromManager(allImageData);
+                }
+            }
+        });
+    }
 
     // Récupérer les données initiales
     fetchProductData();
