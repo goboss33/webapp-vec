@@ -223,9 +223,25 @@ function runAllValidationChecks() {
     validationCriteria.mannequinSelected = (selectedMannequinId !== null && selectedMannequinId > 0);
 
     // --- Critère 4: Toutes les variations assignées ---
-    const unassignedTermsCount = variantAttributeManager.getAvailableTermsCount();
-    const mappings = variantAttributeManager.getVariantMappings();
-    const assignedImageIds = mappings.map(m => m.imageId);
+    if (!variantAttributeManager.hasVariations()) {
+        // S'il n'y a aucune variation à gérer, le critère est Non Applicable.
+        validationCriteria.variantsAssigned = 'na';
+    } else {
+        // Sinon, on exécute la logique de vérification normale.
+        const unassignedTermsCount = variantAttributeManager.getAvailableTermsCount();
+        const mappings = variantAttributeManager.getVariantMappings();
+        const assignedImageIds = mappings.map(m => m.imageId);
+
+        const dropzoneImageIds = [
+            ...(dropzoneMain ? Array.from(dropzoneMain.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : []),
+            ...(dropzoneCustom ? Array.from(dropzoneCustom.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : []),
+            ...(dropzoneGallery ? Array.from(dropzoneGallery.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : [])
+        ];
+        
+        const allAssignedImagesInDropzones = assignedImageIds.every(id => dropzoneImageIds.includes(id));
+        
+        validationCriteria.variantsAssigned = (unassignedTermsCount === 0 && allAssignedImagesInDropzones && mappings.length > 0);
+    }
 	
 	// --- Critère 5: guide des taille choisi ---
 	// On ne met à jour ce critère que s'il n'est pas manuellement mis en N/A

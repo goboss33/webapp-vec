@@ -261,6 +261,14 @@ export function getAvailableTermsCount() {
     return availableTerms.length;
 }
 
+/**
+ * Vérifie si le produit a des attributs de variation à gérer.
+ * @returns {boolean}
+ */
+export function hasVariations() {
+    return productVariantAttribute !== null && productVariantAttribute.terms && productVariantAttribute.terms.length > 0;
+}
+
 export function getVariantMappings() {
     return Array.from(currentImageTermMappings, ([imageId, data]) => ({ imageId, termSlug: data.termSlug }));
 }
