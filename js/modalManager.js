@@ -20,7 +20,7 @@ console.log('modalManager.js module loaded');
 let moduleModalSwiperInstance = null;
 let moduleModalImageList = [];
 let moduleCurrentModalIndex = 0;
-let moduleVariantAttributeData = null; // Variable pour stocker les données de la variante
+let moduleVariantAttributeData = null; 
 
 export function updateModalInfo(index, currentAllImageData) {
     if (index < 0 || index >= moduleModalImageList.length) return;
@@ -44,30 +44,49 @@ export function updateModalInfo(index, currentAllImageData) {
 
     const imageFullData = currentAllImageData.find(img => img.id === imageData.id);
     
-    // On utilise maintenant `moduleVariantAttributeData` stocké localement
-    if (imageFullData && imageFullData.assigned_term_slug && moduleVariantAttributeData) {
-        if (modalImageAssignedTermIndicatorElement) {
-            modalImageAssignedTermIndicatorElement.textContent = '';
-            modalImageAssignedTermIndicatorElement.className = 'modal-term-indicator-inline';
-            if (moduleVariantAttributeData.display_type === 'color' && imageFullData.assigned_term_hex) {
-                modalImageAssignedTermIndicatorElement.classList.add('is-color');
-                modalImageAssignedTermIndicatorElement.style.backgroundColor = imageFullData.assigned_term_hex;
-            } else {
-                modalImageAssignedTermIndicatorElement.classList.add('is-button');
-                modalImageAssignedTermIndicatorElement.textContent = imageFullData.assigned_term_name;
-                modalImageAssignedTermIndicatorElement.style.backgroundColor = '';
-            }
+    // Affichage des variantes multiples
+    if (modalImageAssignedTermNameElement.parentElement) {
+        // Supprimer les anciens indicateurs
+        modalImageAssignedTermNameElement.parentElement.querySelectorAll('.variant-indicator-container').forEach(el => el.remove());
+
+        if (imageFullData && imageFullData.assigned_terms && imageFullData.assigned_terms.length > 0) {
+            imageFullData.assigned_terms.forEach(term => {
+                const indicatorContainer = document.createElement('span');
+                indicatorContainer.className = 'variant-indicator-container';
+
+                const indicator = document.createElement('span');
+                indicator.className = 'modal-term-indicator-inline';
+                if (moduleVariantAttributeData.display_type === 'color' && term.hex) {
+                    indicator.classList.add('is-color');
+                    indicator.style.backgroundColor = term.hex;
+                } else {
+                    indicator.classList.add('is-button');
+                    indicator.textContent = term.termName;
+                }
+                indicatorContainer.appendChild(indicator);
+
+                const dissociateBtn = document.createElement('button');
+                dissociateBtn.className = 'modal-action-btn-inline';
+                dissociateBtn.title = `Dissocier ${term.termName}`;
+                dissociateBtn.textContent = '×';
+                dissociateBtn.dataset.imageId = imageData.id.toString();
+                dissociateBtn.dataset.termSlug = term.termSlug;
+                dissociateBtn.addEventListener('click', (event) => {
+                    const imageId = event.currentTarget.dataset.imageId;
+                    const termSlug = event.currentTarget.dataset.termSlug;
+                    variantAttributeManager.dissociateTermFromImage(imageId, termSlug, currentAllImageData);
+                    refreshCurrentModalViewData(currentAllImageData);
+                });
+                indicatorContainer.appendChild(dissociateBtn);
+
+                modalImageAssignedTermNameElement.parentElement.appendChild(indicatorContainer);
+            });
+            modalImageAssignedTermNameElement.style.display = 'none';
+
+        } else {
+             modalImageAssignedTermNameElement.textContent = 'Aucune';
+             modalImageAssignedTermNameElement.style.display = 'inline';
         }
-        if (modalImageAssignedTermNameElement) modalImageAssignedTermNameElement.textContent = imageFullData.assigned_term_name;
-        if (modalDissociateTermBtn) {
-            modalDissociateTermBtn.style.display = 'inline-block';
-            modalDissociateTermBtn.dataset.imageId = imageData.id.toString();
-            modalDissociateTermBtn.dataset.termSlug = imageFullData.assigned_term_slug;
-        }
-    } else {
-        if (modalImageAssignedTermIndicatorElement) modalImageAssignedTermIndicatorElement.textContent = '';
-        if (modalImageAssignedTermNameElement) modalImageAssignedTermNameElement.textContent = 'Aucune';
-        if (modalDissociateTermBtn) modalDissociateTermBtn.style.display = 'none';
     }
 
     if (modalToggleSizeGuideBtn) {
@@ -96,6 +115,7 @@ export function updateModalInfo(index, currentAllImageData) {
         }
     }
 }
+
 
 // On ajoute `variantAttributeData` comme paramètre
 export function openModal(imageId, currentAllImageData, variantAttributeData) {

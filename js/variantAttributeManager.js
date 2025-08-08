@@ -15,7 +15,8 @@ console.log('variantAttributeManager.js module loaded');
 
 // --- État du module ---
 let productVariantAttribute = null;
-let currentImageTermMappings = new Map();
+// MODIFICATION: Chaque image peut avoir un tableau de variantes.
+let currentImageTermMappings = new Map(); // Map<imageId, Array<termData>>
 let availableTerms = [];
 let sortableAvailableTerms = null;
 let temporaryImageDropZoneInstances = [];
@@ -43,8 +44,6 @@ function createCarouselItem(image) {
  * @param {Array} allImageData - Le tableau global 'allImageData'.
  * @param {Function} onRefreshIndicatorCallback - Callback pour rafraîchir les indicateurs sur les images
  */
-// REMPLACEZ VOTRE FONCTION initVariantHandler DANS variantAttributeManager.js PAR CELLE-CI
-
 export function initVariantHandler(variantAttribute, allImageData, onRefreshIndicatorCallback) {
     console.log('[variantAttributeManager] initVariantHandler START');
     productVariantAttribute = variantAttribute;
@@ -63,68 +62,64 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
     }
 
     currentImageTermMappings.clear();
-    availableTerms = [];
+    
+    // On peuple la liste des termes disponibles.
+    availableTerms = [...productVariantAttribute.terms];
 
+    // On initialise la map des assignations.
+    allImageData.forEach(img => {
+        currentImageTermMappings.set(img.id.toString(), []);
+    });
+    
+    // On traite les assignations existantes
     productVariantAttribute.terms.forEach(term => {
         if (term.current_image_id) {
             const imageIdStr = term.current_image_id.toString();
             const imageToUpdate = allImageData.find(img => img.id.toString() === imageIdStr);
             
             if (imageToUpdate) {
-                // --- DÉBUT DE LA CORRECTION ---
-                // On utilise `assigned_term_slug` pour être cohérent avec la modale
-                imageToUpdate.assigned_term_slug = term.value;
-                // --- FIN DE LA CORRECTION ---
-                
-                imageToUpdate.assigned_term_name = term.name;
-                imageToUpdate.assigned_term_hex = term.hex;
-                
-                const mapping = {
+                const termData = {
                     termSlug: term.value,
                     termName: term.name,
                     termId: term.term_id,
                     hex: term.hex,
                 };
-                currentImageTermMappings.set(imageIdStr, mapping);
+
+                const termsForImage = currentImageTermMappings.get(imageIdStr);
+                if (termsForImage) {
+                    termsForImage.push(termData);
+                }
+                
+                if (!imageToUpdate.assigned_terms) {
+                    imageToUpdate.assigned_terms = [];
+                }
+                imageToUpdate.assigned_terms.push(termData);
             }
         }
     });
 
-    const assignedTermSlugs = new Set(Array.from(currentImageTermMappings.values()).map(m => m.termSlug));
-    availableTerms = productVariantAttribute.terms.filter(term => !assignedTermSlugs.has(term.value));
-
     renderAvailableTerms();
     configureSortableForTerms(allImageData, onRefreshIndicatorCallback);
     
-    allImageData.forEach(image => {
-        // La clé utilisée ici par la modale est maintenant correcte
-        if(image.assigned_term_slug) {
-            onRefreshIndicatorCallback(image.id);
+    currentImageTermMappings.forEach((terms, imageId) => {
+        if (terms.length > 0) {
+            onRefreshIndicatorCallback(imageId);
         }
     });
 
     console.log('[variantAttributeManager] initVariantHandler END');
 }
 
-// DANS js/variantAttributeManager.js
-
 function renderAvailableTerms() {
     if (!availableTermsContainer) return;
 
-    // --- MODIFICATION : Ne pas effacer tout le conteneur ---
-    // AVANT:
-    // availableTermsContainer.innerHTML = '';
-
-    // APRÈS:
-    // Sélectionne et supprime uniquement les anciens termes et messages
     const existingTerms = availableTermsContainer.querySelectorAll('.term-draggable, .no-swatches-message');
     existingTerms.forEach(term => term.remove());
-    // --- FIN DE LA MODIFICATION ---
 
     if (availableTerms.length === 0) {
         const message = document.createElement('p');
         message.className = 'no-swatches-message';
-        message.textContent = '✅ Variantes assignées';
+        message.textContent = '✅ Toutes les variantes sont assignées';
         availableTermsContainer.appendChild(message);
         return;
     }
@@ -132,7 +127,6 @@ function renderAvailableTerms() {
     availableTerms.forEach(term => {
         const termElement = document.createElement('div');
         termElement.className = 'term-draggable';
-		
 		termElement.draggable = true;
 		
         termElement.title = term.name;
@@ -151,126 +145,101 @@ function renderAvailableTerms() {
     });
 }
 
-// REMPLACEZ la fonction renderTermIndicator existante par celle-ci
-
-export function renderTermIndicator(imageId, termData) {
+export function renderTermIndicator(imageId, termsDataArray) {
     const placeholders = document.querySelectorAll(`.image-color-indicator-placeholder[data-indicator-for-image-id="${imageId}"]`);
-    if (!placeholders.length || !termData) return;
+    if (!placeholders.length) return;
 
     placeholders.forEach(placeholder => {
-        // Reset
         placeholder.innerHTML = '';
-        placeholder.style.backgroundColor = 'transparent';
-        placeholder.className = 'image-color-indicator-placeholder'; // Reset classes
+        placeholder.className = 'image-color-indicator-placeholder'; 
 
-        placeholder.title = `Variante: ${termData.termName}`;
-        placeholder.dataset.assignedTermSlug = termData.termSlug;
-        
-        if (productVariantAttribute.display_type === 'color' && termData.hex) {
-            placeholder.classList.add('is-color-indicator');
-            placeholder.style.backgroundColor = termData.hex;
-        } else {
-            placeholder.classList.add('is-button-indicator');
-            placeholder.textContent = termData.termName;
+        if (!termsDataArray || termsDataArray.length === 0) {
+            placeholder.classList.remove('active-indicator');
+            return;
         }
+        
         placeholder.classList.add('active-indicator');
-    });
-}
+        const indicatorWrapper = document.createElement('div');
+        indicatorWrapper.className = 'multi-indicator-wrapper';
 
-export function removeTermIndicator(imageId) {
-    const placeholders = document.querySelectorAll(`.image-color-indicator-placeholder[data-indicator-for-image-id="${imageId}"]`);
-    placeholders.forEach(placeholder => {
-        placeholder.innerHTML = '';
-        placeholder.style.cssText = '';
-        placeholder.title = '';
-        delete placeholder.dataset.assignedTermSlug;
-        placeholder.classList.remove('active-indicator');
+        termsDataArray.forEach(termData => {
+            const indicator = document.createElement('span');
+            indicator.className = 'single-indicator';
+            indicator.title = `Variante: ${termData.termName}`;
+            
+            if (productVariantAttribute.display_type === 'color' && termData.hex) {
+                indicator.classList.add('is-color-indicator');
+                indicator.style.backgroundColor = termData.hex;
+            } else {
+                indicator.classList.add('is-button-indicator');
+                indicator.textContent = termData.termName.substring(0, 1);
+            }
+            indicatorWrapper.appendChild(indicator);
+        });
+        placeholder.appendChild(indicatorWrapper);
     });
 }
 
 export function dissociateTermFromImage(imageId, termSlug, allImageDataRef) {
     const imageIdStr = imageId.toString();
-    if (!currentImageTermMappings.has(imageIdStr)) return false;
-    const currentMapping = currentImageTermMappings.get(imageIdStr);
-    if (currentMapping.termSlug !== termSlug) return false;
+    const termsForImage = currentImageTermMappings.get(imageIdStr);
+    if (!termsForImage || termsForImage.length === 0) return false;
 
-    currentImageTermMappings.delete(imageIdStr);
+    const termIndex = termsForImage.findIndex(t => t.termSlug === termSlug);
+    if (termIndex === -1) return false;
+
+    const termName = termsForImage[termIndex].termName;
+    termsForImage.splice(termIndex, 1);
 
     const imageInData = allImageDataRef.find(img => img.id.toString() === imageIdStr);
-    if (imageInData) {
-        delete imageInData.assigned_variant_slug;
-        delete imageInData.assigned_term_name;
-        delete imageInData.assigned_term_hex;
-        delete imageInData.assigned_term_slug;
+    if (imageInData && imageInData.assigned_terms) {
+        imageInData.assigned_terms = imageInData.assigned_terms.filter(t => t.termSlug !== termSlug);
     }
+    
+    refreshIndicatorForImage(imageId);
 
-    removeTermIndicator(imageIdStr);
-
-    const termObject = productVariantAttribute.terms.find(term => term.value === termSlug);
-    if (termObject && !availableTerms.some(t => t.value === termSlug)) {
-        availableTerms.push(termObject);
-    }
-
-    renderAvailableTerms();
-    updateStatus(`Variante '${currentMapping.termName}' dissociée.`, 'info');
+    updateStatus(`Variante '${termName}' dissociée.`, 'info');
     return true;
 }
 
-/**
- * Dissocie toutes les variantes de toutes les images.
- * @param {Array} allImageDataRef - Référence au tableau global d'images.
- */
 export function dissociateAllTerms(allImageDataRef) {
     if (currentImageTermMappings.size === 0) {
         updateStatus("Aucune variation n'est actuellement assignée.", "info");
         return false;
     }
 
-    // On remet tous les termes assignés dans la liste des termes disponibles
-    productVariantAttribute.terms.forEach(term => {
-        if (!availableTerms.some(t => t.value === term.value)) {
-            availableTerms.push(term);
+    availableTerms = [...productVariantAttribute.terms];
+
+    currentImageTermMappings.forEach((terms, imageId) => {
+        terms.length = 0;
+        const imageInData = allImageDataRef.find(img => img.id.toString() === imageId);
+        if (imageInData) {
+            imageInData.assigned_terms = [];
         }
+        removeTermIndicator(imageId);
     });
 
-    // On vide la carte des assignations
-    currentImageTermMappings.clear();
-
-    // On nettoie les données dans allImageData et on retire les indicateurs
-    allImageDataRef.forEach(image => {
-        if (image.assigned_term_slug) {
-            delete image.assigned_term_slug;
-            delete image.assigned_term_name;
-            delete image.assigned_term_hex;
-            removeTermIndicator(image.id);
-        }
-    });
-
-    // On rafraîchit l'affichage des termes disponibles
     renderAvailableTerms();
     updateStatus("Toutes les associations de variantes ont été réinitialisées.", "success");
     return true;
 }
 
-// AJOUTEZ CETTE NOUVELLE FONCTION (n'importe où dans le fichier)
-/**
- * Retourne le nombre de termes de variante actuellement disponibles (non assignés).
- * @returns {number}
- */
 export function getAvailableTermsCount() {
     return availableTerms.length;
 }
 
-/**
- * Vérifie si le produit a des attributs de variation à gérer.
- * @returns {boolean}
- */
 export function hasVariations() {
     return productVariantAttribute !== null && productVariantAttribute.terms && productVariantAttribute.terms.length > 0;
 }
 
 export function getVariantMappings() {
-    return Array.from(currentImageTermMappings, ([imageId, data]) => ({ imageId, termSlug: data.termSlug }));
+    const mappings = [];
+    currentImageTermMappings.forEach((terms, imageId) => {
+        terms.forEach(term => {
+            mappings.push({ imageId, termSlug: term.termSlug });
+        });
+    });
+    return mappings;
 }
 
 export function getVariantAttributeData() {
@@ -280,46 +249,23 @@ export function getVariantAttributeData() {
 export function refreshIndicatorForImage(imageId) {
     if (!imageId) return;
     const imageIdStr = imageId.toString();
-    if (currentImageTermMappings.has(imageIdStr)) {
-        const termData = currentImageTermMappings.get(imageIdStr);
-        renderTermIndicator(imageIdStr, termData);
+    const termsData = currentImageTermMappings.get(imageIdStr);
+    if (termsData) {
+        renderTermIndicator(imageIdStr, termsData);
     } else {
         removeTermIndicator(imageIdStr);
     }
 }
-
-
-
-// --- DÉBUT DU BLOC DE DEBUG ---
-function logToPanel(message) {
-    const panel = document.getElementById('debug-log-panel');
-    if (panel) {
-        panel.style.display = 'block';
-        const logEntry = document.createElement('div');
-        const time = new Date().toLocaleTimeString();
-        logEntry.textContent = `[${time}] ${message}`;
-        panel.prepend(logEntry);
-    }
-}
-// --- FIN DU BLOC DE DEBUG ---
-
-// REMPLACEZ la fonction configureSortableForTerms par cette version finale et optimisée
 
 function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) {
     if (!availableTermsContainer) return;
     if (sortableAvailableTerms) sortableAvailableTerms.destroy();
 
     sortableAvailableTerms = new Sortable(availableTermsContainer, {
-        group: { name: 'terms-shared', pull: true, put: true },
+        group: { name: 'terms-shared', pull: 'clone', put: false },
         animation: 150,
         sort: false,
-		// --- AJOUT DE CETTE LIGNE ---
-        filter: '#reset-variants-btn', // Indique à SortableJS d'ignorer les clics sur cet élément
-        // --- FIN DE L'AJOUT ---
-        // --- CONFIGURATION FINALE (COMME L'ANCIENNE VERSION) ---
-        // On retire TOUTES les options de fallback (forceFallback, fallbackOnBody, etc.)
-        // pour utiliser l'API native du navigateur, qui est plus performante sur mobile.
-        // --- FIN DE LA CONFIGURATION ---
+		filter: '#reset-variants-btn', 
         
         onStart: function(evt) {
             document.body.classList.add('dragging-color-swatch');
@@ -332,57 +278,42 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
                 const instance = new Sortable(imgElContainer, {
                     group: { name: 'terms-shared', put: true },
                     animation: 0, 
-                    ghostClass: 'color-drop-target-ghost', // On utilise la classe pour cacher le fantôme
+                    ghostClass: 'color-drop-target-ghost',
                     onAdd: function(addEvt) {
                         const targetImageElement = this.el;
                         const droppedTermElement = addEvt.item;
                         const targetImageId = targetImageElement.dataset.imageId;
 
-                        if (droppedTermElement.parentElement === targetImageElement) {
-                            targetImageElement.removeChild(droppedTermElement);
+                        if (droppedTermElement.parentElement) {
+                            droppedTermElement.parentElement.removeChild(droppedTermElement);
                         }
                         
                         const newTermData = {
                             termSlug: droppedTermElement.dataset.termSlug,
                             termName: droppedTermElement.dataset.termName,
+                            termId: droppedTermElement.dataset.termId,
                             hex: droppedTermElement.dataset.hex || null
                         };
 
-                        const currentMapping = currentImageTermMappings.get(targetImageId);
-                        if (currentMapping && currentMapping.termSlug === newTermData.termSlug) return;
+                        const termsForImage = currentImageTermMappings.get(targetImageId);
                         
-                        if (currentMapping) {
-                            const oldTerm = productVariantAttribute.terms.find(t => t.value === currentMapping.termSlug);
-                            if (oldTerm && !availableTerms.some(t => t.value === oldTerm.value)) {
-                                availableTerms.push(oldTerm);
-                            }
+                        if (termsForImage.some(t => t.termSlug === newTermData.termSlug)) {
+                            updateStatus(`La variante '${newTermData.termName}' est déjà assignée à cette image.`, 'warn');
+                            return;
                         }
-                        
-                        currentImageTermMappings.forEach((map, imgId) => {
-                            if (map.termSlug === newTermData.termSlug && imgId !== targetImageId) {
-                                currentImageTermMappings.delete(imgId);
-                                onRefreshIndicatorCallback(imgId);
-                                const oldImgInAllData = allImageDataRef.find(i => i.id.toString() === imgId);
-                                if (oldImgInAllData) {
-                                    delete oldImgInAllData.assigned_term_slug;
-                                    delete oldImgInAllData.assigned_term_name;
-                                    delete oldImgInAllData.assigned_term_hex;
-                                }
-                            }
-                        });
 
-                        currentImageTermMappings.set(targetImageId, newTermData);
-                        
+                        termsForImage.push(newTermData);
+
                         const targetImgInAllData = allImageDataRef.find(img => img.id.toString() === targetImageId);
                         if (targetImgInAllData) {
-                            targetImgInAllData.assigned_term_slug = newTermData.termSlug;
-                            targetImgInAllData.assigned_term_name = newTermData.termName;
-                            targetImgInAllData.assigned_term_hex = newTermData.hex;
+                            if (!targetImgInAllData.assigned_terms) {
+                                targetImgInAllData.assigned_terms = [];
+                            }
+                            targetImgInAllData.assigned_terms.push(newTermData);
                         }
                         
                         onRefreshIndicatorCallback(targetImageId);
                         
-                        availableTerms = availableTerms.filter(term => term.value !== newTermData.termSlug);
                         updateStatus(`'${newTermData.termName}' assigné à l'image ID ${targetImageId}.`, 'success');
                     }
                 });
@@ -393,19 +324,6 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
             document.body.classList.remove('dragging-color-swatch');
             temporaryImageDropZoneInstances.forEach(instance => instance.destroy());
             temporaryImageDropZoneInstances = [];
-
-            const termSlug = evt.item.dataset.termSlug;
-            let wasAssigned = Array.from(currentImageTermMappings.values()).some(m => m.termSlug === termSlug);
-            
-            if (wasAssigned) {
-                if (evt.item.parentElement) evt.item.remove();
-            } else {
-                if (!availableTerms.some(term => term.value === termSlug)) {
-                    const termObject = productVariantAttribute.terms.find(t => t.value === termSlug);
-                    if (termObject) availableTerms.push(termObject);
-                }
-            }
-            renderAvailableTerms();
         }
     });
 }
