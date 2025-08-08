@@ -17,26 +17,28 @@
 </head>
 <body>    
 	<div id="debug-log-panel"></div>
-    <h1>Gestion Images</h1> <p>Produit ID: <strong id="productId">Chargement...</strong></p>
-    <hr>
-
-    <h2>Infos Produit</h2> <p>Nom: <strong id="productName">Chargement...</strong></p>
-    <div class="product-header-actions">
-        <button id="product-status-toggle" class="status-toggle-btn status-inactive" data-status="0" title="Statut du traitement des images">❌</button>
-        <button id="mannequin-choice-btn" class="mannequin-display-btn" title="Choisir un mannequin">
-            <img id="mannequin-display-portrait" src="" alt="Portrait du mannequin" class="mannequin-portrait-thumb" style="display:none;">
-            <span id="mannequin-display-name" class="mannequin-name-text">Chargement...</span>
-        </button>
+    
+	
+	<div class="main-header">
+        <h2 class="main-product-title">
+            (<span id="productId">...</span>) <strong id="productName">Chargement...</strong>
+        </h2>
+        <div class="product-header-actions">
+            <button id="product-status-toggle" class="status-toggle-btn status-inactive" data-status="0" title="Statut du traitement des images">❌</button>
+            <button id="mannequin-choice-btn" class="mannequin-display-btn" title="Choisir un mannequin">
+                <img id="mannequin-display-portrait" src="" alt="Portrait du mannequin" class="mannequin-portrait-thumb" style="display:none;">
+                <span id="mannequin-display-name" class="mannequin-name-text">Chargement...</span>
+            </button>
+        </div>
     </div>
-    <hr>
     <div id="variant-assignment-container" style="display: none;">
-		<h3>Variante : <span id="variant-attribute-name"></span></h3>
-		<p id="no-variants-message" style="display: none;">Aucune variation détectée pour ce produit.</p>
-		<div id="available-terms-container" class="available-terms-container">
-			<button id="reset-variants-btn" class="action-btn cancel-btn">Réinitialiser</button>
-		</div>
+        <p id="no-variants-message" style="display: none;">Aucune variation détectée pour ce produit.</p>
+        <div id="available-terms-container" class="available-terms-container">
+            <button id="reset-variants-btn" class="action-btn cancel-btn">Réinitialiser</button>
+        </div>
 	</div>
-    <hr> 
+	
+	
     <h3>Assigner les Rôles (Glisser-Déposer)</h3>
     <div class="role-assignment-container">
 

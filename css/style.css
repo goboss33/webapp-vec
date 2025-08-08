@@ -7,35 +7,32 @@ body {
     margin: 0;
 }
 
-/* En-tête */
-h1 {
-    text-align: center;
-    margin-top: 0;
-    margin-bottom: 5px;
-}
-#productId {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-size: 0.9em;
-    color: var(--tg-theme-hint-color, #6c757d);
-}
-hr {
-    border: none;
-    border-top: 1px solid var(--tg-theme-hint-color, #ccc);
-    margin: 15px 0;
+/* NOUVEAUX STYLES POUR LE HEADER PRINCIPAL */
+.main-header {
+    margin-bottom: 20px; /* Espace avant la section des variantes */
 }
 
-/* Section Infos Produit */
-h2 {
-    margin-top: 0;
-    margin-bottom: 5px;
-    font-size: 1.1em;
+.main-product-title {
+    font-size: 1.1em; /* Taille de police normale mais légèrement plus grande */
+    font-weight: normal; /* Annule la graisse par défaut du h2 */
+    margin: 0 0 10px 0; /* Espacement en dessous du titre */
+    text-align: center; /* Centrer le titre */
+    color: var(--tg-theme-hint-color, #6c757d); /* Couleur pour l'ID */
 }
-#productName {
-    margin-top: 0;
-    margin-bottom: 15px;
-    font-weight: normal;
+
+.main-product-title strong {
+    font-weight: 600; /* Un peu de graisse pour le nom */
+    text-transform: uppercase; /* Mettre en majuscules */
+    color: var(--tg-theme-text-color, #000); /* Couleur du texte du nom */
+    background-color: #fffb85; /* Jaune stabilo */
+    padding: 2px 5px; /* Petit espace intérieur pour l'effet surligné */
+    border-radius: 3px;
+    
+    /* Assure que le surlignage s'adapte bien au texte */
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
 }
+/* FIN DES NOUVEAUX STYLES */
 
 /* Conteneur pour les boutons du haut (Statut, Mannequin) */
 .product-header-actions {
