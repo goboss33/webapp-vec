@@ -1477,3 +1477,7 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     justify-content: initial !important; /* Annule les styles flexbox hérités */
     align-items: initial !important;    /* Annule les styles flexbox hérités */
 }
+
+.no-swatches-message {
+	display:contents;
+}
