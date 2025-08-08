@@ -296,7 +296,9 @@ function configureSortableForTerms(allImageDataRef, onRefreshIndicatorCallback) 
         group: { name: 'terms-shared', pull: true, put: true },
         animation: 150,
         sort: false,
-
+		// --- AJOUT DE CETTE LIGNE ---
+        filter: '#reset-variants-btn', // Indique à SortableJS d'ignorer les clics sur cet élément
+        // --- FIN DE L'AJOUT ---
         // --- CONFIGURATION FINALE (COMME L'ANCIENNE VERSION) ---
         // On retire TOUTES les options de fallback (forceFallback, fallbackOnBody, etc.)
         // pour utiliser l'API native du navigateur, qui est plus performante sur mobile.

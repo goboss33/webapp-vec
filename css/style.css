@@ -1281,6 +1281,7 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     border: 1px dashed var(--tg-theme-hint-color, #ccc);
     border-radius: 4px;
     background-color: var(--tg-theme-bg-color, #fff);
+	align-items: center;
 }
 
 /* Style commun pour tous les termes draggables */
