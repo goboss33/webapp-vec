@@ -39,6 +39,7 @@ function createCarouselItem(image) {
     img.src = image.url;
     img.alt = `Image ID ${image.id}`;
     img.loading = 'lazy';
+	img.addEventListener('contextmenu', (e) => e.preventDefault());
 
     const info = document.createElement('p');
     info.textContent = `ID: ${image.id}`;
@@ -103,6 +104,7 @@ function createThumbnail(image, targetRole) {
     img.alt = `Vignette ID ${image.id}`;
     img.className = 'img-thumbnail';
     img.title = `ID: ${image.id}\nAssigné à: ${targetRole}`;
+	img.addEventListener('contextmenu', (e) => e.preventDefault());
 
     const removeBtn = document.createElement('button');
     removeBtn.textContent = '×';
