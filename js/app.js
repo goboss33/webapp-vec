@@ -38,7 +38,7 @@ import {
 } from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
 
-import { updateStatus, showLoading, hideLoading, resetModalToActionView } from './uiUtils.js';
+import { updateStatus, showLoading, hideLoading, resetModalToActionView, registerOnStatusUpdateCallback } from './uiUtils.js';
 console.log('app.js: UI utility functions imported.');
 
 import { fetchProductDataAPI, saveChangesAPI, executeImageActionAPI, fetchMannequinsAPI } from './apiService.js'; // Importer fetchMannequinsAPI
@@ -1009,7 +1009,6 @@ const fetchProductData = async () => {
                 handleSettingsClick,
                 handleMarkForDeletionClick,
                 variantAttributeManager.refreshIndicatorForImage,
-				runAllValidationChecks
             );
 
             if (data.variantAttribute && data.variantAttribute.attribute_slug) {
@@ -1027,13 +1026,11 @@ const fetchProductData = async () => {
 			}
 
             updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
-			runAllValidationChecks();
         } else {
             console.error("app.js: Format de données invalide : 'images' manquant ou n'est pas un tableau.");
             if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur format données.</p>';
             updateStatus("Erreur format données images.", 'error');
             initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick, variantAttributeManager.refreshIndicatorForImage);
-			runAllValidationChecks();
         }
     } catch (error) {
         console.error("app.js: Erreur fetchProductData:", error);
@@ -1041,7 +1038,6 @@ const fetchProductData = async () => {
         if (productNameElement) productNameElement.textContent = 'Erreur';
         if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur chargement.</p>';
         initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick, variantAttributeManager.refreshIndicatorForImage);
-		runAllValidationChecks();
     }
 };
 
@@ -1176,7 +1172,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
+	
+	registerOnStatusUpdateCallback(runAllValidationChecks);
     // Écouteur pour le bouton de statut de traitement des images
     if (productStatusToggleBtn) {
         productStatusToggleBtn.addEventListener('click', () => {
