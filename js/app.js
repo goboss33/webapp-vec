@@ -895,8 +895,8 @@ const fetchProductData = async () => {
         // --- Logique du titre et du lien (corrigée et intégrée) ---
         if (productNameElement) {
             const fullTitle = data.productName || 'Non trouvé';
-            if (fullTitle.length > 25) {
-                productNameElement.textContent = fullTitle.substring(0, 25) + '...';
+            if (fullTitle.length > 45) {
+                productNameElement.textContent = fullTitle.substring(0, 45) + '...';
             } else {
                 productNameElement.textContent = fullTitle;
             }
