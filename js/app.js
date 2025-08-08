@@ -36,7 +36,9 @@ import {
 	checklistModal, checklistModalCloseBtn, checklistItemCustomImages,
     checklistItemGalleryCount,
     checklistItemMannequin,
-    checklistItemVariantsAssigned
+    checklistItemVariantsAssigned,
+    checklistItemSizeGuide,
+    sizeGuideNaBtn
     
 } from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
@@ -201,7 +203,8 @@ let validationCriteria = {
     customImages: false,
     galleryCount: false, // <-- AJOUTER
     mannequinSelected: false, // <-- AJOUTER
-    variantsAssigned: false // <-- AJOUTER
+    variantsAssigned: false, // <-- AJOUTER
+	sizeGuide: false
 };
 
 // DANS js/app.js
@@ -223,7 +226,14 @@ function runAllValidationChecks() {
     const unassignedTermsCount = variantAttributeManager.getAvailableTermsCount();
     const mappings = variantAttributeManager.getVariantMappings();
     const assignedImageIds = mappings.map(m => m.imageId);
-
+	
+	// --- Critère 5: guide des taille choisi ---
+	// On ne met à jour ce critère que s'il n'est pas manuellement mis en N/A
+    if (validationCriteria.sizeGuide !== 'na') {
+        const hasSizeGuideAssigned = allImageData.some(img => img.uses?.includes('size_guide'));
+        validationCriteria.sizeGuide = hasSizeGuideAssigned;
+    }
+	
     const dropzoneImageIds = [
         ...(dropzoneMain ? Array.from(dropzoneMain.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : []),
         ...(dropzoneCustom ? Array.from(dropzoneCustom.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : []),
@@ -236,10 +246,11 @@ function runAllValidationChecks() {
 
 
     // --- Mise à jour de l'interface utilisateur de la checklist ---
-    const updateChecklistItemUI = (element, isValid) => {
+    const updateChecklistItemUI = (element, status) => {
         if (element) {
-            element.classList.toggle('is-valid', isValid);
-            element.classList.toggle('is-invalid', !isValid);
+            element.classList.toggle('is-valid', status === true);
+            element.classList.toggle('is-invalid', status === false);
+            element.classList.toggle('is-na', status === 'na');
         }
     };
 
@@ -247,6 +258,7 @@ function runAllValidationChecks() {
     updateChecklistItemUI(checklistItemGalleryCount, validationCriteria.galleryCount);
     updateChecklistItemUI(checklistItemMannequin, validationCriteria.mannequinSelected);
     updateChecklistItemUI(checklistItemVariantsAssigned, validationCriteria.variantsAssigned);
+	updateChecklistItemUI(checklistItemSizeGuide, validationCriteria.sizeGuide);
 
     // Mettre à jour le bouton de statut principal
     updateMainStatusButton();
@@ -254,7 +266,7 @@ function runAllValidationChecks() {
 
 /** Met à jour l'icône du bouton de statut principal (✅/❌) */
 function updateMainStatusButton() {
-    const allValid = Object.values(validationCriteria).every(status => status === true);
+    const allValid = Object.values(validationCriteria).every(status => status === true || status === 'na');
 
     if (productStatusToggleBtn) {
         productStatusToggleBtn.dataset.status = allValid ? '1' : '0';
@@ -1351,6 +1363,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (confirm("Êtes-vous sûr de vouloir réinitialiser TOUTES les associations de variantes ?")) {
                 variantAttributeManager.dissociateAllTerms(allImageData);
             }
+        });
+    }
+	
+	if (sizeGuideNaBtn) {
+        sizeGuideNaBtn.addEventListener('click', () => {
+            // Bascule entre 'non applicable' et 'invalide'
+            validationCriteria.sizeGuide = (validationCriteria.sizeGuide === 'na' ? false : 'na');
+            runAllValidationChecks(); // Met à jour l'UI
         });
     }
 
