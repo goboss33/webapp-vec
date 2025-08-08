@@ -1008,7 +1008,8 @@ const fetchProductData = async () => {
                 allImageData,
                 handleSettingsClick,
                 handleMarkForDeletionClick,
-                variantAttributeManager.refreshIndicatorForImage
+                variantAttributeManager.refreshIndicatorForImage,
+				runAllValidationChecks
             );
 
             if (data.variantAttribute && data.variantAttribute.attribute_slug) {
