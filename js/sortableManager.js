@@ -496,6 +496,9 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
                 const itemEl = evt.item;
                 const removedImageId = itemEl.dataset.imageId;
                 console.log(`sortableManager.js onRemove Event: Image ID ${removedImageId} retirée de la zone ${role}`);
+				if (typeof onStateChangeCallback === 'function') {
+                    onStateChangeCallback();
+                }
             }
         });
     });
