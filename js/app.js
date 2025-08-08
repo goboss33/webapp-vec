@@ -879,7 +879,14 @@ function updateMannequinButtonDisplay() {
 
 const fetchProductData = async () => {
     updateStatus("Récupération des données produit...", 'info');
-    if (productNameElement) productNameElement.textContent = 'Chargement...';
+    if (productNameElement) {
+		const fullTitle = data.productName || 'Non trouvé';
+		if (fullTitle.length > 25) {
+			productNameElement.textContent = fullTitle.substring(0, 25) + '...';
+		} else {
+			productNameElement.textContent = fullTitle;
+		}
+	}
     
     if (imageCarousel) imageCarousel.innerHTML = '<p>Chargement...</p>';
     allImageData = [];
