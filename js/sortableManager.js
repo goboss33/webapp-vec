@@ -83,7 +83,7 @@ function createCarouselItem(image) {
     container.appendChild(info);
     const buttonWrapper = document.createElement('div');
     buttonWrapper.style.marginTop = '5px';
-    buttonWrapper.appendChild(settingsBtn);
+    /*buttonWrapper.appendChild(settingsBtn);*/
     buttonWrapper.appendChild(deleteBtn);
     container.appendChild(buttonWrapper);
 
@@ -135,7 +135,7 @@ function createThumbnail(image, targetRole) {
 
     container.appendChild(img);
     container.appendChild(removeBtn);
-    container.appendChild(settingsBtn);
+    /*container.appendChild(settingsBtn);*/
 
     const colorIndicatorPlaceholder = document.createElement('div');
     colorIndicatorPlaceholder.className = 'image-color-indicator-placeholder';
