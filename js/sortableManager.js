@@ -31,6 +31,12 @@ function createCarouselItem(image) {
     container.dataset.imageUrl = image.url;
     container.dataset.initialUses = image.uses ? image.uses.join(',') : '';
 
+	container.onclick = (event) => {
+        if (!event.target.closest('.del-btn')) {
+            onClickSettingsCallback(event); // Appel du callback (qui ouvre la modale)
+        }
+    };
+
     if (image.markedForDeletion) {
         container.classList.add('marked-for-deletion');
     }
@@ -44,12 +50,12 @@ function createCarouselItem(image) {
     const info = document.createElement('p');
     info.textContent = `ID: ${image.id}`;
 
-    const settingsBtn = document.createElement('button');
+    /*const settingsBtn = document.createElement('button');
     settingsBtn.innerHTML = '&#9881;'; // ⚙️
     settingsBtn.className = 'settings-btn';
     settingsBtn.title = 'Réglages pour cette image';
     settingsBtn.dataset.imageId = image.id;
-    settingsBtn.onclick = (event) => onClickSettingsCallback(event); // Appel du callback
+    settingsBtn.onclick = (event) => onClickSettingsCallback(event); // Appel du callback*/
 
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = 'DEL';
@@ -99,6 +105,12 @@ function createThumbnail(image, targetRole) {
     container.dataset.imageId = image.id;
     container.dataset.imageUrl = image.url;
 
+	container.onclick = (event) => {
+        if (!event.target.closest('.remove-thumbnail-btn')) {
+            onClickSettingsCallback(event); // Appel du callback
+        }
+    };
+
     const img = document.createElement('img');
     img.src = image.url;
     img.alt = `Vignette ID ${image.id}`;
@@ -112,12 +124,14 @@ function createThumbnail(image, targetRole) {
     removeBtn.title = `Retirer de ${targetRole}`;
     removeBtn.onclick = handleThumbnailRemoveClickInternal; // Appel de la fonction interne au module
 
-    const settingsBtn = document.createElement('button');
+    /*
+	const settingsBtn = document.createElement('button');
     settingsBtn.innerHTML = '&#9881;';
     settingsBtn.className = 'settings-btn thumbnail-settings-btn';
     settingsBtn.title = 'Réglages pour cette image';
     settingsBtn.dataset.imageId = image.id;
     settingsBtn.onclick = (event) => onClickSettingsCallback(event); // Appel du callback
+	*/
 
     container.appendChild(img);
     container.appendChild(removeBtn);
