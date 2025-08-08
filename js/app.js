@@ -210,11 +210,12 @@ let validationCriteria = {
 // DANS js/app.js
 
 /** Met à jour la checklist dans la modale et l'état global des critères */
+/** Met à jour la checklist dans la modale et l'état global des critères */
 function runAllValidationChecks() {
     // --- Critère 1: Nombre d'images "Custom" ---
     const customImageCount = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper').length : 0;
     validationCriteria.customImages = (customImageCount === 3);
-    
+
     // --- Critère 2: Nombre d'images "Galerie" ---
     const galleryImageCount = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper').length : 0;
     validationCriteria.galleryCount = (galleryImageCount >= 3);
@@ -242,24 +243,13 @@ function runAllValidationChecks() {
         
         validationCriteria.variantsAssigned = (unassignedTermsCount === 0 && allAssignedImagesInDropzones && mappings.length > 0);
     }
-	
-	// --- Critère 5: guide des taille choisi ---
-	// On ne met à jour ce critère que s'il n'est pas manuellement mis en N/A
+
+    // --- Critère 5: Guide des tailles ---
+    // On ne met à jour ce critère que s'il n'est pas manuellement mis en N/A
     if (validationCriteria.sizeGuide !== 'na') {
         const hasSizeGuideAssigned = allImageData.some(img => img.uses?.includes('size_guide'));
         validationCriteria.sizeGuide = hasSizeGuideAssigned;
     }
-	
-    const dropzoneImageIds = [
-        ...(dropzoneMain ? Array.from(dropzoneMain.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : []),
-        ...(dropzoneCustom ? Array.from(dropzoneCustom.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : []),
-        ...(dropzoneGallery ? Array.from(dropzoneGallery.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : [])
-    ];
-    
-    const allAssignedImagesInDropzones = assignedImageIds.every(id => dropzoneImageIds.includes(id));
-    
-    validationCriteria.variantsAssigned = (unassignedTermsCount === 0 && allAssignedImagesInDropzones && mappings.length > 0);
-
 
     // --- Mise à jour de l'interface utilisateur de la checklist ---
     const updateChecklistItemUI = (element, status) => {
@@ -269,12 +259,12 @@ function runAllValidationChecks() {
             element.classList.toggle('is-na', status === 'na');
         }
     };
-
+    
     updateChecklistItemUI(checklistItemCustomImages, validationCriteria.customImages);
     updateChecklistItemUI(checklistItemGalleryCount, validationCriteria.galleryCount);
     updateChecklistItemUI(checklistItemMannequin, validationCriteria.mannequinSelected);
     updateChecklistItemUI(checklistItemVariantsAssigned, validationCriteria.variantsAssigned);
-	updateChecklistItemUI(checklistItemSizeGuide, validationCriteria.sizeGuide);
+    updateChecklistItemUI(checklistItemSizeGuide, validationCriteria.sizeGuide);
 
     // Mettre à jour le bouton de statut principal
     updateMainStatusButton();
