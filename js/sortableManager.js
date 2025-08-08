@@ -324,6 +324,10 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
             group: 'shared',
             pull: true,
             animation: 150,
+			// --- AJOUTEZ CES DEUX LIGNES ---
+            delay: 200, // Délai en ms avant que le drag ne commence
+            delayOnTouchOnly: true, // Le délai ne s'applique que sur les écrans tactiles
+            // --- FIN DE L'AJOUT ---
             // Dans sortableManager.js, dans la boucle dropZoneElements.forEach(...)
             // Remplacez l'intégralité de la fonction onAdd existante par celle-ci :
             onAdd: function (evt) {
