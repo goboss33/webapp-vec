@@ -106,13 +106,29 @@ export function initVariantHandler(variantAttribute, allImageData, onRefreshIndi
     console.log('[variantAttributeManager] initVariantHandler END');
 }
 
+// DANS js/variantAttributeManager.js
+
 function renderAvailableTerms() {
     if (!availableTermsContainer) return;
-    availableTermsContainer.innerHTML = '';
+
+    // --- MODIFICATION : Ne pas effacer tout le conteneur ---
+    // AVANT:
+    // availableTermsContainer.innerHTML = '';
+
+    // APRÈS:
+    // Sélectionne et supprime uniquement les anciens termes et messages
+    const existingTerms = availableTermsContainer.querySelectorAll('.term-draggable, .no-swatches-message');
+    existingTerms.forEach(term => term.remove());
+    // --- FIN DE LA MODIFICATION ---
+
     if (availableTerms.length === 0) {
-        availableTermsContainer.innerHTML = '<p class="no-swatches-message">Toutes les variantes sont assignées.</p>';
+        const message = document.createElement('p');
+        message.className = 'no-swatches-message';
+        message.textContent = 'Toutes les variantes sont assignées.';
+        availableTermsContainer.appendChild(message);
         return;
     }
+
     availableTerms.forEach(term => {
         const termElement = document.createElement('div');
         termElement.className = 'term-draggable';
