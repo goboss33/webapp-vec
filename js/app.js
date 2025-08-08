@@ -878,16 +878,11 @@ function updateMannequinButtonDisplay() {
 }
 
 
+// DANS js/app.js, REMPLACEZ LA FONCTION fetchProductData EXISTANTE PAR CELLE-CI :
+
 const fetchProductData = async () => {
     updateStatus("Récupération des données produit...", 'info');
-    if (productNameElement) {
-		const fullTitle = data.productName || 'Non trouvé';
-		if (fullTitle.length > 25) {
-			productNameElement.textContent = fullTitle.substring(0, 25) + '...';
-		} else {
-			productNameElement.textContent = fullTitle;
-		}
-	}
+    if (productNameElement) productNameElement.textContent = 'Chargement...';
     
     if (imageCarousel) imageCarousel.innerHTML = '<p>Chargement...</p>';
     allImageData = [];
@@ -897,16 +892,25 @@ const fetchProductData = async () => {
         console.log('app.js: Parsed JSON data:', data);
         updateStatus("Données reçues. Affichage...", 'info');
 
-        if (productNameElement) productNameElement.textContent = data.productName || 'Non trouvé';
-
-		if (aliexpressLinkElement) {
-            if (data['aliexpress-link']) {
-                aliexpressLinkElement.href = data['aliexpress-link'];
-                aliexpressLinkElement.style.display = 'inline-block'; // Affiche l'icône
+        // --- Logique du titre et du lien (corrigée et intégrée) ---
+        if (productNameElement) {
+            const fullTitle = data.productName || 'Non trouvé';
+            if (fullTitle.length > 25) {
+                productNameElement.textContent = fullTitle.substring(0, 25) + '...';
             } else {
-                aliexpressLinkElement.style.display = 'none'; // Garde l'icône cachée
+                productNameElement.textContent = fullTitle;
             }
         }
+        if (aliexpressLinkElement) {
+            // Note: j'utilise la clé 'aliexpress-link' comme vous l'avez mentionné.
+            if (data['aliexpress-link']) { 
+                aliexpressLinkElement.href = data['aliexpress-link'];
+                aliexpressLinkElement.style.display = 'inline-block';
+            } else {
+                aliexpressLinkElement.style.display = 'none';
+            }
+        }
+        // --- Fin de la logique du titre ---
 
         selectedMannequinId = data.linked_mannequin_id ? parseInt(data.linked_mannequin_id, 10) : null;
         if (selectedMannequinId === 0) selectedMannequinId = null;
@@ -941,44 +945,40 @@ const fetchProductData = async () => {
                 }
             }
 
-            // --- NOUVELLE LOGIQUE DE GESTION DES VARIANTES ---
             initializeSortableManager(
                 allImageData,
                 handleSettingsClick,
                 handleMarkForDeletionClick,
-                variantAttributeManager.refreshIndicatorForImage // Appel au nouveau manager
+                variantAttributeManager.refreshIndicatorForImage
             );
 
-            // L'API renvoie maintenant directement l'objet `variantAttribute`
             if (data.variantAttribute && data.variantAttribute.attribute_slug) {
 				currentAttributeSlug = data.variantAttribute.attribute_slug;
 				variantAttributeManager.initVariantHandler(data.variantAttribute, allImageData, variantAttributeManager.refreshIndicatorForImage);
-				// Afficher le bouton et cacher le message
 				if(resetVariantsBtn) resetVariantsBtn.style.display = 'inline-block';
 				if(noVariantsMessage) noVariantsMessage.style.display = 'none';
 			} else {
-				// Cacher le bouton et afficher le message
 				const variantContainer = document.getElementById('variant-assignment-container');
-				if(variantContainer) variantContainer.style.display = 'block'; // S'assurer que le conteneur est visible
+				if(variantContainer) variantContainer.style.display = 'block';
 				if(resetVariantsBtn) resetVariantsBtn.style.display = 'none';
 				if(noVariantsMessage) noVariantsMessage.style.display = 'block';
-				if(availableTermsContainer) availableTermsContainer.style.display = 'none'; // Cacher la zone des termes
+				const availableTermsContainer = document.getElementById('available-terms-container'); // Correction : définir la variable avant de l'utiliser
+				if(availableTermsContainer) availableTermsContainer.style.display = 'none';
 			}
-            // --- FIN DE LA NOUVELLE LOGIQUE ---
 
             updateStatus("Images affichées. Glissez pour assigner/réassigner.", 'success');
         } else {
             console.error("app.js: Format de données invalide : 'images' manquant ou n'est pas un tableau.");
             if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur format données.</p>';
             updateStatus("Erreur format données images.", 'error');
-            initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick);
+            initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick, variantAttributeManager.refreshIndicatorForImage);
         }
     } catch (error) {
         console.error("app.js: Erreur fetchProductData:", error);
         updateStatus(`Erreur chargement: ${error.message}`, 'error');
         if (productNameElement) productNameElement.textContent = 'Erreur';
         if (imageCarousel) imageCarousel.innerHTML = '<p>Erreur chargement.</p>';
-        initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick);
+        initializeSortableManager([], handleSettingsClick, handleMarkForDeletionClick, variantAttributeManager.refreshIndicatorForImage);
     }
 };
 
