@@ -280,7 +280,6 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
     }
 
     moduleSortableCarousel = new Sortable(imageCarousel, {
-        // ... (le reste de la configuration de moduleSortableCarousel reste INCHANGÉ) ...
         group: {
             name: 'shared',
             pull: true,
@@ -289,6 +288,12 @@ export function initializeSortableManager(imageData, settingsClickHandler, markF
         sort: false,
         animation: 150,
         filter: '.marked-for-deletion',
+
+        // --- AJOUTEZ CES DEUX LIGNES ---
+        delay: 200, // Délai en ms avant que le drag ne commence
+        delayOnTouchOnly: true, // Le délai ne s'applique que sur les écrans tactiles
+        // --- FIN DE L'AJOUT ---
+
         onStart: function(evt) {
             if (evt.item.classList.contains('marked-for-deletion')) {
                 return false; 

@@ -281,6 +281,9 @@ h3:first-of-type { /* Pas d'espace au dessus pour le premier h3 */
     margin: 0 auto 5px auto;
     cursor: grab;
 }
+#image-carousel .sortable-drag img {
+    cursor: grabbing; /* Curseur "main fermée" */
+}
 #image-carousel p {
     font-size: 0.8em;
     margin: 0;
