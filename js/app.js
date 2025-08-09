@@ -124,17 +124,12 @@ function updateSizeGuideIcon(imageId, isSizeGuide) {
 // Elle collecte toujours les IDs depuis les .thumbnail-wrapper présents dans les zones au moment du clic.
 // REMPLACEZ VOTRE FONCTION handleSaveChanges EXISTANTE PAR CELLE-CI
 
-// js/app.js
-
 const handleSaveChanges = async () => {
     console.log('app.js: handleSaveChanges started.');
-    
-    // Étape 1: Affiche le message "Sauvegarde en cours..."
-    showLoading("Sauvegarde en cours..."); 
+    showLoading("Sauvegarde des modifications...");
     updateStatus("Enregistrement des modifications...", 'info');
     if (saveChangesButton) saveChangesButton.disabled = true;
 
-    // --- Le reste de votre code de collecte de données reste inchangé ---
     const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
     const mainImageId = mainImageThumb ? mainImageThumb.dataset.imageId : null;
 
@@ -152,10 +147,12 @@ const handleSaveChanges = async () => {
         .map(imgData => imgData.id);
 
     const imageProcessingStatus = parseInt(productStatusToggleBtn ? productStatusToggleBtn.dataset.status : '0', 10);
-    const variantMappings = variantAttributeManager.getVariantMappings();
+
+    // --- NOUVELLE LOGIQUE DE GESTION DES VARIANTES ---
+    const variantMappings = variantAttributeManager.getVariantMappings(); // Appel au nouveau manager
     
     const payload = {
-		chatId: currentChatId,
+        chatId: currentChatId,
         productId: currentProductId,
         image_processing_status: imageProcessingStatus,
         mainImageId: mainImageId,
@@ -168,14 +165,13 @@ const handleSaveChanges = async () => {
         linked_mannequin_id: selectedMannequinId
     };
 
-    console.log("app.js: Données envoyées à n8n:", payload);
-
     try {
         const result = await saveChangesAPI(payload);
         console.log("app.js: Réponse de n8n (Mise à jour):", result);
-        
-        // La sauvegarde est réussie, nous pouvons maintenant fermer.
-        // On vérifie que l'API Telegram est bien disponible.
+        updateStatus(result.message || "Modifications enregistrées !", 'success');
+
+        // On ne gère que la fermeture ici.
+        // La disparition de l'écran de chargement sera gérée dans 'finally'.
         if (window.Telegram && window.Telegram.WebApp) {
             Telegram.WebApp.close();
         }
@@ -183,11 +179,12 @@ const handleSaveChanges = async () => {
     } catch (error) {
         console.error("app.js: Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
-        // En cas d'erreur, on ne ferme pas, on réactive les boutons et on cache le chargement.
+    } finally {
+        // Ce bloc s'exécutera TOUJOURS, même si la webapp ne se ferme pas.
         if (saveChangesButton) saveChangesButton.disabled = false;
         hideLoading();
-    } 
-    // Le bloc 'finally' n'est plus nécessaire ici car on gère la fin dans le 'try' et le 'catch'.
+        console.log('app.js: handleSaveChanges finished.');
+    }
 };
 
 // DANS js/app.js
