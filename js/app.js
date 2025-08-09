@@ -288,48 +288,39 @@ let validationCriteria = {
 // DANS js/app.js
 
 /** Met à jour la checklist dans la modale et l'état global des critères */
-/** Met à jour la checklist dans la modale et l'état global des critères */
+// DANS js/app.js
+
 function runAllValidationChecks() {
-    // --- Critère 1: Nombre d'images "Custom" ---
+    // --- Critères 1, 2, 3 (inchangés) ---
     const customImageCount = dropzoneCustom ? dropzoneCustom.querySelectorAll('.thumbnail-wrapper').length : 0;
     validationCriteria.customImages = (customImageCount === 3);
 
-    // --- Critère 2: Nombre d'images "Galerie" ---
     const galleryImageCount = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper').length : 0;
     validationCriteria.galleryCount = (galleryImageCount >= 3);
 
-    // --- Critère 3: Mannequin sélectionné ---
     validationCriteria.mannequinSelected = (selectedMannequinId !== null && selectedMannequinId > 0);
 
-    // --- Critère 4: Toutes les variations assignées ---
+    // --- Critère 4: Variantes (La logique interne pour 'na' est déjà bonne, on la garde) ---
     if (!variantAttributeManager.hasVariations()) {
-        // S'il n'y a aucune variation à gérer, le critère est Non Applicable.
         validationCriteria.variantsAssigned = 'na';
     } else {
-        // Sinon, on exécute la logique de vérification normale.
         const unassignedTermsCount = variantAttributeManager.getAvailableTermsCount();
         const mappings = variantAttributeManager.getVariantMappings();
         const assignedImageIds = mappings.map(m => m.imageId);
-
         const dropzoneImageIds = [
             ...(dropzoneMain ? Array.from(dropzoneMain.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : []),
             ...(dropzoneCustom ? Array.from(dropzoneCustom.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : []),
             ...(dropzoneGallery ? Array.from(dropzoneGallery.querySelectorAll('.thumbnail-wrapper')).map(t => t.dataset.imageId) : [])
         ];
-        
         const allAssignedImagesInDropzones = assignedImageIds.every(id => dropzoneImageIds.includes(id));
-        
         validationCriteria.variantsAssigned = (unassignedTermsCount === 0 && allAssignedImagesInDropzones && mappings.length > 0);
     }
 
-    // --- Critère 5: Guide des tailles ---
-    // On ne met à jour ce critère que s'il n'est pas manuellement mis en N/A
-    if (validationCriteria.sizeGuide !== 'na') {
-        const hasSizeGuideAssigned = allImageData.some(img => img.uses?.includes('size_guide'));
-        validationCriteria.sizeGuide = hasSizeGuideAssigned;
-    }
+    // --- Critère 5: Guide des tailles (SIMPLIFIÉ) ---
+    // Le statut est maintenant un simple booléen : vrai ou faux.
+    validationCriteria.sizeGuide = allImageData.some(img => img.uses?.includes('size_guide'));
 
-    // --- Mise à jour de l'interface utilisateur de la checklist ---
+    // --- Mise à jour de l'UI (le code ici fonctionne toujours car il gère déjà 'na' pour les variantes) ---
     const updateChecklistItemUI = (element, status) => {
         if (element) {
             element.classList.toggle('is-valid', status === true);
@@ -344,7 +335,6 @@ function runAllValidationChecks() {
     updateChecklistItemUI(checklistItemVariantsAssigned, validationCriteria.variantsAssigned);
     updateChecklistItemUI(checklistItemSizeGuide, validationCriteria.sizeGuide);
 
-    // Mettre à jour le bouton de statut principal
     updateMainStatusButton();
 }
 
@@ -1452,14 +1442,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (confirm("Êtes-vous sûr de vouloir réinitialiser TOUTES les associations de variantes ?")) {
                 variantAttributeManager.dissociateAllTerms(allImageData);
             }
-        });
-    }
-	
-	if (sizeGuideNaBtn) {
-        sizeGuideNaBtn.addEventListener('click', () => {
-            // Bascule entre 'non applicable' et 'invalide'
-            validationCriteria.sizeGuide = (validationCriteria.sizeGuide === 'na' ? false : 'na');
-            runAllValidationChecks(); // Met à jour l'UI
         });
     }
 	

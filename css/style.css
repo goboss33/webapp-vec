@@ -1575,45 +1575,6 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 
 /* DANS css/style.css */
 
-/* Styles pour le bouton "Non Applicable" */
-.na-btn {
-    margin-left: auto; /* Pousse le bouton complètement à droite */
-    font-size: 0.8em;
-    font-weight: bold;
-    color: var(--tg-theme-hint-color, #6c757d);
-    background-color: transparent;
-    border: 1px solid var(--tg-theme-hint-color, #ccc);
-    border-radius: 4px;
-    padding: 3px 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.na-btn:hover {
-    background-color: #e9ecef;
-    color: #343a40;
-}
-
-/* Style pour un critère marqué "Non Applicable" */
-.checklist-item.is-na .checklist-status::before {
-    content: '➖'; /* Icône neutre */
-    opacity: 0.7;
-}
-
-.checklist-item.is-na .checklist-text {
-    text-decoration: none; /* Pas de texte barré */
-    color: var(--tg-theme-hint-color, #6c757d);
-    font-style: italic;
-}
-
-.checklist-item.is-na .na-btn {
-    background-color: #6c757d;
-    color: white;
-    border-color: #6c757d;
-}
-
-/* DANS css/style.css (à la fin) */
-
 /* Styles pour les indicateurs multiples dans la modale */
 #variant-list-container {
     display: inline-flex;

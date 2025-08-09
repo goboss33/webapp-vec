@@ -23,7 +23,7 @@ export let resetVariantsBtn, noVariantsMessage;
 export let aliexpressLinkElement;
 export let checklistModal, checklistModalCloseBtn, checklistItemCustomImages,
            checklistItemGalleryCount, checklistItemMannequin, checklistItemVariantsAssigned,
-		   checklistItemSizeGuide, sizeGuideNaBtn;
+		   checklistItemSizeGuide;
 // NOUVEAUX ÉLÉMENTS DOM POUR LA SÉLECTION DES MANNEQUINS
 export let mannequinChoiceBtn, mannequinSelectionModal, mannequinModalCloseBtn, mannequinFilterAll, mannequinFilterHomme, mannequinFilterFemme, mannequinListContainer, mannequinSelectBtn, mannequinCancelBtn, mannequinFilterGreen, mannequinFilterOrange, mannequinFilterRed;
 // NOUVEAUX ÉLÉMENTS DOM POUR L'AFFICHAGE DANS LE BOUTON PRINCIPAL
@@ -138,7 +138,6 @@ export function initDomElements() {
     checklistItemMannequin = document.getElementById('checklist-item-mannequin');
     checklistItemVariantsAssigned = document.getElementById('checklist-item-variants-assigned');
 	checklistItemSizeGuide = document.getElementById('checklist-item-size-guide');
-    sizeGuideNaBtn = document.getElementById('size-guide-na-btn');
 	uploadImageBtn = document.getElementById('upload-image-btn');
     imageUploadInput = document.getElementById('image-upload-input');
 }
