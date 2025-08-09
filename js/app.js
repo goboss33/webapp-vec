@@ -203,11 +203,14 @@ const handleSaveChanges = async () => {
 // (À placer où vous mettez les autres fonctions de gestion, par exemple après handleSaveChanges)
 // DANS js/app.js
 
+// DANS js/app.js
+
 const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) {
-        return; // L'utilisateur a annulé la sélection
+        return;
     }
+    console.log('[UPLOAD_DEBUG] 1. Fichier sélectionné, début de l\'upload.');
 
     showLoading(`Upload de l'image "${file.name}"...`);
     if (uploadImageBtn) uploadImageBtn.disabled = true;
@@ -216,51 +219,53 @@ const handleImageUpload = async (event) => {
         const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
         const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
         
-        // La réponse de N8N va maintenant être utilisée
+        console.log('[UPLOAD_DEBUG] 2. Appel à l\'API avec les IDs de galerie:', galleryImageIds);
         const result = await uploadImageAPI(currentProductId, currentChatId, file, galleryImageIds);
-        console.log("app.js: Réponse du workflow d'upload:", result);
-
-        // --- DÉBUT DE LA LOGIQUE DE MISE À JOUR EN TEMPS RÉEL ---
+        
+        console.log('[UPLOAD_DEBUG] 3. Réponse reçue de N8N:', result);
 
         if (result && result.status === 'success' && result.newImage && result.newImage.id) {
+            console.log('[UPLOAD_DEBUG] 4. Condition de succès remplie. Traitement de la nouvelle image.');
             
-            // 1. On crée un objet image standard, comme les autres dans l'application
             const newImageObject = {
                 id: result.newImage.id,
                 url: result.newImage.url,
                 status: 'current',
-                uses: ['gallery'] // On lui assigne le rôle 'gallery' par défaut
+                uses: ['gallery']
             };
+            console.log('[UPLOAD_DEBUG] 5. Objet image créé:', newImageObject);
 
-            // 2. On ajoute cette nouvelle image au tableau de données global de l'application
             allImageData.push(newImageObject);
+            console.log('[UPLOAD_DEBUG] 6. Objet image ajouté à allImageData. Nouvelle taille du tableau:', allImageData.length);
 
-            // 3. On utilise la fonction existante pour ajouter la miniature au DOM dans la zone "Galerie"
             if (dropzoneGallery) {
+                console.log('[UPLOAD_DEBUG] 7. dropzoneGallery trouvée. Appel de addGalleryImageToDOM...');
                 addGalleryImageToDOM(newImageObject);
+                console.log('[UPLOAD_DEBUG] 8. addGalleryImageToDOM a été appelé.');
+            } else {
+                console.error('[UPLOAD_DEBUG] ERREUR: dropzoneGallery non trouvée !');
             }
 
-            // 4. (Bonus) Si la modale est ouverte, on ajoute aussi l'image au carrousel de la modale
             if (modalOverlay && modalOverlay.style.display === 'flex') {
+                console.log('[UPLOAD_DEBUG] 9. Modale ouverte. Appel de addImageToModalSwiper...');
                 addImageToModalSwiper(newImageObject);
             }
-
+            
             updateStatus(`Image "${file.name}" ajoutée à la galerie !`, 'success');
 
         } else {
-            // Si la réponse de N8N n'est pas celle attendue
+            console.error('[UPLOAD_DEBUG] ERREUR: La condition de succès a échoué. La réponse du serveur est invalide ou ne contient pas newImage.id.');
             throw new Error(result.message || "La réponse du serveur est invalide après l'upload.");
         }
         
-        // --- FIN DE LA LOGIQUE DE MISE À JOUR ---
-
     } catch (error) {
-        console.error("app.js: Erreur lors de l'upload de l'image:", error);
+        console.error("[UPLOAD_DEBUG] ERREUR CRITIQUE dans le bloc catch:", error);
         updateStatus(`Erreur d'upload: ${error.message}`, 'error');
     } finally {
         if (imageUploadInput) imageUploadInput.value = ''; 
         if (uploadImageBtn) uploadImageBtn.disabled = false;
         hideLoading();
+        console.log('[UPLOAD_DEBUG] 10. Fin de l\'opération (finally).');
     }
 };
 
