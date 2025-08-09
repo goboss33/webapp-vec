@@ -201,37 +201,63 @@ const handleSaveChanges = async () => {
 
 // --- 2. NOUVELLE FONCTION DE GESTION ---
 // (À placer où vous mettez les autres fonctions de gestion, par exemple après handleSaveChanges)
+// DANS js/app.js
+
 const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) {
         return; // L'utilisateur a annulé la sélection
     }
-    console.log(`app.js: Fichier sélectionné pour upload: ${file.name}, taille: ${file.size}`);
 
     showLoading(`Upload de l'image "${file.name}"...`);
     if (uploadImageBtn) uploadImageBtn.disabled = true;
 
     try {
-		
-        // --- DÉBUT DE LA MODIFICATION ---
-        // On récupère les IDs actuels de la galerie, comme dans handleSaveChanges
         const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
         const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
-
-        // On passe les IDs à la fonction d'API
-        const result = await uploadImageAPI(currentProductId, currentChatId, file, galleryImageIds);
-        // --- FIN DE LA MODIFICATION ---
-		
-        console.log("app.js: Réponse du workflow d'upload:", result);
-        updateStatus(`Image "${file.name}" uploadée avec succès !`, 'success');
         
-        // Phase 2: Ici, on utilisera le 'result' pour ajouter l'image au DOM.
+        // La réponse de N8N va maintenant être utilisée
+        const result = await uploadImageAPI(currentProductId, currentChatId, file, galleryImageIds);
+        console.log("app.js: Réponse du workflow d'upload:", result);
+
+        // --- DÉBUT DE LA LOGIQUE DE MISE À JOUR EN TEMPS RÉEL ---
+
+        if (result && result.status === 'success' && result.newImage && result.newImage.id) {
+            
+            // 1. On crée un objet image standard, comme les autres dans l'application
+            const newImageObject = {
+                id: result.newImage.id,
+                url: result.newImage.url,
+                status: 'current',
+                uses: ['gallery'] // On lui assigne le rôle 'gallery' par défaut
+            };
+
+            // 2. On ajoute cette nouvelle image au tableau de données global de l'application
+            allImageData.push(newImageObject);
+
+            // 3. On utilise la fonction existante pour ajouter la miniature au DOM dans la zone "Galerie"
+            if (dropzoneGallery) {
+                addGalleryImageToDOM(newImageObject);
+            }
+
+            // 4. (Bonus) Si la modale est ouverte, on ajoute aussi l'image au carrousel de la modale
+            if (modalOverlay && modalOverlay.style.display === 'flex') {
+                addImageToModalSwiper(newImageObject);
+            }
+
+            updateStatus(`Image "${file.name}" ajoutée à la galerie !`, 'success');
+
+        } else {
+            // Si la réponse de N8N n'est pas celle attendue
+            throw new Error(result.message || "La réponse du serveur est invalide après l'upload.");
+        }
+        
+        // --- FIN DE LA LOGIQUE DE MISE À JOUR ---
 
     } catch (error) {
         console.error("app.js: Erreur lors de l'upload de l'image:", error);
         updateStatus(`Erreur d'upload: ${error.message}`, 'error');
     } finally {
-        // Vider l'input pour permettre de re-sélectionner le même fichier
         if (imageUploadInput) imageUploadInput.value = ''; 
         if (uploadImageBtn) uploadImageBtn.disabled = false;
         hideLoading();
