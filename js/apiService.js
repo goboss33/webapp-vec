@@ -143,30 +143,27 @@ export async function fetchMannequinsAPI(mannequinId = null) {
  * @param {string} productId - L'ID du produit associé.
  * @param {string} chatId - L'ID du chat de l'utilisateur.
  * @param {File} file - Le fichier image à uploader.
+ * @param {Array<string>} currentGalleryImageIds - La liste des IDs des images déjà dans la galerie.
  * @returns {Promise<Object>} La promesse résolue avec la réponse du serveur.
  */
-export async function uploadImageAPI(productId, chatId, file) {
+//  ▼▼▼ LA CORRECTION EST ICI, SUR CETTE LIGNE ▼▼▼
+export async function uploadImageAPI(productId, chatId, file, currentGalleryImageIds) {
     console.log(`apiService.js: Uploading image for product ${productId}`);
     
     const formData = new FormData();
     formData.append('productId', productId);
     formData.append('chatId', chatId);
-    // Le troisième argument 'file.name' est important pour le backend
-    formData.append('file', file, file.name); 
-	
-	// --- DÉBUT DE LA MODIFICATION ---
-    // On ajoute chaque ID de la galerie. FormData les enverra comme un tableau.
+    formData.append('file', file, file.name);
+
+    // Ce code est maintenant correct car currentGalleryImageIds est bien défini
     if (currentGalleryImageIds && currentGalleryImageIds.length > 0) {
         currentGalleryImageIds.forEach(id => {
             formData.append('currentGalleryImageIds[]', id);
         });
     }
-    // --- FIN DE LA MODIFICATION ---
-	
+
     const response = await fetch(N8N_UPLOAD_IMAGE_WEBHOOK_URL, {
         method: 'POST',
-        // Pas de header 'Content-Type', le navigateur le mettra automatiquement 
-        // à 'multipart/form-data' avec la bonne délimitation (boundary).
         body: formData 
     });
 
@@ -175,11 +172,9 @@ export async function uploadImageAPI(productId, chatId, file) {
         try {
             const errorData = await response.json();
             errorMsg = errorData.message || JSON.stringify(errorData);
-        } catch (e) { /* Ignorer si la réponse d'erreur n'est pas du JSON */ }
+        } catch (e) { /* Ignorer */ }
         throw new Error(errorMsg);
     }
     
-    // Pour l'instant, on s'attend à ce que le workflow ne renvoie rien de spécial,
-    // mais on prépare le code pour quand il renverra des données.
     return response.json(); 
 }
