@@ -124,12 +124,17 @@ function updateSizeGuideIcon(imageId, isSizeGuide) {
 // Elle collecte toujours les IDs depuis les .thumbnail-wrapper présents dans les zones au moment du clic.
 // REMPLACEZ VOTRE FONCTION handleSaveChanges EXISTANTE PAR CELLE-CI
 
+// js/app.js
+
 const handleSaveChanges = async () => {
     console.log('app.js: handleSaveChanges started.');
-    showLoading("Sauvegarde des modifications...");
+    
+    // Étape 1: Affiche le message "Sauvegarde en cours..."
+    showLoading("Sauvegarde en cours..."); 
     updateStatus("Enregistrement des modifications...", 'info');
     if (saveChangesButton) saveChangesButton.disabled = true;
 
+    // --- Le reste de votre code de collecte de données reste inchangé ---
     const mainImageThumb = dropzoneMain ? dropzoneMain.querySelector('.thumbnail-wrapper') : null;
     const mainImageId = mainImageThumb ? mainImageThumb.dataset.imageId : null;
 
@@ -147,9 +152,7 @@ const handleSaveChanges = async () => {
         .map(imgData => imgData.id);
 
     const imageProcessingStatus = parseInt(productStatusToggleBtn ? productStatusToggleBtn.dataset.status : '0', 10);
-
-    // --- NOUVELLE LOGIQUE DE GESTION DES VARIANTES ---
-    const variantMappings = variantAttributeManager.getVariantMappings(); // Appel au nouveau manager
+    const variantMappings = variantAttributeManager.getVariantMappings();
     
     const payload = {
 		chatId: currentChatId,
@@ -160,41 +163,31 @@ const handleSaveChanges = async () => {
         customGalleryImageIds: customGalleryImageIds,
         sizeGuideImageId: sizeGuideImageId,
         imageIdsToDelete: imageIdsToDelete,
-        variantMappings: variantMappings,           // Nom de clé générique
-        attributeSlug: currentAttributeSlug,        // Nom de clé générique
+        variantMappings: variantMappings,
+        attributeSlug: currentAttributeSlug,
         linked_mannequin_id: selectedMannequinId
     };
-    // --- FIN DE LA NOUVELLE LOGIQUE ---
 
     console.log("app.js: Données envoyées à n8n:", payload);
 
     try {
         const result = await saveChangesAPI(payload);
         console.log("app.js: Réponse de n8n (Mise à jour):", result);
-        updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
-
-        if (imageIdsToDelete.length > 0) {
-            allImageData = allImageData.filter(imgData => !imageIdsToDelete.includes(imgData.id));
-            imageIdsToDelete.forEach(deletedId => {
-                const itemToRemove = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${deletedId}"]`);
-                if (itemToRemove) itemToRemove.remove();
-            });
-            if (modalOverlay.style.display === 'flex') {
-                const currentModalImgData = getCurrentModalImage();
-                if (currentModalImgData && imageIdsToDelete.includes(currentModalImgData.id)) {
-                    closeModal();
-                    updateStatus("Modifications enregistrées. L'image affichée a été supprimée.", 'info');
-                }
-            }
+        
+        // La sauvegarde est réussie, nous pouvons maintenant fermer.
+        // On vérifie que l'API Telegram est bien disponible.
+        if (window.Telegram && window.Telegram.WebApp) {
+            Telegram.WebApp.close();
         }
+
     } catch (error) {
         console.error("app.js: Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
-    } finally {
+        // En cas d'erreur, on ne ferme pas, on réactive les boutons et on cache le chargement.
         if (saveChangesButton) saveChangesButton.disabled = false;
         hideLoading();
-        console.log('app.js: handleSaveChanges finished.');
-    }
+    } 
+    // Le bloc 'finally' n'est plus nécessaire ici car on gère la fin dans le 'try' et le 'catch'.
 };
 
 // DANS js/app.js
