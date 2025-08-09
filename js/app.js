@@ -152,7 +152,7 @@ const handleSaveChanges = async () => {
     const variantMappings = variantAttributeManager.getVariantMappings(); // Appel au nouveau manager
     
     const payload = {
-        chatId: currentChatId,
+		chatId: currentChatId,
         productId: currentProductId,
         image_processing_status: imageProcessingStatus,
         mainImageId: mainImageId,
@@ -160,27 +160,37 @@ const handleSaveChanges = async () => {
         customGalleryImageIds: customGalleryImageIds,
         sizeGuideImageId: sizeGuideImageId,
         imageIdsToDelete: imageIdsToDelete,
-        variantMappings: variantMappings,
-        attributeSlug: currentAttributeSlug,
+        variantMappings: variantMappings,           // Nom de clé générique
+        attributeSlug: currentAttributeSlug,        // Nom de clé générique
         linked_mannequin_id: selectedMannequinId
     };
+    // --- FIN DE LA NOUVELLE LOGIQUE ---
+
+    console.log("app.js: Données envoyées à n8n:", payload);
 
     try {
         const result = await saveChangesAPI(payload);
         console.log("app.js: Réponse de n8n (Mise à jour):", result);
-        updateStatus(result.message || "Modifications enregistrées !", 'success');
+        updateStatus(result.message || "Modifications enregistrées avec succès !", 'success');
 
-        // On ne gère que la fermeture ici.
-        // La disparition de l'écran de chargement sera gérée dans 'finally'.
-        if (window.Telegram && window.Telegram.WebApp) {
-            Telegram.WebApp.close();
+        if (imageIdsToDelete.length > 0) {
+            allImageData = allImageData.filter(imgData => !imageIdsToDelete.includes(imgData.id));
+            imageIdsToDelete.forEach(deletedId => {
+                const itemToRemove = imageCarousel.querySelector(`.carousel-image-container[data-image-id="${deletedId}"]`);
+                if (itemToRemove) itemToRemove.remove();
+            });
+            if (modalOverlay.style.display === 'flex') {
+                const currentModalImgData = getCurrentModalImage();
+                if (currentModalImgData && imageIdsToDelete.includes(currentModalImgData.id)) {
+                    closeModal();
+                    updateStatus("Modifications enregistrées. L'image affichée a été supprimée.", 'info');
+                }
+            }
         }
-
     } catch (error) {
         console.error("app.js: Erreur lors de l'enregistrement via n8n:", error);
         updateStatus(`Erreur enregistrement: ${error.message}`, 'error');
     } finally {
-        // Ce bloc s'exécutera TOUJOURS, même si la webapp ne se ferme pas.
         if (saveChangesButton) saveChangesButton.disabled = false;
         hideLoading();
         console.log('app.js: handleSaveChanges finished.');
