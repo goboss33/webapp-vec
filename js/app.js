@@ -38,7 +38,9 @@ import {
     checklistItemMannequin,
     checklistItemVariantsAssigned,
     checklistItemSizeGuide,
-    sizeGuideNaBtn
+    sizeGuideNaBtn,
+	uploadImageBtn,
+    imageUploadInput
     
 } from './dom.js';
 console.log('app.js: DOM element variables and init function imported.');
@@ -46,7 +48,7 @@ console.log('app.js: DOM element variables and init function imported.');
 import { updateStatus, showLoading, hideLoading, resetModalToActionView, registerOnStatusUpdateCallback } from './uiUtils.js';
 console.log('app.js: UI utility functions imported.');
 
-import { fetchProductDataAPI, saveChangesAPI, executeImageActionAPI, fetchMannequinsAPI } from './apiService.js'; // Importer fetchMannequinsAPI
+import { fetchProductDataAPI, saveChangesAPI, executeImageActionAPI, fetchMannequinsAPI, uploadImageAPI } from './apiService.js';
 console.log('app.js: API service functions imported.');
 
 import { initializeSortableManager, addGalleryImageToDOM } from './sortableManager.js';
@@ -196,6 +198,38 @@ const handleSaveChanges = async () => {
         console.log('app.js: handleSaveChanges finished.');
     }
 };
+
+// --- 2. NOUVELLE FONCTION DE GESTION ---
+// (À placer où vous mettez les autres fonctions de gestion, par exemple après handleSaveChanges)
+const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+        return; // L'utilisateur a annulé la sélection
+    }
+    console.log(`app.js: Fichier sélectionné pour upload: ${file.name}, taille: ${file.size}`);
+
+    showLoading(`Upload de l'image "${file.name}"...`);
+    if (uploadImageBtn) uploadImageBtn.disabled = true;
+
+    try {
+        // Pour l'instant, on ne fait rien avec le résultat, comme demandé.
+        const result = await uploadImageAPI(currentProductId, currentChatId, file);
+        console.log("app.js: Réponse du workflow d'upload:", result);
+        updateStatus(`Image "${file.name}" uploadée avec succès !`, 'success');
+        
+        // Phase 2: Ici, on utilisera le 'result' pour ajouter l'image au DOM.
+
+    } catch (error) {
+        console.error("app.js: Erreur lors de l'upload de l'image:", error);
+        updateStatus(`Erreur d'upload: ${error.message}`, 'error');
+    } finally {
+        // Vider l'input pour permettre de re-sélectionner le même fichier
+        if (imageUploadInput) imageUploadInput.value = ''; 
+        if (uploadImageBtn) uploadImageBtn.disabled = false;
+        hideLoading();
+    }
+};
+
 
 // DANS js/app.js
 
@@ -1410,6 +1444,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+	
+	// --- AJOUTEZ CE BLOC D'ÉCOUTEURS ---
+    if (uploadImageBtn) {
+        uploadImageBtn.addEventListener('click', () => {
+            // Déclenche le clic sur l'input de fichier qui est caché
+            if (imageUploadInput) {
+                imageUploadInput.click();
+            }
+        });
+    }
+
+    if (imageUploadInput) {
+        imageUploadInput.addEventListener('change', handleImageUpload);
+    }
+    // --- FIN DE L'AJOUT ---
 
     // Récupérer les données initiales
     fetchProductData();

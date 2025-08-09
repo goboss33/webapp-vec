@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>V7</title>
+    <title>V8</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
@@ -63,10 +63,14 @@
         </div>
 
         <div id="dropzone-gallery" class="dropzone full-width-zone" data-role="gallery">
-             <h3>Galerie</h3>
-             <div class="thumbnail-container">
-                 </div>
-        </div>
+			 <div class="dropzone-header"> <h3>Galerie</h3>
+				 <button id="upload-image-btn" class="upload-btn" title="Uploader une nouvelle image">+</button>
+			 </div>
+			 <div class="thumbnail-container">
+				 </div>
+		</div>
+
+		<input type="file" id="image-upload-input" accept="image/*" style="display: none;">
 
     </div>
 	<hr>

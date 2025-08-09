@@ -2,7 +2,8 @@
 import {
     N8N_GET_DATA_WEBHOOK_URL,
     N8N_UPDATE_DATA_WEBHOOK_URL,
-    N8N_GET_MANNEQUINS_WEBHOOK_URL
+    N8N_GET_MANNEQUINS_WEBHOOK_URL,
+	N8N_UPLOAD_IMAGE_WEBHOOK_URL
     // N8N_CROP_IMAGE_WEBHOOK_URL, // Sera utilisé par une fonction d'action spécifique
     // N8N_REMOVE_WATERMARK_WEBHOOK_URL,
     // N8N_GENERATE_MOCKUP_WEBHOOK_URL
@@ -135,4 +136,41 @@ export async function fetchMannequinsAPI(mannequinId = null) {
 
     // Si les données sont déjà au bon format (un simple tableau), on les retourne directement.
     return data;
+}
+
+/**
+ * Uploade un fichier image vers un webhook N8N.
+ * @param {string} productId - L'ID du produit associé.
+ * @param {string} chatId - L'ID du chat de l'utilisateur.
+ * @param {File} file - Le fichier image à uploader.
+ * @returns {Promise<Object>} La promesse résolue avec la réponse du serveur.
+ */
+export async function uploadImageAPI(productId, chatId, file) {
+    console.log(`apiService.js: Uploading image for product ${productId}`);
+    
+    const formData = new FormData();
+    formData.append('productId', productId);
+    formData.append('chatId', chatId);
+    // Le troisième argument 'file.name' est important pour le backend
+    formData.append('file', file, file.name); 
+
+    const response = await fetch(N8N_UPLOAD_IMAGE_WEBHOOK_URL, {
+        method: 'POST',
+        // Pas de header 'Content-Type', le navigateur le mettra automatiquement 
+        // à 'multipart/form-data' avec la bonne délimitation (boundary).
+        body: formData 
+    });
+
+    if (!response.ok) {
+        let errorMsg = `Erreur serveur N8N (uploadImageAPI): ${response.status} ${response.statusText}`;
+        try {
+            const errorData = await response.json();
+            errorMsg = errorData.message || JSON.stringify(errorData);
+        } catch (e) { /* Ignorer si la réponse d'erreur n'est pas du JSON */ }
+        throw new Error(errorMsg);
+    }
+    
+    // Pour l'instant, on s'attend à ce que le workflow ne renvoie rien de spécial,
+    // mais on prépare le code pour quand il renverra des données.
+    return response.json(); 
 }

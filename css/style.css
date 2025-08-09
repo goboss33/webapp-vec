@@ -1677,3 +1677,55 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
     /* Style pour les variantes texte si nécessaire (non implémenté ici) */
     display: none; 
 }
+
+/* DANS css/style.css (à ajouter à la fin du fichier) */
+
+/* Conteneur pour le titre de la dropzone pour aligner le titre et le bouton */
+.dropzone-header {
+    display: flex;
+    justify-content: center; /* Centre le titre par défaut */
+    align-items: center;
+    position: relative; /* Contexte de positionnement pour le bouton */
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    background-color: rgba(128,128,128,0.03);
+}
+
+.dropzone-header h3 {
+    margin: 0;
+    padding: 0;
+    border-bottom: none; /* On enlève la bordure du h3 car elle est sur le header */
+    background-color: transparent;
+}
+
+/* Style du bouton d'upload "+" */
+.upload-btn {
+    position: absolute; /* Positionnement absolu par rapport au .dropzone-header */
+    left: 10px; /* Le place à gauche */
+    top: 50%;
+    transform: translateY(-50%); /* Centrage vertical parfait */
+    
+    width: 28px;
+    height: 28px;
+    background-color: var(--tg-theme-button-color, #007bff);
+    color: var(--tg-theme-button-text-color, #fff);
+    border: none;
+    border-radius: 50%; /* Rond */
+    font-size: 22px; /* Taille du "+" */
+    font-weight: bold;
+    line-height: 26px; /* Ajustement pour centrer le "+" verticalement */
+    padding: 0;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.upload-btn:hover {
+    background-color: #0056b3; /* Un peu plus foncé au survol */
+    transform: translateY(-50%) scale(1.1); /* Léger grossissement */
+}
+
+.upload-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

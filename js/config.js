@@ -13,3 +13,5 @@ export const N8N_UPSCALE_IMAGE_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook
 // NOUVELLE URL POUR LA RÉCUPÉRATION DES MANNEQUINS
 export const N8N_GET_MANNEQUINS_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/get-mannequins';
 console.log('config.js: N8N_GET_MANNEQUINS_WEBHOOK_URL added:', N8N_GET_MANNEQUINS_WEBHOOK_URL);
+
+export const N8N_UPLOAD_IMAGE_WEBHOOK_URL = 'https://n8n.scalableweb.ch/webhook/webapp/upload-image';
