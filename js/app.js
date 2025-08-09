@@ -1125,9 +1125,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStatus("Erreur: ID produit manquant dans l'URL.", "error");
         return; 
     }
-	if (!currentChatId) { // <-- NOUVELLE LIGNE : Sécurité
-        currentProductId = "-4875756375"; //chat par défaut si pas de paramètre d'url
-    }
+	if (!currentChatId) { 
+		console.warn("app.js: ChatId non trouvé dans l'URL. Utilisation de l'ID par défaut.");
+		currentChatId = "-4875756375"; // Correction ici !
+	}
     if (productIdElement) productIdElement.textContent = currentProductId;
     console.log('app.js: currentProductId set to:', currentProductId);
 
