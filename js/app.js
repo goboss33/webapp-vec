@@ -150,20 +150,7 @@ const handleSaveChanges = async () => {
     // --- NOUVELLE LOGIQUE DE GESTION DES VARIANTES ---
     const variantMappings = variantAttributeManager.getVariantMappings(); // Appel au nouveau manager
     
-    // --- NOUVELLE LIGNE : Récupérer le chatId de Telegram ---
-    let chatId = null;
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.chat) {
-        chatId = window.Telegram.WebApp.initDataUnsafe.chat.id;
-        console.log(`app.js: ChatId récupéré : ${chatId}`);
-    } else {
-        console.warn("app.js: Impossible de récupérer le chatId depuis l'API Telegram.");
-        // Optionnel : Mettre un ID par défaut pour le débogage hors de Telegram
-        chatId = '-4875756375'; //204331163
-    }
-    
     const payload = {
-        // --- NOUVELLE LIGNE : Ajouter le chatId au payload ---
-        chatId: chatId,
         productId: currentProductId,
         image_processing_status: imageProcessingStatus,
         mainImageId: mainImageId,
@@ -171,10 +158,11 @@ const handleSaveChanges = async () => {
         customGalleryImageIds: customGalleryImageIds,
         sizeGuideImageId: sizeGuideImageId,
         imageIdsToDelete: imageIdsToDelete,
-        variantMappings: variantMappings,
-        attributeSlug: currentAttributeSlug,
+        variantMappings: variantMappings,           // Nom de clé générique
+        attributeSlug: currentAttributeSlug,        // Nom de clé générique
         linked_mannequin_id: selectedMannequinId
     };
+    // --- FIN DE LA NOUVELLE LOGIQUE ---
 
     console.log("app.js: Données envoyées à n8n:", payload);
 
