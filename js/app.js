@@ -224,12 +224,15 @@ const handleImageUpload = async (event) => {
         
         console.log('[UPLOAD_DEBUG] 3. Réponse reçue de N8N:', result);
 
-        if (result && result.status === 'success' && result.newImage && result.newImage.id) {
+        // ▼▼▼ LA CORRECTION EST ICI ▼▼▼
+        // On vérifie maintenant la présence de `newImageId` directement dans l'objet `result`
+        if (result && result.status === 'success' && result.newImageId) {
             console.log('[UPLOAD_DEBUG] 4. Condition de succès remplie. Traitement de la nouvelle image.');
             
+            // On crée l'objet en utilisant les clés plates de la réponse
             const newImageObject = {
-                id: result.newImage.id,
-                url: result.newImage.url,
+                id: result.newImageId,      // On utilise result.newImageId
+                url: result.newImageUrl,    // On utilise result.newImageUrl
                 status: 'current',
                 uses: ['gallery']
             };
@@ -254,7 +257,7 @@ const handleImageUpload = async (event) => {
             updateStatus(`Image "${file.name}" ajoutée à la galerie !`, 'success');
 
         } else {
-            console.error('[UPLOAD_DEBUG] ERREUR: La condition de succès a échoué. La réponse du serveur est invalide ou ne contient pas newImage.id.');
+            console.error('[UPLOAD_DEBUG] ERREUR: La condition de succès a échoué. La réponse du serveur est invalide ou ne contient pas newImageId.');
             throw new Error(result.message || "La réponse du serveur est invalide après l'upload.");
         }
         
