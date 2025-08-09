@@ -1635,8 +1635,16 @@ body.dragging-color-swatch .thumbnail-wrapper:hover {
 }
 
 .image-color-indicator-placeholder .term-indicator-item.is-button-indicator {
-    /* Style pour les variantes texte si nécessaire (non implémenté ici) */
-    display: none; 
+    /* On retire "display: none;" et on applique un style de pastille */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #555; /* Fond gris foncé pour la pastille */
+    color: white; /* Texte blanc */
+    font-size: 8px; /* Petite police pour les initiales */
+    font-weight: bold;
+    line-height: 1;
+    /* Les dimensions et la forme ronde sont déjà gérées par .term-indicator-item */
 }
 
 /* DANS css/style.css (à ajouter à la fin du fichier) */

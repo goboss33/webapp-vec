@@ -148,9 +148,9 @@ export function renderTermIndicator(imageId, termsDataArray) {
     if (!placeholders.length) return;
 
     placeholders.forEach(placeholder => {
-        placeholder.innerHTML = ''; // Nettoyer les anciens indicateurs
-        placeholder.className = 'image-color-indicator-placeholder'; // Reset classes
-        placeholder.classList.add('multiple-indicators'); // Classe pour gérer le layout de plusieurs pastilles
+        placeholder.innerHTML = ''; 
+        placeholder.className = 'image-color-indicator-placeholder';
+        placeholder.classList.add('multiple-indicators');
         
         if (!termsDataArray || termsDataArray.length === 0) {
             removeTermIndicator(imageId);
@@ -168,7 +168,10 @@ export function renderTermIndicator(imageId, termsDataArray) {
                 indicator.style.backgroundColor = termData.hex;
             } else {
                 indicator.classList.add('is-button-indicator');
-                indicator.textContent = termData.termName;
+                // --- DÉBUT DE LA MODIFICATION ---
+                // On prend les 2 premières lettres du nom et on les met en majuscules
+                indicator.textContent = termData.termName.substring(0, 2).toUpperCase();
+                // --- FIN DE LA MODIFICATION ---
             }
             placeholder.appendChild(indicator);
         });
