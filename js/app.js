@@ -66,6 +66,7 @@ console.log('app.js: Variant manager functions imported.');
 
 // --- Variables Globales ---
 let currentProductId = null;
+let currentChatId = null;
 let allImageData = [];
 let currentEditActionContext = null;
 let currentAttributeSlug = null;
@@ -151,6 +152,7 @@ const handleSaveChanges = async () => {
     const variantMappings = variantAttributeManager.getVariantMappings(); // Appel au nouveau manager
     
     const payload = {
+		chatId: currentChatId,
         productId: currentProductId,
         image_processing_status: imageProcessingStatus,
         mainImageId: mainImageId,
@@ -1117,10 +1119,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... (Récupération productId - inchangé) ...
     const urlParams = new URLSearchParams(window.location.search);
     currentProductId = urlParams.get('productId');
+	currentChatId = urlParams.get('chatId');
      if (!currentProductId) { 
         console.error('app.js: Product ID not found in URL. Cannot proceed.');
         updateStatus("Erreur: ID produit manquant dans l'URL.", "error");
         return; 
+    }
+	if (!currentChatId) { // <-- NOUVELLE LIGNE : Sécurité
+        currentProductId = "-4875756375"; //chat par défaut si pas de paramètre d'url
     }
     if (productIdElement) productIdElement.textContent = currentProductId;
     console.log('app.js: currentProductId set to:', currentProductId);
