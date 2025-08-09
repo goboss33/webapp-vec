@@ -316,8 +316,9 @@ function runAllValidationChecks() {
     }
 
     // --- Critère 5: Guide des tailles (SIMPLIFIÉ) ---
-    // Le statut est maintenant un simple booléen : vrai ou faux.
-    validationCriteria.sizeGuide = allImageData.some(img => img.uses?.includes('size_guide'));
+    const hasSizeGuide = allImageData.some(img => img.uses?.includes('size_guide'));
+    console.log(`[GUIDE_DEBUG] Dans runAllValidationChecks, résultat de 'hasSizeGuide': ${hasSizeGuide}`);
+    validationCriteria.sizeGuide = hasSizeGuide;
 
     // --- Mise à jour de l'UI (le code ici fonctionne toujours car il gère déjà 'na' pour les variantes) ---
     const updateChecklistItemUI = (element, status) => {
@@ -401,51 +402,73 @@ function handleSettingsClick(event) {
 // Gère le clic sur le bouton "Guide des tailles" dans la modale
 // DANS js/app.js
 
-// Gère le clic sur le bouton "Guide des tailles" dans la modale
+// DANS js/app.js
+
 function handleSizeGuideToggle(event) {
-    console.log('app.js: handleSizeGuideToggle called.');
+    console.log('--- [GUIDE_DEBUG] DÉBUT handleSizeGuideToggle ---');
     const button = event.currentTarget;
     const imageId = button.dataset.currentImageId;
-    if (!imageId) return;
+    if (!imageId) {
+        console.error('[GUIDE_DEBUG] ERREUR: Pas d\'ID d\'image sur le bouton.');
+        return;
+    }
+    console.log(`[GUIDE_DEBUG] Image ID ciblée: ${imageId}`);
     
     const imageIdNum = parseInt(imageId, 10);
-    const wasActive = button.classList.contains('active-size-guide');
-    const newActiveState = !wasActive;
-    let previousSizeGuideId = null;
+    const imageToUpdate = allImageData.find(img => img.id === imageIdNum);
+
+    if (!imageToUpdate) {
+        console.error(`[GUIDE_DEBUG] ERREUR: Image avec ID ${imageIdNum} non trouvée dans allImageData.`);
+        return;
+    }
+
+    console.log('[GUIDE_DEBUG] Image trouvée. État "uses" AVANT modification:', JSON.stringify(imageToUpdate.uses));
+    
+    const newActiveState = !button.classList.contains('active-size-guide');
+    console.log(`[GUIDE_DEBUG] Nouvel état visé pour le guide: ${newActiveState}`);
 
     // Met à jour le tableau de données allImageData
     allImageData.forEach(imgData => {
         const uses = imgData.uses || [];
-        const isCurrentlySizeGuide = uses.includes('size_guide');
-        const idMatches = imgData.id === imageIdNum;
-
         if (newActiveState) {
-            if (idMatches) {
-                if (!isCurrentlySizeGuide) imgData.uses = [...uses, 'size_guide'];
-            } else if (isCurrentlySizeGuide) {
-                previousSizeGuideId = imgData.id;
+            // Si on active le guide pour notre image
+            if (imgData.id === imageIdNum) {
+                if (!uses.includes('size_guide')) {
+                    imgData.uses = [...uses, 'size_guide'];
+                }
+            } else { // Pour toutes les autres images, on le désactive
                 imgData.uses = uses.filter(use => use !== 'size_guide');
             }
-        } else {
-            if (idMatches && isCurrentlySizeGuide) {
+        } else { // Si on désactive le guide pour notre image
+            if (imgData.id === imageIdNum) {
                 imgData.uses = uses.filter(use => use !== 'size_guide');
             }
         }
     });
 
-    // Met à jour les éléments visuels (bouton et icônes)
-    if (newActiveState) button.classList.add('active-size-guide');
-    else button.classList.remove('active-size-guide');
+    console.log('[GUIDE_DEBUG] Image trouvée. État "uses" APRÈS modification:', JSON.stringify(imageToUpdate.uses));
+    console.log('[GUIDE_DEBUG] Mise à jour des icônes visuelles...');
     
-    updateSizeGuideIcon(imageIdNum, newActiveState);
-    if (previousSizeGuideId !== null) updateSizeGuideIcon(previousSizeGuideId, false);
+    // Met à jour tous les éléments visuels
+    document.querySelectorAll('[data-image-id]').forEach(el => {
+        const id = parseInt(el.dataset.imageId, 10);
+        const imgData = allImageData.find(img => img.id === id);
+        if (imgData) {
+            updateSizeGuideIcon(id, imgData.uses?.includes('size_guide'));
+        }
+    });
+
+    if (newActiveState) {
+        button.classList.add('active-size-guide');
+    } else {
+        button.classList.remove('active-size-guide');
+    }
     
     updateStatus("Statut 'Guide des tailles' mis à jour localement.", "info");
 
-    // --- DÉBUT DE LA CORRECTION ---
-    // On appelle manuellement la fonction de validation pour rafraîchir la checklist.
+    console.log('[GUIDE_DEBUG] Appel de runAllValidationChecks...');
     runAllValidationChecks();
-    // --- FIN DE LA CORRECTION ---
+    console.log('--- [GUIDE_DEBUG] FIN handleSizeGuideToggle ---');
 }
 
 // Gère le clic sur le bouton "DEL" dans le carrousel OU l'appel direct depuis la modale
