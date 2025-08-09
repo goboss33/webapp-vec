@@ -399,20 +399,26 @@ function handleSettingsClick(event) {
 }
 
 // Gère le clic sur le bouton "Guide des tailles" dans la modale
+// DANS js/app.js
+
+// Gère le clic sur le bouton "Guide des tailles" dans la modale
 function handleSizeGuideToggle(event) {
-    // ... (Cette fonction reste inchangée, vous pouvez la garder telle quelle)
     console.log('app.js: handleSizeGuideToggle called.');
     const button = event.currentTarget;
     const imageId = button.dataset.currentImageId;
     if (!imageId) return;
+    
     const imageIdNum = parseInt(imageId, 10);
     const wasActive = button.classList.contains('active-size-guide');
     const newActiveState = !wasActive;
     let previousSizeGuideId = null;
+
+    // Met à jour le tableau de données allImageData
     allImageData.forEach(imgData => {
         const uses = imgData.uses || [];
         const isCurrentlySizeGuide = uses.includes('size_guide');
         const idMatches = imgData.id === imageIdNum;
+
         if (newActiveState) {
             if (idMatches) {
                 if (!isCurrentlySizeGuide) imgData.uses = [...uses, 'size_guide'];
@@ -426,11 +432,20 @@ function handleSizeGuideToggle(event) {
             }
         }
     });
+
+    // Met à jour les éléments visuels (bouton et icônes)
     if (newActiveState) button.classList.add('active-size-guide');
     else button.classList.remove('active-size-guide');
+    
     updateSizeGuideIcon(imageIdNum, newActiveState);
     if (previousSizeGuideId !== null) updateSizeGuideIcon(previousSizeGuideId, false);
+    
     updateStatus("Statut 'Guide des tailles' mis à jour localement.", "info");
+
+    // --- DÉBUT DE LA CORRECTION ---
+    // On appelle manuellement la fonction de validation pour rafraîchir la checklist.
+    runAllValidationChecks();
+    // --- FIN DE LA CORRECTION ---
 }
 
 // Gère le clic sur le bouton "DEL" dans le carrousel OU l'appel direct depuis la modale
