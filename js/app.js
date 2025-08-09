@@ -38,7 +38,6 @@ import {
     checklistItemMannequin,
     checklistItemVariantsAssigned,
     checklistItemSizeGuide,
-    sizeGuideNaBtn,
 	uploadImageBtn,
     imageUploadInput
     
