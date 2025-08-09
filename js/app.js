@@ -212,8 +212,16 @@ const handleImageUpload = async (event) => {
     if (uploadImageBtn) uploadImageBtn.disabled = true;
 
     try {
-        // Pour l'instant, on ne fait rien avec le résultat, comme demandé.
-        const result = await uploadImageAPI(currentProductId, currentChatId, file);
+		
+        // --- DÉBUT DE LA MODIFICATION ---
+        // On récupère les IDs actuels de la galerie, comme dans handleSaveChanges
+        const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
+        const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
+
+        // On passe les IDs à la fonction d'API
+        const result = await uploadImageAPI(currentProductId, currentChatId, file, galleryImageIds);
+        // --- FIN DE LA MODIFICATION ---
+		
         console.log("app.js: Réponse du workflow d'upload:", result);
         updateStatus(`Image "${file.name}" uploadée avec succès !`, 'success');
         

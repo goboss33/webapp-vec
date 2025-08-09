@@ -153,7 +153,16 @@ export async function uploadImageAPI(productId, chatId, file) {
     formData.append('chatId', chatId);
     // Le troisième argument 'file.name' est important pour le backend
     formData.append('file', file, file.name); 
-
+	
+	// --- DÉBUT DE LA MODIFICATION ---
+    // On ajoute chaque ID de la galerie. FormData les enverra comme un tableau.
+    if (currentGalleryImageIds && currentGalleryImageIds.length > 0) {
+        currentGalleryImageIds.forEach(id => {
+            formData.append('currentGalleryImageIds[]', id);
+        });
+    }
+    // --- FIN DE LA MODIFICATION ---
+	
     const response = await fetch(N8N_UPLOAD_IMAGE_WEBHOOK_URL, {
         method: 'POST',
         // Pas de header 'Content-Type', le navigateur le mettra automatiquement 
