@@ -158,7 +158,7 @@ const handleSaveChanges = async () => {
     } else {
         console.warn("app.js: Impossible de récupérer le chatId depuis l'API Telegram.");
         // Optionnel : Mettre un ID par défaut pour le débogage hors de Telegram
-        chatId = '204331163'; 
+        chatId = '-4875756375'; //204331163
     }
     
     const payload = {
