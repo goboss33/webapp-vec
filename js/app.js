@@ -204,13 +204,14 @@ const handleSaveChanges = async () => {
 
 // DANS js/app.js
 
+// DANS js/app.js
+
 const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) {
         return;
     }
-    console.log('[UPLOAD_DEBUG] 1. Fichier sélectionné, début de l\'upload.');
-
+    // J'ai retiré les logs pour ne garder que le code final et propre.
     showLoading(`Upload de l'image "${file.name}"...`);
     if (uploadImageBtn) uploadImageBtn.disabled = true;
 
@@ -218,56 +219,43 @@ const handleImageUpload = async (event) => {
         const galleryImageThumbs = dropzoneGallery ? dropzoneGallery.querySelectorAll('.thumbnail-wrapper') : [];
         const galleryImageIds = Array.from(galleryImageThumbs).map(wrapper => wrapper.dataset.imageId);
         
-        console.log('[UPLOAD_DEBUG] 2. Appel à l\'API avec les IDs de galerie:', galleryImageIds);
         const result = await uploadImageAPI(currentProductId, currentChatId, file, galleryImageIds);
         
-        console.log('[UPLOAD_DEBUG] 3. Réponse reçue de N8N:', result);
-
-        // ▼▼▼ LA CORRECTION EST ICI ▼▼▼
-        // On vérifie maintenant la présence de `newImageId` directement dans l'objet `result`
         if (result && result.status === 'success' && result.newImageId) {
-            console.log('[UPLOAD_DEBUG] 4. Condition de succès remplie. Traitement de la nouvelle image.');
             
-            // On crée l'objet en utilisant les clés plates de la réponse
+            // --- DÉBUT DE LA CORRECTION ---
+            // On s'assure que l'ID est un NOMBRE dès sa création.
             const newImageObject = {
-                id: result.newImageId,      // On utilise result.newImageId
-                url: result.newImageUrl,    // On utilise result.newImageUrl
+                id: parseInt(result.newImageId, 10), // La correction est ici
+                url: result.newImageUrl,
                 status: 'current',
                 uses: ['gallery']
             };
-            console.log('[UPLOAD_DEBUG] 5. Objet image créé:', newImageObject);
+            // --- FIN DE LA CORRECTION ---
 
             allImageData.push(newImageObject);
-            console.log('[UPLOAD_DEBUG] 6. Objet image ajouté à allImageData. Nouvelle taille du tableau:', allImageData.length);
 
             if (dropzoneGallery) {
-                console.log('[UPLOAD_DEBUG] 7. dropzoneGallery trouvée. Appel de addGalleryImageToDOM...');
                 addGalleryImageToDOM(newImageObject);
-                console.log('[UPLOAD_DEBUG] 8. addGalleryImageToDOM a été appelé.');
-            } else {
-                console.error('[UPLOAD_DEBUG] ERREUR: dropzoneGallery non trouvée !');
             }
 
             if (modalOverlay && modalOverlay.style.display === 'flex') {
-                console.log('[UPLOAD_DEBUG] 9. Modale ouverte. Appel de addImageToModalSwiper...');
                 addImageToModalSwiper(newImageObject);
             }
             
             updateStatus(`Image "${file.name}" ajoutée à la galerie !`, 'success');
 
         } else {
-            console.error('[UPLOAD_DEBUG] ERREUR: La condition de succès a échoué. La réponse du serveur est invalide ou ne contient pas newImageId.');
             throw new Error(result.message || "La réponse du serveur est invalide après l'upload.");
         }
         
     } catch (error) {
-        console.error("[UPLOAD_DEBUG] ERREUR CRITIQUE dans le bloc catch:", error);
+        console.error("Erreur critique lors de l'upload:", error);
         updateStatus(`Erreur d'upload: ${error.message}`, 'error');
     } finally {
         if (imageUploadInput) imageUploadInput.value = ''; 
         if (uploadImageBtn) uploadImageBtn.disabled = false;
         hideLoading();
-        console.log('[UPLOAD_DEBUG] 10. Fin de l\'opération (finally).');
     }
 };
 
